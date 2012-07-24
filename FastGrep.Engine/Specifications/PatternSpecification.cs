@@ -8,7 +8,9 @@ namespace FastGrep.Engine.Specifications
     {
         public Regex Expression { get; private set; }
 
-        public PatternSpecification(string regularExpression, bool ignoreCase)
+        public PatternSpecification(
+            string regularExpression,
+            bool ignoreCase)
         {
             Ensure.That(() => regularExpression).IsNotNullOrWhiteSpace();
 
