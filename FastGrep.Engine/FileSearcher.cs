@@ -87,7 +87,8 @@ namespace FastGrep.Engine
 
                     if (matches.Count == 0) return;
 
-                    this.OnMatchFound(new MatchEventArgs(fileDataSource.Identifier, matches));
+                    this.OnMatchFound(
+                        new MatchEventArgs(fileDataSource.Identifier, fileContents, matches));
                 });
 
             if (parallelResult.IsCompleted)

@@ -24,26 +24,28 @@ namespace FastGrep.Tests.Engine
                 new Regex("speedy", RegexOptions.IgnoreCase), dataSources);
 
             bool matchFoundFired = false;
+            bool matchFoundEventArgsCorrect = false;
 
             fileSearcher.MatchFound +=
                 (sender, args) =>
                 {
-                    matchFoundFired = args.FilePath == fileName && args.Matches.Count == 2;
+                    matchFoundFired = true;
+                    matchFoundEventArgsCorrect = args.FilePath == fileName
+                                                 && args.FileContent == fileContent
+                                                 && args.Matches.Count == 2;
                 };
 
             bool completedFired = false;
 
             fileSearcher.Completed +=
-                (sender, args) =>
-                {
-                    completedFired = true;
-                };
+                (sender, args) => { completedFired = true; };
 
             fileSearcher.Start();
             fileSearcher.Wait();
 
-            Assert.That(matchFoundFired, "Match found event was not fired");
-            Assert.That(completedFired, "Completion event was not fired");
+            Assert.That(matchFoundFired, "Match found event was not fired.");
+            Assert.That(matchFoundEventArgsCorrect, "Match found event args are unexpected.");
+            Assert.That(completedFired, "Completion event was not fired.");
         }
 
         /// <summary>
