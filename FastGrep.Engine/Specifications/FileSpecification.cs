@@ -11,18 +11,24 @@ namespace FastGrep.Engine.Specifications
         readonly string _folderPath;
         readonly bool _includeSubfolders;
         readonly string _filePattern;
+        readonly IEnumerable<GlobExpression> _fileExcludePatterns;
 
-        public FileSpecification(
+        internal FileSpecification(
             string folderPath,
             bool includeSubfolders,
-            string filePattern)
+            string filePattern,
+            IEnumerable<string> fileExcludePatterns)
         {
-            Ensure.That(() => filePattern).IsNotNullOrWhiteSpace();
             Ensure.That(() => folderPath).IsNotNullOrWhiteSpace();
+            Ensure.That(() => filePattern).IsNotNullOrWhiteSpace();
 
-            this._filePattern = filePattern;
             this._folderPath = folderPath;
             this._includeSubfolders = includeSubfolders;
+            this._filePattern = filePattern;
+
+            this._fileExcludePatterns = (fileExcludePatterns ?? new string[0])
+                .Where(x => x != null)
+                .Select(p => new GlobExpression(p));
         }
 
         public IEnumerable<DataSource> EnumerateFiles()
@@ -34,6 +40,7 @@ namespace FastGrep.Engine.Specifications
                     this._includeSubfolders
                         ? SearchOption.AllDirectories
                         : SearchOption.TopDirectoryOnly)
+                    .Where(x => !this._fileExcludePatterns.All(p => p.IsMatch(x)))
                     .Select(
                         x =>
                         {
