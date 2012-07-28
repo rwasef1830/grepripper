@@ -14,7 +14,7 @@ namespace FastGrep.Engine.Specifications
         {
             Ensure.That(() => regularExpression).IsNotNullOrWhiteSpace();
 
-            RegexOptions options = RegexOptions.None;
+            var options = RegexOptions.None;
             if (ignoreCase) options |= RegexOptions.IgnoreCase;
 
             this.Expression = new Regex(regularExpression, options);
