@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{3AC7AD
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FastGrep.UI", "FastGrep.UI\FastGrep.UI.csproj", "{DA6652AD-F1E9-4D07-B580-905B1FBE1AE5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +28,10 @@ Global
 		{8E7A73C7-76E1-4FB5-BEFC-245245E54169}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8E7A73C7-76E1-4FB5-BEFC-245245E54169}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8E7A73C7-76E1-4FB5-BEFC-245245E54169}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA6652AD-F1E9-4D07-B580-905B1FBE1AE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA6652AD-F1E9-4D07-B580-905B1FBE1AE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA6652AD-F1E9-4D07-B580-905B1FBE1AE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA6652AD-F1E9-4D07-B580-905B1FBE1AE5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

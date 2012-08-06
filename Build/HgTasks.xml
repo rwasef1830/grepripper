@@ -1,6 +1,5 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="2.0">
-	<!-- Required Import to use MSBuild Community Tasks -->
-	<Import Project="$(MSBuildExtensionsPath)\MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets"/>
+	<UsingTask AssemblyFile="MSBuild.Community.Tasks.dll" TaskName="RegexMatch" />
 	<UsingTask AssemblyFile="MSBuild.Versioning.Tasks.dll" TaskName="AssemblyInfoVersionMatch" />
 	<UsingTask AssemblyFile="MSBuild.Versioning.Tasks.dll" TaskName="MercurialVersion" />
 	
