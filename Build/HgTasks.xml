@@ -1,5 +1,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="2.0">
 	<UsingTask AssemblyFile="MSBuild.Community.Tasks.dll" TaskName="RegexMatch" />
+  <UsingTask AssemblyFile="MSBuild.Community.Tasks.dll" TaskName="AssemblyInfo" />
 	<UsingTask AssemblyFile="MSBuild.Versioning.Tasks.dll" TaskName="AssemblyInfoVersionMatch" />
 	<UsingTask AssemblyFile="MSBuild.Versioning.Tasks.dll" TaskName="MercurialVersion" />
 	
