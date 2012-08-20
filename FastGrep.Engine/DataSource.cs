@@ -12,8 +12,8 @@ namespace FastGrep.Engine
 
         public DataSource(string identifier, TextReader reader, long length)
         {
-            Ensure.That(() => identifier).IsNotNullOrWhiteSpace();
-            Ensure.That(() => reader).IsNotNull();
+            Ensure.That(identifier, "identifier").IsNotNullOrWhiteSpace();
+            Ensure.That(reader, "reader").IsNotNull();
 
             this.Identifier = identifier;
             this.Length = length;

@@ -10,7 +10,7 @@ namespace FastGrep.Engine
 
         public MatchedLine(int number, string text)
         {
-            Ensure.That(() => number).IsGt(0);
+            Ensure.That(number, "number").IsGt(0);
 
             this.Number = number;
             this.Text = text ?? String.Empty;
