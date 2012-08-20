@@ -158,7 +158,6 @@
             this._dataGridViewResults.RowHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
             this._dataGridViewResults.RowHeadersVisible = false;
             this._dataGridViewResults.RowTemplate.Height = 16;
-            this._dataGridViewResults.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this._dataGridViewResults.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this._dataGridViewResults.Size = new System.Drawing.Size(882, 452);
             this._dataGridViewResults.TabIndex = 7;
