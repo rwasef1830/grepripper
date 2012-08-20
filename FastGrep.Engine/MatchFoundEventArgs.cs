@@ -11,8 +11,8 @@ namespace FastGrep.Engine
 
         public MatchFoundEventArgs(string filePath, IEnumerable<MatchedLine> matches)
         {
-            Ensure.That(() => filePath).IsNotNullOrWhiteSpace();
-            Ensure.That(() => matches).IsNotNull();
+            Ensure.That(filePath, "filePath").IsNotNullOrWhiteSpace();
+            Ensure.That(matches, "matches").IsNotNull();
 
             this.FilePath = filePath;
             this.Matches = matches;
