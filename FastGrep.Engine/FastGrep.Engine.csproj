@@ -41,10 +41,12 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CompletedEventArgs.cs" />
     <Compile Include="DataSource.cs" />
     <Compile Include="FileSearcher.cs" />
     <Compile Include="GlobExpression.cs" />
-    <Compile Include="MatchEventArgs.cs" />
+    <Compile Include="MatchedLine.cs" />
+    <Compile Include="MatchFoundEventArgs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Specifications\FileSpecification.cs" />
     <Compile Include="Specifications\PatternSpecification.cs" />

@@ -13,7 +13,7 @@ namespace FastGrep.Engine.Specifications
         readonly string _filePattern;
         readonly IEnumerable<GlobExpression> _fileExcludePatterns;
 
-        internal FileSpecification(
+        public FileSpecification(
             string folderPath,
             bool includeSubfolders,
             string filePattern,
@@ -33,28 +33,51 @@ namespace FastGrep.Engine.Specifications
 
         public IEnumerable<DataSource> EnumerateFiles()
         {
-            return
-                Directory.EnumerateFiles(
+            var enumerator =
+                EnumerateFiles(
                     this._folderPath,
                     this._filePattern,
                     this._includeSubfolders
                         ? SearchOption.AllDirectories
-                        : SearchOption.TopDirectoryOnly)
-                    .Where(x => !this._fileExcludePatterns.All(p => p.IsMatch(x)))
-                    .Select(
-                        x =>
-                        {
-                            try
-                            {
-                                StreamReader reader = File.OpenText(x);
-                                return new DataSource(x, reader, reader.BaseStream.Length);
-                            }
-                            catch (IOException)
-                            {
-                                return null;
-                            }
-                        })
-                    .Where(x => x != null);
+                        : SearchOption.TopDirectoryOnly);
+
+            if (this._fileExcludePatterns.Any())
+            {
+                enumerator = enumerator.Where(x => !this._fileExcludePatterns.All(p => p.IsMatch(x)));
+            }
+
+            return enumerator.Select(
+                x =>
+                {
+                    try
+                    {
+                        StreamReader reader = File.OpenText(x);
+                        return new DataSource(x, reader, reader.BaseStream.Length);
+                    }
+                    catch (IOException)
+                    {
+                        return null;
+                    }
+                })
+                .Where(x => x != null);
+        }
+
+        static IEnumerable<string> EnumerateFiles(string path, string searchPattern, SearchOption searchOption)
+        {
+            try
+            {
+                var dirFiles = Enumerable.Empty<string>();
+                if (searchOption == SearchOption.AllDirectories)
+                {
+                    dirFiles = Directory.EnumerateDirectories(path)
+                        .SelectMany(x => EnumerateFiles(x, searchPattern, searchOption));
+                }
+                return dirFiles.Concat(Directory.EnumerateFiles(path, searchPattern));
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Enumerable.Empty<string>();
+            }
         }
     }
 }

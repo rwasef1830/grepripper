@@ -9,15 +9,21 @@ namespace FastGrep.Engine.Specifications
         public Regex Expression { get; private set; }
 
         public PatternSpecification(
-            string regularExpression,
+            string text,
+            bool isRegex,
             bool ignoreCase)
         {
-            Ensure.That(() => regularExpression).IsNotNullOrWhiteSpace();
+            Ensure.That(() => text).IsNotNullOrWhiteSpace();
 
             var options = RegexOptions.None;
             if (ignoreCase) options |= RegexOptions.IgnoreCase;
 
-            this.Expression = new Regex(regularExpression, options);
+            if (!isRegex)
+            {
+                text = Regex.Escape(text);
+            }
+
+            this.Expression = new Regex(text, options);
         }
     }
 }
