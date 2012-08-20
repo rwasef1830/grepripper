@@ -15,24 +15,33 @@ namespace FastGrep.Tests.Engine
         public void FileSearcher_FindsAMatch_FiresEvents()
         {
             const string fileName = "Test";
-            const string fileContent = "Speedy thing goes in, Speedy thing comes out!";
+            const string fileContent = "Speedy thing goes in, speedy thing comes out!";
 
             IEnumerable<DataSource> dataSources =
                 MakeFileDataSourceList(new Dictionary<string, string> { { fileName, fileContent } });
 
             var fileSearcher = new FileSearcher(
-                new Regex("speedy", RegexOptions.IgnoreCase), dataSources);
+                new Regex("speedy", RegexOptions.None), dataSources);
 
             bool matchFoundFired = false;
-            bool matchFoundEventArgsCorrect = false;
+            Exception assertionException = null;
 
             fileSearcher.MatchFound +=
                 (sender, args) =>
                 {
                     matchFoundFired = true;
-                    matchFoundEventArgsCorrect = args.FilePath == fileName
-                                                 && args.FileContent == fileContent
-                                                 && args.Matches.Count == 2;
+
+                    try
+                    {
+                        Assert.That(args.FilePath, Is.EqualTo(fileName));
+                        Assert.That(args.Matches.Count(), Is.EqualTo(1));
+                        Assert.That(args.Matches.First().Number, Is.EqualTo(1));
+                        Assert.That(args.Matches.First().Text, Is.EqualTo(fileContent));
+                    }
+                    catch (Exception ex)
+                    {
+                        assertionException = ex;
+                    }
                 };
 
             bool completedFired = false;
@@ -44,7 +53,7 @@ namespace FastGrep.Tests.Engine
             fileSearcher.Wait();
 
             Assert.That(matchFoundFired, "Match found event was not fired.");
-            Assert.That(matchFoundEventArgsCorrect, "Match found event args are unexpected.");
+            Assert.That(assertionException, Is.Null);
             Assert.That(completedFired, "Completion event was not fired.");
         }
 
