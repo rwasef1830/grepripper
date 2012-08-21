@@ -29,6 +29,17 @@ namespace FastGrep.UI
             this._textBoxFolderPath.Text = initialFolder != null
                                                ? new DirectoryInfo(initialFolder).FullName
                                                : Environment.CurrentDirectory;
+
+            this.InitializeGridColumnWidths();
+        }
+
+        void InitializeGridColumnWidths()
+        {
+            int baseWidth = this._dataGridViewResults.Width;
+
+            this._columnFilePath.Width = (int)(baseWidth * 0.35);
+            this._columnLineNumber.Width = (int)(baseWidth * 0.05);
+            this._columnText.Width = (int)(baseWidth * 0.55);
         }
 
         void MainForm_Shown(object sender, EventArgs e)
@@ -113,6 +124,7 @@ namespace FastGrep.UI
         {
             try
             {
+                this.ClearStatusMessage();
                 this._dataGridViewResults.Rows.Clear();
 
                 var patternSpec = new PatternSpecification(

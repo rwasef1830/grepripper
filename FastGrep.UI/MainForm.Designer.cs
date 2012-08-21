@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this._labelFolderPath = new System.Windows.Forms.Label();
             this._textBoxFolderPath = new System.Windows.Forms.TextBox();
@@ -37,9 +38,6 @@
             this._textBoxText = new System.Windows.Forms.TextBox();
             this._labelText = new System.Windows.Forms.Label();
             this._dataGridViewResults = new System.Windows.Forms.DataGridView();
-            this._columnFilePath = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this._columnLineNumber = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this._columnText = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this._buttonBrowseFolder = new System.Windows.Forms.Button();
             this._buttonSearch = new System.Windows.Forms.Button();
             this._buttonStop = new System.Windows.Forms.Button();
@@ -47,6 +45,9 @@
             this._checkBoxRegex = new System.Windows.Forms.CheckBox();
             this._textBoxStatus = new System.Windows.Forms.TextBox();
             this._folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
+            this._columnFilePath = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this._columnLineNumber = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this._columnText = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this._dataGridViewResults)).BeginInit();
             this.SuspendLayout();
             // 
@@ -78,7 +79,7 @@
             this._checkBoxSearchSubfolders.AutoSize = true;
             this._checkBoxSearchSubfolders.Checked = true;
             this._checkBoxSearchSubfolders.CheckState = System.Windows.Forms.CheckState.Checked;
-            this._checkBoxSearchSubfolders.Location = new System.Drawing.Point(758, 5);
+            this._checkBoxSearchSubfolders.Location = new System.Drawing.Point(772, 5);
             this._checkBoxSearchSubfolders.Name = "_checkBoxSearchSubfolders";
             this._checkBoxSearchSubfolders.Size = new System.Drawing.Size(99, 17);
             this._checkBoxSearchSubfolders.TabIndex = 2;
@@ -142,14 +143,14 @@
             this._columnFilePath,
             this._columnLineNumber,
             this._columnText});
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this._dataGridViewResults.DefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this._dataGridViewResults.DefaultCellStyle = dataGridViewCellStyle2;
             this._dataGridViewResults.GridColor = System.Drawing.SystemColors.ControlLight;
             this._dataGridViewResults.Location = new System.Drawing.Point(1, 100);
             this._dataGridViewResults.MultiSelect = false;
@@ -161,27 +162,6 @@
             this._dataGridViewResults.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this._dataGridViewResults.Size = new System.Drawing.Size(882, 452);
             this._dataGridViewResults.TabIndex = 7;
-            // 
-            // _columnFilePath
-            // 
-            this._columnFilePath.FillWeight = 80F;
-            this._columnFilePath.HeaderText = "File";
-            this._columnFilePath.Name = "_columnFilePath";
-            this._columnFilePath.ReadOnly = true;
-            this._columnFilePath.Width = 48;
-            // 
-            // _columnLineNumber
-            // 
-            this._columnLineNumber.HeaderText = "Line";
-            this._columnLineNumber.Name = "_columnLineNumber";
-            this._columnLineNumber.ReadOnly = true;
-            // 
-            // _columnText
-            // 
-            this._columnText.HeaderText = "Text";
-            this._columnText.Name = "_columnText";
-            this._columnText.ReadOnly = true;
-            this._columnText.Width = 53;
             // 
             // _buttonBrowseFolder
             // 
@@ -261,6 +241,29 @@
             // 
             this._folderBrowserDialog.Description = "Choose directory to search";
             this._folderBrowserDialog.ShowNewFolderButton = false;
+            // 
+            // _columnFilePath
+            // 
+            this._columnFilePath.FillWeight = 80F;
+            this._columnFilePath.HeaderText = "File";
+            this._columnFilePath.Name = "_columnFilePath";
+            this._columnFilePath.ReadOnly = true;
+            this._columnFilePath.Width = 48;
+            // 
+            // _columnLineNumber
+            // 
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this._columnLineNumber.DefaultCellStyle = dataGridViewCellStyle1;
+            this._columnLineNumber.HeaderText = "Line";
+            this._columnLineNumber.Name = "_columnLineNumber";
+            this._columnLineNumber.ReadOnly = true;
+            // 
+            // _columnText
+            // 
+            this._columnText.HeaderText = "Text";
+            this._columnText.Name = "_columnText";
+            this._columnText.ReadOnly = true;
+            this._columnText.Width = 53;
             // 
             // MainForm
             // 
