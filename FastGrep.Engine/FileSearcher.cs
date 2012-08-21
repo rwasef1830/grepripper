@@ -92,7 +92,15 @@ namespace FastGrep.Engine
                     var regexMatches = this._expression.Matches(fileContents);
                     if (regexMatches.Count == 0) return;
 
-                    var matches = regexMatches.OfType<Match>().Select(x => GetMatchLine(x, fileContents));
+                    var matches = regexMatches
+                        .OfType<Match>()
+                        .Select(match =>
+                                {
+                                    var lineText = GetMatchFullLineText(match, fileContents);
+                                    int lineNumber = GetLineNumber(fileContents, match.Index);
+                                    return new MatchedLine(lineNumber, lineText);
+                                });
+
                     this.OnMatchFound(new MatchFoundEventArgs(fileDataSource.Identifier, matches));
                 });
 
@@ -103,9 +111,9 @@ namespace FastGrep.Engine
             }
         }
 
-        static MatchedLine GetMatchLine(Capture match, string fileContents)
+        static string GetMatchFullLineText(Capture match, string fileContents)
         {
-            int contextStartIndex = match.Index;
+            int contextStartIndex = 0;
             int contextLength = match.Length;
 
             foreach (var newLineChar in "\r\n")
@@ -136,9 +144,8 @@ namespace FastGrep.Engine
                 contextLength = fileContents.Length;
             }
 
-            int lineNumber = GetLineNumber(fileContents, match.Index);
-
-            return new MatchedLine(lineNumber, fileContents.Substring(contextStartIndex, contextLength));
+            var result = fileContents.Substring(contextStartIndex, contextLength);
+            return result;
         }
 
         static int GetLineNumber(string text, int position)
