@@ -130,33 +130,33 @@ namespace FastGrep.Engine
 
         static string GetMatchFullLineText(Capture match, string fileContents)
         {
-            int contextStartIndex = 0;
-            int contextLength = match.Length;
+            int contextStartIndex = -1;
+            int contextLength = -1;
 
             foreach (var newLineChar in "\r\n")
             {
-                int index = fileContents.LastIndexOf(newLineChar, contextStartIndex);
+                int index = fileContents.LastIndexOf(newLineChar, match.Index);
                 if (index < 0) continue;
 
                 contextStartIndex = index;
                 break;
             }
 
-            foreach (var newLineChar in "\n\r")
-            {
-                int index = fileContents.IndexOf(newLineChar, contextStartIndex + contextLength);
-                if (index < 0) continue;
-
-                contextLength = index - contextStartIndex;
-                break;
-            }
-
-            if (contextStartIndex == match.Index)
+            if (contextStartIndex == -1)
             {
                 contextStartIndex = 0;
             }
 
-            if (contextLength == match.Length)
+            foreach (var newLineChar in "\n\r")
+            {
+                int index = fileContents.IndexOf(newLineChar, match.Index + match.Length);
+                if (index < 0) continue;
+
+                contextLength = index - contextStartIndex;
+                break;
+            }            
+
+            if (contextLength == -1)
             {
                 contextLength = fileContents.Length;
             }
