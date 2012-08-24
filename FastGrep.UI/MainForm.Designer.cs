@@ -192,7 +192,7 @@
             this._buttonStop.Name = "_buttonStop";
             this._buttonStop.Size = new System.Drawing.Size(56, 23);
             this._buttonStop.TabIndex = 11;
-            this._buttonStop.Text = "&Stop";
+            this._buttonStop.Text = "&Cancel";
             this._buttonStop.UseVisualStyleBackColor = true;
             this._buttonStop.Click += new System.EventHandler(this.ButtonStop_Click);
             // 

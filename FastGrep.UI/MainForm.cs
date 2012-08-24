@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Windows.Forms;
 using FastGrep.Engine;
 using FastGrep.Engine.Specifications;
@@ -66,6 +67,7 @@ namespace FastGrep.UI
         void CheckBoxIgnoreCase_CheckedChanged(object sender, EventArgs e)
         {
             this.FocusTextPatternBox();
+            this.ValidateTextPattern();
         }
 
         void FocusTextPatternBox()
@@ -122,6 +124,39 @@ namespace FastGrep.UI
 
         void ButtonSearch_Click(object sender, EventArgs e)
         {
+            this.DoSearch();
+        }
+
+        void Searcher_Completed(object sender, CompletedEventArgs e)
+        {
+            this.UnregisterSearcherEvents();
+
+            this.DoCrossThreadUiAction(
+                () =>
+                {
+                    string completedMessage = String.Format("Search completed. Elapsed: {0}", e.Duration);
+                    this.UpdateStatusMessage(completedMessage, false);
+                    this._buttonSearch.Enabled = true;
+                });
+        }
+
+        void Searcher_MatchFound(object o, MatchFoundEventArgs args)
+        {
+            foreach (MatchedLine line in args.Matches)
+            {
+                MatchedLine localLine = line;
+                string relativePath = args.FilePath.Substring(this._textBoxFolderPath.Text.Length + 1);
+                this.DoCrossThreadUiAction(() => this._dataGridViewResults.Rows.Add(relativePath, localLine.Number, localLine.Text));
+            }
+        }
+
+        void ButtonStop_Click(object sender, EventArgs e)
+        {
+            this.AbortSearch();
+        }
+
+        void DoSearch()
+        {
             try
             {
                 this.ClearStatusMessage();
@@ -149,36 +184,48 @@ namespace FastGrep.UI
             }
         }
 
-        void Searcher_Completed(object sender, CompletedEventArgs e)
+        void AbortSearch()
         {
-            this._buttonSearch.Invoke(new Action(() => this._buttonSearch.Enabled = true));
+            if (this._searcher == null) return;
 
-            string completedMessage = String.Format("Search completed. Elapsed: {0}", e.Duration);
-            this._textBoxStatus.Invoke(new Action(() => this.UpdateStatusMessage(completedMessage, false)));
-            this.StopSearcher();
+            this.UpdateStatusMessage("Cancelling...", false);
+
+            // Explicitly using a high priority thread here
+            new Thread(
+                () =>
+                {
+                    try
+                    {
+                        this._searcher.Cancel();
+                        this.UnregisterSearcherEvents();
+                        this.DoCrossThreadUiAction(
+                            () =>
+                            {
+                                this.UpdateStatusMessage("Search cancelled.", false);
+                                this._buttonSearch.Enabled = true;
+                            });
+                    }
+                    catch (Exception ex)
+                    {
+                        this.UpdateStatusMessage(ex.Message, true);
+                    }
+                }) { Priority = ThreadPriority.AboveNormal }.Start();
         }
 
-        void Searcher_MatchFound(object o, MatchFoundEventArgs args)
+        void DoCrossThreadUiAction(Action uiAction)
         {
-            foreach (MatchedLine line in args.Matches)
+            if (this.InvokeRequired)
             {
-                MatchedLine localLine = line;
-                string relativePath = args.FilePath.Substring(this._textBoxFolderPath.Text.Length + 1);
-
-                var method =
-                    new Action(() => this._dataGridViewResults.Rows.Add(relativePath, localLine.Number, localLine.Text));
-                this._dataGridViewResults.Invoke(method);
+                this.Invoke(uiAction);
+            }
+            else
+            {
+                uiAction();
             }
         }
 
-        void ButtonStop_Click(object sender, EventArgs e)
+        void UnregisterSearcherEvents()
         {
-            this.StopSearcher();
-        }
-
-        void StopSearcher()
-        {
-            this._searcher.Stop();
             this._searcher.MatchFound -= this.Searcher_MatchFound;
             this._searcher.Completed -= this.Searcher_Completed;
         }
