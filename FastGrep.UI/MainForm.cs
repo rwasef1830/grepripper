@@ -207,7 +207,7 @@ namespace FastGrep.UI
                     }
                     catch (Exception ex)
                     {
-                        this.UpdateStatusMessage(ex.Message, true);
+                        this.DoCrossThreadUiAction(() => this.UpdateStatusMessage(ex.Message, true));
                     }
                 }) { Priority = ThreadPriority.AboveNormal }.Start();
         }
