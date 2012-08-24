@@ -43,32 +43,49 @@ namespace FastGrep.Engine
         {
             lock (this._locker)
             {
-                if (this._searchTask != null)
+                if (this._searchTask != null && !this._searchTask.IsCompleted)
                 {
                     throw new InvalidOperationException("Searcher task is already running.");
                 }
 
-                this._stopwatch.Start();
-
                 this._searchTask = Task.Factory.StartNew(
-                    () => this.DoSearch(this._cancelSrc.Token),
-                    this._cancelSrc.Token);
-
-                this._searchTask.ContinueWith(
-                    antecedent =>
+                    () =>
                     {
-                        try
-                        {
-                            this.Stop();
-                        }
-                        // ReSharper disable EmptyGeneralCatchClause
-                        catch (Exception) { }
-                        // ReSharper restore EmptyGeneralCatchClause
-                    });
+                        this._stopwatch.Start();
+                        this.DoSearch();
+                    },
+                    this._cancelSrc.Token);
             }
         }
 
-        void DoSearch(CancellationToken token)
+        public void Cancel()
+        {
+            lock (this._locker)
+            {
+                if (this._searchTask == null) return;
+
+                try
+                {
+                    this._cancelSrc.Cancel();
+                    this.Wait();
+                }
+                catch (AggregateException aex)
+                {
+                    aex.Handle(ex => ex is OperationCanceledException);
+                }
+                finally
+                {
+                    this._searchTask = null;
+                }
+            }
+        }
+
+        public void Wait()
+        {
+            this._searchTask.Wait();
+        }
+
+        void DoSearch()
         {
             var parallelResult = Parallel.ForEach(
                 this._dataSources,
@@ -81,7 +98,7 @@ namespace FastGrep.Engine
                 {
                     if (fileDataSource.Length > MaxFileSize) return;
 
-                    token.ThrowIfCancellationRequested();
+                    this._cancelSrc.Token.ThrowIfCancellationRequested();
 
                     string fileContents;
                     using (fileDataSource.Reader)
@@ -172,28 +189,6 @@ namespace FastGrep.Engine
             }
 
             return lineNumber;
-        }
-
-        public void Stop()
-        {
-            lock (this._locker)
-            {
-                this._cancelSrc.Cancel();
-
-                try
-                {
-                    this.Wait();
-                }
-                catch (OperationCanceledException) {}
-
-                this._searchTask.Dispose();
-                this._searchTask = null;
-            }
-        }
-
-        public void Wait()
-        {
-            this._searchTask.Wait();
         }
 
         void OnMatchFound(MatchFoundEventArgs e)
