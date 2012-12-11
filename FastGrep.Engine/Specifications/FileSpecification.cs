@@ -27,11 +27,11 @@ namespace FastGrep.Engine.Specifications
             this._filePattern = filePattern;
 
             this._fileExcludePatterns = (fileExcludePatterns ?? new string[0])
-                .Where(x => x != null)
+                .Where(x => !String.IsNullOrWhiteSpace(x))
                 .Select(p => new GlobExpression(p));
         }
 
-        public IEnumerable<DataSource> EnumerateFiles()
+        public IEnumerable<IDataSource> EnumerateFiles()
         {
             var enumerator =
                 EnumerateFiles(
@@ -51,15 +51,13 @@ namespace FastGrep.Engine.Specifications
                 {
                     try
                     {
-                        StreamReader reader = File.OpenText(x);
-                        return new DataSource(x, reader, reader.BaseStream.Length);
+                        return new FileDataSource(x);
                     }
-                    catch (IOException)
+                    catch (UnauthorizedAccessException)
                     {
                         return null;
                     }
-                })
-                .Where(x => x != null);
+                }).Where(x => x != null);
         }
 
         static IEnumerable<string> EnumerateFiles(string path, string searchPattern, SearchOption searchOption)

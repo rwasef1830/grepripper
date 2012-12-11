@@ -110,21 +110,51 @@ namespace FastGrep.UI
         {
             if (isError)
             {
-                this._textBoxStatus.BackColor = Color.IndianRed;
-                this._textBoxStatus.ForeColor = Color.White;
+                this._labelStatus.BackColor = Color.IndianRed;
+                this._labelStatus.ForeColor = Color.White;
             }
             else
             {
-                this._textBoxStatus.ResetBackColor();
-                this._textBoxStatus.ResetForeColor();
+                this._labelStatus.ResetBackColor();
+                this._labelStatus.ResetForeColor();
             }
 
-            this._textBoxStatus.Text = message;
+            this._labelStatus.Text = message;
         }
 
         void ButtonSearch_Click(object sender, EventArgs e)
         {
             this.DoSearch();
+        }
+
+        void Searcher_ProgressChanged(object sender, ProgressEventArgs e)
+        {
+            this.DoCrossThreadUiAction(
+                () =>
+                {
+                    if (e.TotalNumberOfFiles > 0)
+                    {
+                        this._labelStatus.Text = String.Format(
+                            "{0:n0} of {1:n0} done. {2:n0} failed.",
+                            e.NumberOfSearchedFiles,
+                            e.TotalNumberOfFiles,
+                            e.NumberOfFailedFiles);
+
+                        var percent = (int)Math.Min(100, e.NumberOfSearchedFiles * 100 / e.TotalNumberOfFiles);
+
+                        this._progressBarStatus.Style = ProgressBarStyle.Continuous;
+                        this._progressBarStatus.Value = percent;
+                    }
+                    else
+                    {
+                        this._labelStatus.Text = String.Format(
+                            "{0:n0} done. {1:n0} failed.",
+                            e.NumberOfSearchedFiles,
+                            e.NumberOfFailedFiles);
+
+                        this._progressBarStatus.Style = ProgressBarStyle.Marquee;
+                    }
+                });
         }
 
         void Searcher_Completed(object sender, CompletedEventArgs e)
@@ -134,19 +164,32 @@ namespace FastGrep.UI
             this.DoCrossThreadUiAction(
                 () =>
                 {
-                    string completedMessage = String.Format("Search completed. Elapsed: {0}", e.Duration);
+                    string completedMessage = String.Format("Last search duration: {0}", e.Duration);
                     this.UpdateStatusMessage(completedMessage, false);
                     this._buttonSearch.Enabled = true;
+
+                    this._progressBarStatus.Style = ProgressBarStyle.Continuous;
+                    this._progressBarStatus.Value = 0;
                 });
         }
 
         void Searcher_MatchFound(object o, MatchFoundEventArgs args)
         {
+            string parentPath = this._textBoxFolderPath.Text;
+            int basenameLength = parentPath.Length;
+
+            if (!parentPath.EndsWith(Path.DirectorySeparatorChar.ToString(Thread.CurrentThread.CurrentCulture)))
+            {
+                basenameLength++;
+            }
+
             foreach (MatchedLine line in args.Matches)
             {
                 MatchedLine localLine = line;
-                string relativePath = args.FilePath.Substring(this._textBoxFolderPath.Text.Length + 1);
-                this.DoCrossThreadUiAction(() => this._dataGridViewResults.Rows.Add(relativePath, localLine.Number, localLine.Text));
+                string relativePath = args.FilePath.Substring(basenameLength);
+
+                this.DoCrossThreadUiAction(
+                    () => this._dataGridViewResults.Rows.Add(relativePath, localLine.Number, localLine.Text));
             }
         }
 
@@ -161,22 +204,27 @@ namespace FastGrep.UI
             {
                 this.ClearStatusMessage();
                 this._dataGridViewResults.Rows.Clear();
+                this._progressBarStatus.Style = ProgressBarStyle.Marquee;
 
                 var patternSpec = new PatternSpecification(
-                    this._textBoxText.Text, this._checkBoxRegex.Checked,
+                    this._textBoxText.Text,
+                    this._checkBoxRegex.Checked,
                     this._checkBoxIgnoreCase.Checked);
 
                 var fileSpec = new FileSpecification(
-                    this._textBoxFolderPath.Text, this._checkBoxSearchSubfolders.Checked,
-                    this._textBoxFilePattern.Text, new string[0]);
+                    this._textBoxFolderPath.Text,
+                    this._checkBoxSearchSubfolders.Checked,
+                    this._textBoxFilePattern.Text,
+                    new string[0]);
 
                 var searcher = new FileSearcher(patternSpec.Expression, fileSpec.EnumerateFiles());
                 searcher.MatchFound += this.Searcher_MatchFound;
+                searcher.ProgressChanged += this.Searcher_ProgressChanged;
                 searcher.Completed += this.Searcher_Completed;
 
                 this._buttonSearch.Enabled = false;
                 this._searcher = searcher;
-                searcher.Start();
+                searcher.Begin();
             }
             catch (Exception ex)
             {
@@ -203,6 +251,9 @@ namespace FastGrep.UI
                             {
                                 this.UpdateStatusMessage("Search cancelled.", false);
                                 this._buttonSearch.Enabled = true;
+
+                                this._progressBarStatus.Style = ProgressBarStyle.Continuous;
+                                this._progressBarStatus.Value = 0;
                             });
                     }
                     catch (Exception ex)
@@ -227,6 +278,7 @@ namespace FastGrep.UI
         void UnregisterSearcherEvents()
         {
             this._searcher.MatchFound -= this.Searcher_MatchFound;
+            this._searcher.ProgressChanged -= this.Searcher_ProgressChanged;
             this._searcher.Completed -= this.Searcher_Completed;
         }
     }

@@ -28,8 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
             this._labelFolderPath = new System.Windows.Forms.Label();
             this._textBoxFolderPath = new System.Windows.Forms.TextBox();
             this._checkBoxSearchSubfolders = new System.Windows.Forms.CheckBox();
@@ -38,16 +38,17 @@
             this._textBoxText = new System.Windows.Forms.TextBox();
             this._labelText = new System.Windows.Forms.Label();
             this._dataGridViewResults = new System.Windows.Forms.DataGridView();
+            this._columnFilePath = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this._columnLineNumber = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this._columnText = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this._buttonBrowseFolder = new System.Windows.Forms.Button();
             this._buttonSearch = new System.Windows.Forms.Button();
             this._buttonStop = new System.Windows.Forms.Button();
             this._checkBoxIgnoreCase = new System.Windows.Forms.CheckBox();
             this._checkBoxRegex = new System.Windows.Forms.CheckBox();
-            this._textBoxStatus = new System.Windows.Forms.TextBox();
+            this._progressBarStatus = new System.Windows.Forms.ProgressBar();
             this._folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
-            this._columnFilePath = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this._columnLineNumber = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this._columnText = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this._labelStatus = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this._dataGridViewResults)).BeginInit();
             this.SuspendLayout();
             // 
@@ -143,16 +144,16 @@
             this._columnFilePath,
             this._columnLineNumber,
             this._columnText});
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this._dataGridViewResults.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle8.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle8.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle8.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle8.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle8.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle8.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this._dataGridViewResults.DefaultCellStyle = dataGridViewCellStyle8;
             this._dataGridViewResults.GridColor = System.Drawing.SystemColors.ControlLight;
-            this._dataGridViewResults.Location = new System.Drawing.Point(1, 100);
+            this._dataGridViewResults.Location = new System.Drawing.Point(1, 102);
             this._dataGridViewResults.MultiSelect = false;
             this._dataGridViewResults.Name = "_dataGridViewResults";
             this._dataGridViewResults.ReadOnly = true;
@@ -160,8 +161,31 @@
             this._dataGridViewResults.RowHeadersVisible = false;
             this._dataGridViewResults.RowTemplate.Height = 16;
             this._dataGridViewResults.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this._dataGridViewResults.Size = new System.Drawing.Size(882, 452);
+            this._dataGridViewResults.Size = new System.Drawing.Size(882, 450);
             this._dataGridViewResults.TabIndex = 7;
+            // 
+            // _columnFilePath
+            // 
+            this._columnFilePath.FillWeight = 80F;
+            this._columnFilePath.HeaderText = "File";
+            this._columnFilePath.Name = "_columnFilePath";
+            this._columnFilePath.ReadOnly = true;
+            this._columnFilePath.Width = 48;
+            // 
+            // _columnLineNumber
+            // 
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this._columnLineNumber.DefaultCellStyle = dataGridViewCellStyle7;
+            this._columnLineNumber.HeaderText = "Line";
+            this._columnLineNumber.Name = "_columnLineNumber";
+            this._columnLineNumber.ReadOnly = true;
+            // 
+            // _columnText
+            // 
+            this._columnText.HeaderText = "Text";
+            this._columnText.Name = "_columnText";
+            this._columnText.ReadOnly = true;
+            this._columnText.Width = 53;
             // 
             // _buttonBrowseFolder
             // 
@@ -177,7 +201,7 @@
             // _buttonSearch
             // 
             this._buttonSearch.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this._buttonSearch.Location = new System.Drawing.Point(754, 71);
+            this._buttonSearch.Location = new System.Drawing.Point(754, 74);
             this._buttonSearch.Name = "_buttonSearch";
             this._buttonSearch.Size = new System.Drawing.Size(56, 23);
             this._buttonSearch.TabIndex = 10;
@@ -188,7 +212,7 @@
             // _buttonStop
             // 
             this._buttonStop.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this._buttonStop.Location = new System.Drawing.Point(816, 71);
+            this._buttonStop.Location = new System.Drawing.Point(816, 74);
             this._buttonStop.Name = "_buttonStop";
             this._buttonStop.Size = new System.Drawing.Size(56, 23);
             this._buttonStop.TabIndex = 11;
@@ -222,48 +246,32 @@
             this._checkBoxRegex.UseVisualStyleBackColor = true;
             this._checkBoxRegex.CheckedChanged += new System.EventHandler(this.CheckBoxRegex_CheckedChanged);
             // 
-            // _textBoxStatus
+            // _progressBarStatus
             // 
-            this._textBoxStatus.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
+            this._progressBarStatus.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this._textBoxStatus.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this._textBoxStatus.Cursor = System.Windows.Forms.Cursors.Arrow;
-            this._textBoxStatus.Location = new System.Drawing.Point(7, 74);
-            this._textBoxStatus.Name = "_textBoxStatus";
-            this._textBoxStatus.ReadOnly = true;
-            this._textBoxStatus.Size = new System.Drawing.Size(741, 20);
-            this._textBoxStatus.TabIndex = 14;
-            this._textBoxStatus.TabStop = false;
-            this._textBoxStatus.WordWrap = false;
+            this._progressBarStatus.Cursor = System.Windows.Forms.Cursors.Arrow;
+            this._progressBarStatus.Location = new System.Drawing.Point(7, 74);
+            this._progressBarStatus.Name = "_progressBarStatus";
+            this._progressBarStatus.Size = new System.Drawing.Size(741, 10);
+            this._progressBarStatus.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this._progressBarStatus.TabIndex = 14;
+            this._progressBarStatus.TabStop = false;
             // 
             // _folderBrowserDialog
             // 
             this._folderBrowserDialog.Description = "Choose directory to search";
             this._folderBrowserDialog.ShowNewFolderButton = false;
             // 
-            // _columnFilePath
+            // _labelStatus
             // 
-            this._columnFilePath.FillWeight = 80F;
-            this._columnFilePath.HeaderText = "File";
-            this._columnFilePath.Name = "_columnFilePath";
-            this._columnFilePath.ReadOnly = true;
-            this._columnFilePath.Width = 48;
-            // 
-            // _columnLineNumber
-            // 
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this._columnLineNumber.DefaultCellStyle = dataGridViewCellStyle1;
-            this._columnLineNumber.HeaderText = "Line";
-            this._columnLineNumber.Name = "_columnLineNumber";
-            this._columnLineNumber.ReadOnly = true;
-            // 
-            // _columnText
-            // 
-            this._columnText.HeaderText = "Text";
-            this._columnText.Name = "_columnText";
-            this._columnText.ReadOnly = true;
-            this._columnText.Width = 53;
+            this._labelStatus.AutoSize = true;
+            this._labelStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this._labelStatus.Location = new System.Drawing.Point(4, 86);
+            this._labelStatus.Name = "_labelStatus";
+            this._labelStatus.Size = new System.Drawing.Size(100, 13);
+            this._labelStatus.TabIndex = 16;
+            this._labelStatus.Text = "Search not running.";
             // 
             // MainForm
             // 
@@ -271,7 +279,8 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.ClientSize = new System.Drawing.Size(884, 552);
-            this.Controls.Add(this._textBoxStatus);
+            this.Controls.Add(this._labelStatus);
+            this.Controls.Add(this._progressBarStatus);
             this.Controls.Add(this._checkBoxRegex);
             this.Controls.Add(this._checkBoxIgnoreCase);
             this.Controls.Add(this._buttonStop);
@@ -309,11 +318,12 @@
         private System.Windows.Forms.Button _buttonStop;
         private System.Windows.Forms.CheckBox _checkBoxIgnoreCase;
         private System.Windows.Forms.CheckBox _checkBoxRegex;
-        private System.Windows.Forms.TextBox _textBoxStatus;
+        private System.Windows.Forms.ProgressBar _progressBarStatus;
         private System.Windows.Forms.FolderBrowserDialog _folderBrowserDialog;
         private System.Windows.Forms.DataGridViewTextBoxColumn _columnFilePath;
         private System.Windows.Forms.DataGridViewTextBoxColumn _columnLineNumber;
         private System.Windows.Forms.DataGridViewTextBoxColumn _columnText;
+        private System.Windows.Forms.Label _labelStatus;
 
     }
 }
