@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using FastGrep.Engine;
 using NUnit.Framework;
@@ -17,8 +17,8 @@ namespace FastGrep.Tests.Engine
             const string fileName = "Test";
             const string fileContent = "Speedy thing goes in, speedy thing comes out!";
 
-            IEnumerable<DataSource> dataSources =
-                MakeFileDataSourceList(new Dictionary<string, string> { { fileName, fileContent } });
+            IEnumerable<IDataSource> dataSources =
+                MakeDataSourceList(new Dictionary<string, string> { { fileName, fileContent } });
 
             var fileSearcher = new FileSearcher(
                 new Regex("speedy", RegexOptions.None), dataSources);
@@ -49,7 +49,7 @@ namespace FastGrep.Tests.Engine
             fileSearcher.Completed +=
                 (sender, args) => { completedFired = true; };
 
-            fileSearcher.Start();
+            fileSearcher.Begin();
             fileSearcher.Wait();
 
             Assert.That(matchFoundFired, "Match found event was not fired.");
@@ -61,12 +61,12 @@ namespace FastGrep.Tests.Engine
         /// Each element of the passed list represents the fake file contents.
         /// The file name is a randomly generated GUID.
         /// </summary>
-        static IEnumerable<DataSource> MakeFileDataSourceList(
+        static IEnumerable<IDataSource> MakeDataSourceList(
             string file1Data,
             params string[] fileNData)
         {
             return
-                MakeFileDataSourceList(
+                MakeDataSourceList(
                     new[] { file1Data }.Union(fileNData)
                         .Select(x => new KeyValuePair<string, string>(Guid.NewGuid().ToString(), x)));
         }
@@ -77,17 +77,12 @@ namespace FastGrep.Tests.Engine
         /// </summary>
         /// <param name="dictionary"></param>
         /// <returns></returns>
-        static IEnumerable<DataSource> MakeFileDataSourceList(
+        static IEnumerable<IDataSource> MakeDataSourceList(
             IEnumerable<KeyValuePair<string, string>> dictionary)
         {
-            if (dictionary == null) return null;
-
-            return dictionary.Select(
-                x =>
-                {
-                    var stringReader = new StringReader(x.Value);
-                    return new DataSource(x.Key, stringReader, x.Value.Length);
-                });
+            return dictionary == null
+                       ? null
+                       : dictionary.Select(x => new TestDataSource(x.Key, x.Value, Encoding.Unicode));
         }
     }
 }

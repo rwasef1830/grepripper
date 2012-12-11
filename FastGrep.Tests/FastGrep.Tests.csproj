@@ -45,6 +45,7 @@
     <Compile Include="Engine\FileSearcherTests.cs" />
     <Compile Include="Engine\GlobExpressionTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestDataSource.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FastGrep.Engine\FastGrep.Engine.csproj">
