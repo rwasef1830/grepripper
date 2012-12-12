@@ -12,12 +12,13 @@ namespace FastGrep.Engine
     public class FileSearcher
     {
         public const long MaxFileSize = 256 * 1024 * 1024;
-        public const int MaxContextLength = 512;
+        public const int DefaultMaxContextLength = 512;
 
         readonly CancellationTokenSource _cancelSrc;
 
         readonly Regex _expression;
         readonly IEnumerable<IDataSource> _dataSources;
+        readonly int _maxContextLength;
 
         readonly object _locker = new object();
         Task _searchTask;
@@ -30,13 +31,22 @@ namespace FastGrep.Engine
 
         public FileSearcher(
             Regex expression,
-            IEnumerable<IDataSource> dataSources)
+            IEnumerable<IDataSource> dataSources) 
+            : this(expression, dataSources, DefaultMaxContextLength)
+        {
+        }
+
+        public FileSearcher(
+            Regex expression,
+            IEnumerable<IDataSource> dataSources,
+            int maxContextLength)
         {
             Ensure.That(() => expression).IsNotNull();
             Ensure.That(() => dataSources).IsNotNull();
 
             this._dataSources = dataSources;
             this._expression = expression;
+            this._maxContextLength = maxContextLength;
 
             this._cancelSrc = new CancellationTokenSource();
         }
@@ -184,12 +194,12 @@ namespace FastGrep.Engine
                 });
         }
 
-        static string GetMatchFullLineTextClamped(Capture match, string fileContents)
+        string GetMatchFullLineTextClamped(Capture match, string fileContents)
         {
             int contextStartIndex = -1;
             int contextLength = -1;
 
-            int maxLeftChars = MaxContextLength - (match.Length / 2);
+            int maxLeftChars = this._maxContextLength - Math.Max(1, match.Length / 2);
             int minLeftIndex = match.Index - maxLeftChars;
             if (minLeftIndex < 0) minLeftIndex = 0;
 
@@ -197,6 +207,14 @@ namespace FastGrep.Engine
             {
                 int index = fileContents.LastIndexOf(newLineChar, match.Index);
                 if (index < 0) continue;
+
+                // Skip CR or LF
+                index++;
+                // If we had got a CR and next is LF, skip that too.
+                if (newLineChar == '\r' && fileContents[index] == '\n')
+                {
+                    index++;
+                }
 
                 contextStartIndex = Math.Max(index, minLeftIndex);
                 break;
@@ -212,13 +230,21 @@ namespace FastGrep.Engine
                 int index = fileContents.IndexOf(newLineChar, match.Index + match.Length);
                 if (index < 0) continue;
 
-                contextLength = Math.Min(index - contextStartIndex, MaxContextLength);
+                // Skip CR or LF
+                index--;
+                // If we had got a LF and prev is CR, skip that too.
+                if (newLineChar == '\n' && fileContents[index] == '\r')
+                {
+                    index--;
+                }
+
+                contextLength = Math.Min(index - contextStartIndex, this._maxContextLength);
                 break;
             }
 
             if (contextLength == -1)
             {
-                contextLength = fileContents.Length;
+                contextLength = Math.Min(fileContents.Length, this._maxContextLength);
             }
 
             var result = fileContents.Substring(contextStartIndex, contextLength);
