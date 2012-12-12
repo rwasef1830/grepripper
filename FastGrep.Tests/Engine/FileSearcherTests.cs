@@ -57,6 +57,71 @@ namespace FastGrep.Tests.Engine
             Assert.That(completedFired, "Completion event was not fired.");
         }
 
+        [Test]
+        [TestCaseSource("LongLinesClampTestSource")]
+        public void Long_lines_in_results_are_clamped_properly_around_match(int contextLength, string matchText, string lineToSearch, string expectedContext)
+        {
+            var dataSources = MakeDataSourceList(lineToSearch);
+            var searcher = new FileSearcher(new Regex(Regex.Escape(matchText)), dataSources, contextLength);
+
+            Exception failedAssertion = new AssertionException("MatchFound event was not fired.");
+
+            searcher.MatchFound +=
+                (sender, args) =>
+                {
+                    try
+                    {
+                        Assert.That(args.Matches.First().Text, Is.EqualTo(expectedContext));
+                        failedAssertion = null;
+                    }
+                    catch (Exception ex)
+                    {
+                        failedAssertion = ex;
+                    }
+                };
+
+            searcher.Begin();
+            searcher.Wait();
+
+            if (failedAssertion != null)
+            {
+                throw failedAssertion;
+            }
+        }
+
+        static IEnumerable<TestCaseData> LongLinesClampTestSource()
+        {
+            const int maxContextLength = 10;
+
+            yield return new TestCaseData(
+                maxContextLength,
+                "A",
+                "ABBBBBBBBCDEF",
+                "ABBBBBBBBC")
+                .SetName("Tail excess no CRLF");
+
+            yield return new TestCaseData(
+                maxContextLength,
+                "A",
+                "BBBBBBBBACDEF",
+                "BBBBBBBBAC")
+                .SetName("Head excess no CRLF");
+
+            yield return new TestCaseData(
+                maxContextLength,
+                "A",
+                "\r\nABBBBBBBBCDEF\r\n",
+                "ABBBBBBBBC")
+                .SetName("Tail excess with CRLF");
+
+            yield return new TestCaseData(
+                maxContextLength,
+                "A",
+                "\r\nBBBBBBBBACDEF\r\n",
+                "BBBBBBBBAC")
+                .SetName("Head excess with CRLF");
+        }
+
         /// <summary>
         /// Each element of the passed list represents the fake file contents.
         /// The file name is a randomly generated GUID.
