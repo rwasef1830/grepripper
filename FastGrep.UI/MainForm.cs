@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -202,10 +204,6 @@ namespace FastGrep.UI
         {
             try
             {
-                this.ClearStatusMessage();
-                this._dataGridViewResults.Rows.Clear();
-                this._progressBarStatus.Style = ProgressBarStyle.Marquee;
-
                 var patternSpec = new PatternSpecification(
                     this._textBoxText.Text,
                     this._checkBoxRegex.Checked,
@@ -216,6 +214,10 @@ namespace FastGrep.UI
                     this._checkBoxSearchSubfolders.Checked,
                     this._textBoxFilePattern.Text,
                     new string[0]);
+
+                this.ClearStatusMessage();
+                this._dataGridViewResults.Rows.Clear();
+                this._progressBarStatus.Style = ProgressBarStyle.Marquee;
 
                 var searcher = new FileSearcher(patternSpec.Expression, fileSpec.EnumerateFiles());
                 searcher.MatchFound += this.Searcher_MatchFound;
@@ -280,6 +282,57 @@ namespace FastGrep.UI
             this._searcher.MatchFound -= this.Searcher_MatchFound;
             this._searcher.ProgressChanged -= this.Searcher_ProgressChanged;
             this._searcher.Completed -= this.Searcher_Completed;
+        }
+
+        void DataGridViewResults_CellMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                this._dataGridViewResults.CurrentCell = this._dataGridViewResults[e.ColumnIndex, e.RowIndex];
+
+                this._contextMenuStripGridRow.Show(
+                    (Control)sender,
+                    this._dataGridViewResults.PointToClient(Cursor.Position));
+            }
+        }
+
+        void ToolStripMenuItemRelativePath_Click(object sender, EventArgs e)
+        {
+            Clipboard.SetText(this._dataGridViewResults.CurrentCell.OwningRow.Cells[0].Value.ToString());
+        }
+
+        void ToolStripMenuItemAbsPath_Click(object sender, EventArgs e)
+        {
+            Clipboard.SetText(this.GetSelectedMatchFullPath());
+        }
+
+        string GetSelectedMatchFullPath()
+        {
+            return Path.Combine(
+                this._textBoxFolderPath.Text,
+                this._dataGridViewResults.CurrentCell.OwningRow.Cells[0].Value.ToString());
+        }
+
+        void ToolStripMenuItemFile_Click(object sender, EventArgs e)
+        {
+            var filePath = this.GetSelectedMatchFullPath();
+            var collection = new StringCollection { filePath };
+            Clipboard.SetFileDropList(collection);
+        }
+
+        void ToolStripMenuItemLineNumber_Click(object sender, EventArgs e)
+        {
+            Clipboard.SetText(this._dataGridViewResults.CurrentCell.OwningRow.Cells[1].Value.ToString());
+        }
+
+        void ToolStripMenuItemNotepad_Click(object sender, EventArgs e)
+        {
+            var pi = new ProcessStartInfo("notepad.exe", "\"" + this.GetSelectedMatchFullPath() + "\"")
+                     {
+                         UseShellExecute = true
+                     };
+
+            Process.Start(pi);
         }
     }
 }
