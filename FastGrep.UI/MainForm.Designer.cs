@@ -28,8 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            this.components = new System.ComponentModel.Container();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this._labelFolderPath = new System.Windows.Forms.Label();
             this._textBoxFolderPath = new System.Windows.Forms.TextBox();
             this._checkBoxSearchSubfolders = new System.Windows.Forms.CheckBox();
@@ -49,7 +50,16 @@
             this._progressBarStatus = new System.Windows.Forms.ProgressBar();
             this._folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
             this._labelStatus = new System.Windows.Forms.Label();
+            this._contextMenuStripGridRow = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this._toolStripMenuItemCopy = new System.Windows.Forms.ToolStripMenuItem();
+            this._toolStripMenuItemRelativePath = new System.Windows.Forms.ToolStripMenuItem();
+            this._toolStripMenuItemAbsPath = new System.Windows.Forms.ToolStripMenuItem();
+            this._toolStripMenuItemFile = new System.Windows.Forms.ToolStripMenuItem();
+            this._toolStripMenuItemLineNum = new System.Windows.Forms.ToolStripMenuItem();
+            this._toolStripMenuItemOpen = new System.Windows.Forms.ToolStripMenuItem();
+            this._toolStripMenuItemNotepad = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this._dataGridViewResults)).BeginInit();
+            this._contextMenuStripGridRow.SuspendLayout();
             this.SuspendLayout();
             // 
             // _labelFolderPath
@@ -144,14 +154,14 @@
             this._columnFilePath,
             this._columnLineNumber,
             this._columnText});
-            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle8.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle8.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle8.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle8.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle8.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle8.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this._dataGridViewResults.DefaultCellStyle = dataGridViewCellStyle8;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this._dataGridViewResults.DefaultCellStyle = dataGridViewCellStyle2;
             this._dataGridViewResults.GridColor = System.Drawing.SystemColors.ControlLight;
             this._dataGridViewResults.Location = new System.Drawing.Point(1, 102);
             this._dataGridViewResults.MultiSelect = false;
@@ -161,8 +171,9 @@
             this._dataGridViewResults.RowHeadersVisible = false;
             this._dataGridViewResults.RowTemplate.Height = 16;
             this._dataGridViewResults.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this._dataGridViewResults.Size = new System.Drawing.Size(882, 450);
+            this._dataGridViewResults.Size = new System.Drawing.Size(882, 360);
             this._dataGridViewResults.TabIndex = 7;
+            this._dataGridViewResults.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.DataGridViewResults_CellMouseClick);
             // 
             // _columnFilePath
             // 
@@ -174,8 +185,8 @@
             // 
             // _columnLineNumber
             // 
-            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this._columnLineNumber.DefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this._columnLineNumber.DefaultCellStyle = dataGridViewCellStyle1;
             this._columnLineNumber.HeaderText = "Line";
             this._columnLineNumber.Name = "_columnLineNumber";
             this._columnLineNumber.ReadOnly = true;
@@ -273,12 +284,75 @@
             this._labelStatus.TabIndex = 16;
             this._labelStatus.Text = "Search not running.";
             // 
+            // _contextMenuStripGridRow
+            // 
+            this._contextMenuStripGridRow.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this._toolStripMenuItemCopy,
+            this._toolStripMenuItemOpen});
+            this._contextMenuStripGridRow.Name = "contextMenuStrip1";
+            this._contextMenuStripGridRow.Size = new System.Drawing.Size(153, 70);
+            // 
+            // _toolStripMenuItemCopy
+            // 
+            this._toolStripMenuItemCopy.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this._toolStripMenuItemRelativePath,
+            this._toolStripMenuItemAbsPath,
+            this._toolStripMenuItemFile,
+            this._toolStripMenuItemLineNum});
+            this._toolStripMenuItemCopy.Name = "_toolStripMenuItemCopy";
+            this._toolStripMenuItemCopy.Size = new System.Drawing.Size(152, 22);
+            this._toolStripMenuItemCopy.Text = "Copy";
+            // 
+            // _toolStripMenuItemRelativePath
+            // 
+            this._toolStripMenuItemRelativePath.Name = "_toolStripMenuItemRelativePath";
+            this._toolStripMenuItemRelativePath.Size = new System.Drawing.Size(148, 22);
+            this._toolStripMenuItemRelativePath.Text = "Relative path";
+            this._toolStripMenuItemRelativePath.Click += new System.EventHandler(this.ToolStripMenuItemRelativePath_Click);
+            // 
+            // _toolStripMenuItemAbsPath
+            // 
+            this._toolStripMenuItemAbsPath.Name = "_toolStripMenuItemAbsPath";
+            this._toolStripMenuItemAbsPath.Size = new System.Drawing.Size(148, 22);
+            this._toolStripMenuItemAbsPath.Text = "Absolute path";
+            this._toolStripMenuItemAbsPath.Click += new System.EventHandler(this.ToolStripMenuItemAbsPath_Click);
+            // 
+            // _toolStripMenuItemFile
+            // 
+            this._toolStripMenuItemFile.Name = "_toolStripMenuItemFile";
+            this._toolStripMenuItemFile.Size = new System.Drawing.Size(148, 22);
+            this._toolStripMenuItemFile.Text = "File";
+            this._toolStripMenuItemFile.Click += new System.EventHandler(this.ToolStripMenuItemFile_Click);
+            // 
+            // _toolStripMenuItemLineNum
+            // 
+            this._toolStripMenuItemLineNum.Name = "_toolStripMenuItemLineNum";
+            this._toolStripMenuItemLineNum.Size = new System.Drawing.Size(148, 22);
+            this._toolStripMenuItemLineNum.Text = "Line number";
+            this._toolStripMenuItemLineNum.Click += new System.EventHandler(this.ToolStripMenuItemLineNumber_Click);
+            // 
+            // _toolStripMenuItemOpen
+            // 
+            this._toolStripMenuItemOpen.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this._toolStripMenuItemNotepad});
+            this._toolStripMenuItemOpen.Name = "_toolStripMenuItemOpen";
+            this._toolStripMenuItemOpen.Size = new System.Drawing.Size(152, 22);
+            this._toolStripMenuItemOpen.Text = "Open";
+            this._toolStripMenuItemOpen.Click += new System.EventHandler(this.ToolStripMenuItemNotepad_Click);
+            // 
+            // _toolStripMenuItemNotepad
+            // 
+            this._toolStripMenuItemNotepad.Name = "_toolStripMenuItemNotepad";
+            this._toolStripMenuItemNotepad.Size = new System.Drawing.Size(152, 22);
+            this._toolStripMenuItemNotepad.Text = "Notepad";
+            this._toolStripMenuItemNotepad.Click += new System.EventHandler(this.ToolStripMenuItemNotepad_Click);
+            // 
             // MainForm
             // 
             this.AcceptButton = this._buttonSearch;
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-            this.ClientSize = new System.Drawing.Size(884, 552);
+            this.ClientSize = new System.Drawing.Size(884, 462);
             this.Controls.Add(this._labelStatus);
             this.Controls.Add(this._progressBarStatus);
             this.Controls.Add(this._checkBoxRegex);
@@ -294,10 +368,12 @@
             this.Controls.Add(this._checkBoxSearchSubfolders);
             this.Controls.Add(this._textBoxFolderPath);
             this.Controls.Add(this._labelFolderPath);
+            this.MinimumSize = new System.Drawing.Size(450, 250);
             this.Name = "MainForm";
             this.Text = "FastGrep";
             this.Shown += new System.EventHandler(this.MainForm_Shown);
             ((System.ComponentModel.ISupportInitialize)(this._dataGridViewResults)).EndInit();
+            this._contextMenuStripGridRow.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -324,6 +400,14 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn _columnLineNumber;
         private System.Windows.Forms.DataGridViewTextBoxColumn _columnText;
         private System.Windows.Forms.Label _labelStatus;
+        private System.Windows.Forms.ContextMenuStrip _contextMenuStripGridRow;
+        private System.Windows.Forms.ToolStripMenuItem _toolStripMenuItemOpen;
+        private System.Windows.Forms.ToolStripMenuItem _toolStripMenuItemCopy;
+        private System.Windows.Forms.ToolStripMenuItem _toolStripMenuItemRelativePath;
+        private System.Windows.Forms.ToolStripMenuItem _toolStripMenuItemAbsPath;
+        private System.Windows.Forms.ToolStripMenuItem _toolStripMenuItemFile;
+        private System.Windows.Forms.ToolStripMenuItem _toolStripMenuItemLineNum;
+        private System.Windows.Forms.ToolStripMenuItem _toolStripMenuItemNotepad;
 
     }
 }
