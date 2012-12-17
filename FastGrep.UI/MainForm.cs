@@ -286,7 +286,7 @@ namespace FastGrep.UI
 
         void DataGridViewResults_CellMouseClick(object sender, DataGridViewCellMouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Right)
+            if (e.Button == MouseButtons.Right && e.RowIndex >= 0 && e.ColumnIndex >= 0)
             {
                 this._dataGridViewResults.CurrentCell = this._dataGridViewResults[e.ColumnIndex, e.RowIndex];
 
