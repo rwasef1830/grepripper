@@ -296,6 +296,20 @@ namespace FastGrep.UI
             }
         }
 
+        void DataGridViewResults_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left && e.RowIndex >= 0 && e.ColumnIndex >= 0)
+            {
+                this._dataGridViewResults.CurrentCell = this._dataGridViewResults[e.ColumnIndex, e.RowIndex];
+
+                var selectedMatchFullPath = this.GetSelectedMatchFullPath();
+
+                this._dataGridViewResults.DoDragDrop(
+                    new DataObject(DataFormats.FileDrop, new[] { selectedMatchFullPath }),
+                    DragDropEffects.All);
+            }
+        }
+
         void ToolStripMenuItemRelativePath_Click(object sender, EventArgs e)
         {
             Clipboard.SetText(this._dataGridViewResults.CurrentCell.OwningRow.Cells[0].Value.ToString());

@@ -174,6 +174,7 @@
             this._dataGridViewResults.Size = new System.Drawing.Size(882, 360);
             this._dataGridViewResults.TabIndex = 7;
             this._dataGridViewResults.CellMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.DataGridViewResults_CellMouseClick);
+            this._dataGridViewResults.CellMouseDown += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.DataGridViewResults_CellMouseDown);
             // 
             // _columnFilePath
             // 
@@ -290,7 +291,7 @@
             this._toolStripMenuItemCopy,
             this._toolStripMenuItemOpen});
             this._contextMenuStripGridRow.Name = "contextMenuStrip1";
-            this._contextMenuStripGridRow.Size = new System.Drawing.Size(153, 70);
+            this._contextMenuStripGridRow.Size = new System.Drawing.Size(104, 48);
             // 
             // _toolStripMenuItemCopy
             // 
@@ -300,7 +301,7 @@
             this._toolStripMenuItemFile,
             this._toolStripMenuItemLineNum});
             this._toolStripMenuItemCopy.Name = "_toolStripMenuItemCopy";
-            this._toolStripMenuItemCopy.Size = new System.Drawing.Size(152, 22);
+            this._toolStripMenuItemCopy.Size = new System.Drawing.Size(103, 22);
             this._toolStripMenuItemCopy.Text = "Copy";
             // 
             // _toolStripMenuItemRelativePath
@@ -336,14 +337,14 @@
             this._toolStripMenuItemOpen.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this._toolStripMenuItemNotepad});
             this._toolStripMenuItemOpen.Name = "_toolStripMenuItemOpen";
-            this._toolStripMenuItemOpen.Size = new System.Drawing.Size(152, 22);
+            this._toolStripMenuItemOpen.Size = new System.Drawing.Size(103, 22);
             this._toolStripMenuItemOpen.Text = "Open";
             this._toolStripMenuItemOpen.Click += new System.EventHandler(this.ToolStripMenuItemNotepad_Click);
             // 
             // _toolStripMenuItemNotepad
             // 
             this._toolStripMenuItemNotepad.Name = "_toolStripMenuItemNotepad";
-            this._toolStripMenuItemNotepad.Size = new System.Drawing.Size(152, 22);
+            this._toolStripMenuItemNotepad.Size = new System.Drawing.Size(120, 22);
             this._toolStripMenuItemNotepad.Text = "Notepad";
             this._toolStripMenuItemNotepad.Click += new System.EventHandler(this.ToolStripMenuItemNotepad_Click);
             // 
