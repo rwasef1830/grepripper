@@ -35,6 +35,14 @@ namespace FastGrep.Tests.Engine
             Assert.That(!new GlobExpression(expression).IsMatch(input));
         }
 
+        [Test]
+        [TestCaseSource("GetGlobTestCases")]
+        public void IsValid(string expression, bool isPositive)
+        {
+            var isValid = GlobExpression.IsValid(expression);
+            Assert.That(isValid, Is.EqualTo(isPositive));
+        }
+
         // ReSharper disable UnusedMethodReturnValue.Local
         static IEnumerable<TestCaseData> GetPositiveGlobTestCases()
         {
@@ -59,6 +67,19 @@ namespace FastGrep.Tests.Engine
                 new TestCaseData("test.exe", "test.?"),
                 new TestCaseData("a", "ab"),
                 new TestCaseData("test1Abc.tot", "test1??X.t?t")
+            };
+        }
+
+        static IEnumerable<TestCaseData> GetGlobTestCases()
+        {
+            return new[]
+            {
+                new TestCaseData("*.css", true),
+                new TestCaseData("*.cs?", true),
+                new TestCaseData("\\*.css", false),
+                new TestCaseData("??*.??s", true),
+                new TestCaseData("test", true),
+                new TestCaseData("^", true)
             };
         }
         // ReSharper restore UnusedMethodReturnValue.Local
