@@ -10,21 +10,26 @@ namespace FastGrep.Engine.Specifications
     {
         readonly string _folderPath;
         readonly bool _includeSubfolders;
-        readonly string _filePattern;
+        readonly IEnumerable<GlobExpression> _filePatterns;
         readonly IEnumerable<GlobExpression> _fileExcludePatterns;
 
         public FileSpecification(
             string folderPath,
             bool includeSubfolders,
-            string filePattern,
+            IEnumerable<string> filePatterns,
             IEnumerable<string> fileExcludePatterns)
         {
             Ensure.That(() => folderPath).IsNotNullOrWhiteSpace();
-            Ensure.That(() => filePattern).IsNotNullOrWhiteSpace();
 
             this._folderPath = folderPath;
             this._includeSubfolders = includeSubfolders;
-            this._filePattern = filePattern;
+
+            if (filePatterns == null || !filePatterns.Any()) 
+                filePatterns = new[] { "*.*" };
+
+            this._filePatterns = filePatterns
+                .Where(x => !String.IsNullOrWhiteSpace(x))
+                .Select(p => new GlobExpression(p));
 
             this._fileExcludePatterns = (fileExcludePatterns ?? new string[0])
                 .Where(x => !String.IsNullOrWhiteSpace(x))
@@ -36,10 +41,12 @@ namespace FastGrep.Engine.Specifications
             var enumerator =
                 EnumerateFiles(
                     this._folderPath,
-                    this._filePattern,
                     this._includeSubfolders
                         ? SearchOption.AllDirectories
                         : SearchOption.TopDirectoryOnly);
+
+            enumerator = enumerator.Where(
+                x => this._filePatterns.Any(p => p.IsMatch(Path.GetFileName(x))));
 
             if (this._fileExcludePatterns.Any())
             {
@@ -60,17 +67,18 @@ namespace FastGrep.Engine.Specifications
                 }).Where(x => x != null);
         }
 
-        static IEnumerable<string> EnumerateFiles(string path, string searchPattern, SearchOption searchOption)
+        static IEnumerable<string> EnumerateFiles(string path, SearchOption searchOption)
         {
             try
             {
                 var dirFiles = Enumerable.Empty<string>();
                 if (searchOption == SearchOption.AllDirectories)
                 {
-                    dirFiles = Directory.EnumerateDirectories(path)
-                        .SelectMany(x => EnumerateFiles(x, searchPattern, searchOption));
+                    dirFiles = Directory
+                        .EnumerateDirectories(path)
+                        .SelectMany(x => EnumerateFiles(x, searchOption));
                 }
-                return dirFiles.Concat(Directory.EnumerateFiles(path, searchPattern));
+                return dirFiles.Concat(Directory.EnumerateFiles(path));
             }
             catch (UnauthorizedAccessException)
             {

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
@@ -14,20 +16,26 @@ namespace FastGrep.UI
     public partial class MainForm : Form
     {
         FileSearcher _searcher;
+        bool _isSearching;
+
+        readonly Control[] _inputControls;
 
         public MainForm(string initialFolder)
         {
             this.InitializeComponent();
             this.InitializeDefaults(initialFolder);
+
+            this._inputControls = new Control[]
+            {
+                this._textBoxFolderPath, this._textBoxFilePattern, this._textBoxText,
+                this._checkBoxSearchSubfolders, this._checkBoxRegex, this._checkBoxIgnoreCase,
+                this._buttonBrowseFolder
+            };
         }
 
         void InitializeDefaults(string initialFolder)
         {
-            this._checkBoxSearchSubfolders.Checked = true;
-
-            // ReSharper disable LocalizableElement
             this._textBoxFilePattern.Text = "*.*";
-            // ReSharper restore LocalizableElement
 
             this._textBoxFolderPath.Text = initialFolder != null
                                                ? new DirectoryInfo(initialFolder).FullName
@@ -84,25 +92,6 @@ namespace FastGrep.UI
             this.ValidateTextPattern();
         }
 
-        void ValidateTextPattern()
-        {
-            try
-            {
-                if (this._checkBoxRegex.Checked)
-                {
-                    // ReSharper disable ReturnValueOfPureMethodIsNotUsed
-                    Regex.IsMatch(string.Empty, this._textBoxText.Text);
-                    // ReSharper restore ReturnValueOfPureMethodIsNotUsed
-                }
-
-                this.ClearStatusMessage();
-            }
-            catch (Exception ex)
-            {
-                this.UpdateStatusMessage(ex.Message, true);
-            }
-        }
-
         void ClearStatusMessage()
         {
             this.UpdateStatusMessage(String.Empty, false);
@@ -124,9 +113,21 @@ namespace FastGrep.UI
             this._labelStatus.Text = message;
         }
 
-        void ButtonSearch_Click(object sender, EventArgs e)
+        void ButtonGo_Click(object sender, EventArgs e)
         {
-            this.DoSearch();
+            if (!this._isSearching)
+            {
+                if (this.HasAnyValidationError())
+                {
+                    return;
+                }
+
+                this.BeginSearch();
+            }
+            else
+            {
+                this.AbortSearch();
+            }
         }
 
         void Searcher_ProgressChanged(object sender, ProgressEventArgs e)
@@ -168,10 +169,23 @@ namespace FastGrep.UI
                 {
                     string completedMessage = String.Format("Last search duration: {0}", e.Duration);
                     this.UpdateStatusMessage(completedMessage, false);
-                    this._buttonSearch.Enabled = true;
+                    this._buttonGo.Text = "&Go";
+                    this._buttonGo.Enabled = true;
 
                     this._progressBarStatus.Style = ProgressBarStyle.Continuous;
                     this._progressBarStatus.Value = 0;
+
+                    foreach (var control in this._inputControls)
+                    {
+                        control.Enabled = true;
+                    }
+
+                    this._isSearching = false;
+
+                    if (this._dataGridViewResults.Rows.Count == 0)
+                        this._textBoxText.Focus();
+                    else
+                        this._dataGridViewResults.Focus();
                 });
         }
 
@@ -195,12 +209,7 @@ namespace FastGrep.UI
             }
         }
 
-        void ButtonStop_Click(object sender, EventArgs e)
-        {
-            this.AbortSearch();
-        }
-
-        void DoSearch()
+        void BeginSearch()
         {
             try
             {
@@ -212,8 +221,13 @@ namespace FastGrep.UI
                 var fileSpec = new FileSpecification(
                     this._textBoxFolderPath.Text,
                     this._checkBoxSearchSubfolders.Checked,
-                    this._textBoxFilePattern.Text,
+                    this._textBoxFilePattern.Text.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries),
                     new string[0]);
+
+                foreach (var control in this._inputControls)
+                {
+                    control.Enabled = false;
+                }
 
                 this.ClearStatusMessage();
                 this._dataGridViewResults.Rows.Clear();
@@ -224,9 +238,13 @@ namespace FastGrep.UI
                 searcher.ProgressChanged += this.Searcher_ProgressChanged;
                 searcher.Completed += this.Searcher_Completed;
 
-                this._buttonSearch.Enabled = false;
                 this._searcher = searcher;
                 searcher.Begin();
+
+                this._buttonGo.Text = "&Stop";
+                this._isSearching = true;
+
+                this._buttonGo.Focus();
             }
             catch (Exception ex)
             {
@@ -238,6 +256,7 @@ namespace FastGrep.UI
         {
             if (this._searcher == null) return;
 
+            this._buttonGo.Enabled = false;
             this.UpdateStatusMessage("Cancelling...", false);
 
             // Explicitly using a high priority thread here
@@ -248,14 +267,28 @@ namespace FastGrep.UI
                     {
                         this._searcher.Cancel();
                         this.UnregisterSearcherEvents();
+
                         this.DoCrossThreadUiAction(
                             () =>
                             {
                                 this.UpdateStatusMessage("Search cancelled.", false);
-                                this._buttonSearch.Enabled = true;
+
+                                this._buttonGo.Text = "&Go";
+                                this._isSearching = false;
+                                this._buttonGo.Enabled = true;
 
                                 this._progressBarStatus.Style = ProgressBarStyle.Continuous;
                                 this._progressBarStatus.Value = 0;
+
+                                foreach (var control in this._inputControls)
+                                {
+                                    control.Enabled = true;
+                                }
+
+                                if (this._dataGridViewResults.Rows.Count == 0)
+                                    this._textBoxText.Focus();
+                                else
+                                    this._dataGridViewResults.Focus();
                             });
                     }
                     catch (Exception ex)
@@ -347,6 +380,120 @@ namespace FastGrep.UI
                      };
 
             Process.Start(pi);
+        }
+
+        bool HasAnyValidationError()
+        {
+            return
+                new[] { this._textBoxFolderPath, this._textBoxFilePattern, this._textBoxText }
+                    .Any(x => !String.IsNullOrWhiteSpace(this._errorProvider.GetError(x)));
+        }
+
+        void TextBoxFolderPath_Validating(object sender, CancelEventArgs e)
+        {
+            this.DoTextValidation(
+                sender,
+                t =>
+                {
+                    try
+                    {
+                        if (String.IsNullOrWhiteSpace(t))
+                            return "Type or browse for a path to search";
+
+                        if (!Directory.Exists(t))
+                            throw new DirectoryNotFoundException();
+                    }
+                    catch (Exception ex)
+                    {
+                        return "Invalid path: " + ex.Message;
+                    }
+
+                    return null;
+                });
+        }
+
+        void TextBoxText_Validating(object sender, CancelEventArgs e)
+        {
+            this.ValidateTextPattern();
+        }
+
+        void ValidateTextPattern()
+        {
+            this.DoTextValidation(
+                this._textBoxText,
+                t =>
+                {
+                    try
+                    {
+                        if (String.IsNullOrWhiteSpace(t))
+                        {
+                            return "Enter a search pattern";
+                        }
+
+                        if (this._checkBoxRegex.Checked)
+                        {
+                            // ReSharper disable ReturnValueOfPureMethodIsNotUsed
+                            Regex.IsMatch(string.Empty, t);
+                            // ReSharper restore ReturnValueOfPureMethodIsNotUsed
+                        }
+
+                        return null;
+                    }
+                    catch (Exception ex)
+                    {
+                        return "Invalid regex: " + ex.Message;
+                    }
+                });
+        }
+
+        void TextBoxFilePattern_Validating(object sender, CancelEventArgs e)
+        {
+            this.DoTextValidation(
+                sender,
+                t =>
+                {
+                    var failedPatterns =
+                        t.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                         .Where(x => !GlobExpression.IsValid(x))
+                         .ToList();
+
+                    if (failedPatterns.Any())
+                    {
+                        return "Invalid pattern: " + String.Join(", ", failedPatterns);
+                    }
+
+                    return null;
+                });
+        }
+
+        void DoTextValidation(
+            object validatingEventHandlerSenderControl, 
+            Func<string, string> validationFunc)
+        {
+            if (!(validatingEventHandlerSenderControl is TextBoxBase))
+                throw new ArgumentException(
+                    "object must be an instance of " + typeof(TextBoxBase).Name,
+                    "validatingEventHandlerSenderControl");
+
+            if (validationFunc == null) throw new ArgumentNullException("validationFunc");
+
+            var control = (TextBoxBase)validatingEventHandlerSenderControl;
+            var errorMessage = validationFunc(control.Text);
+
+            if (String.IsNullOrWhiteSpace(errorMessage))
+            {
+                this._errorProvider.SetError(control, String.Empty);
+
+                control.BackColor = SystemColors.Window;
+                control.ForeColor = SystemColors.WindowText;
+            }
+            else
+            {
+                this._errorProvider.SetError(control, errorMessage);
+
+                control.BackColor = Color.MistyRose;
+                control.ForeColor = Color.Black;
+            }
         }
     }
 }
