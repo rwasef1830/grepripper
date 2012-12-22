@@ -24,8 +24,14 @@ namespace FastGrep.Engine.Specifications
             this._folderPath = folderPath;
             this._includeSubfolders = includeSubfolders;
 
-            if (filePatterns == null || !filePatterns.Any()) 
+            if (filePatterns == null)
+            {
                 filePatterns = new[] { "*.*" };
+            }
+            else
+            {
+                filePatterns = filePatterns.ToList();
+            }
 
             this._filePatterns = filePatterns
                 .Where(x => !String.IsNullOrWhiteSpace(x))
@@ -38,19 +44,18 @@ namespace FastGrep.Engine.Specifications
 
         public IEnumerable<IDataSource> EnumerateFiles()
         {
-            var enumerator =
-                EnumerateFiles(
-                    this._folderPath,
-                    this._includeSubfolders
-                        ? SearchOption.AllDirectories
-                        : SearchOption.TopDirectoryOnly);
+            var searchOption = this._includeSubfolders
+                                   ? SearchOption.AllDirectories
+                                   : SearchOption.TopDirectoryOnly;
 
-            enumerator = enumerator.Where(
-                x => this._filePatterns.Any(p => p.IsMatch(Path.GetFileName(x))));
+            var enumerator =
+                EnumerateFiles(this._folderPath, searchOption)
+                    .Where(x => this._filePatterns.Any(p => p.IsMatch(Path.GetFileName(x))));
 
             if (this._fileExcludePatterns.Any())
             {
-                enumerator = enumerator.Where(x => !this._fileExcludePatterns.All(p => p.IsMatch(x)));
+                enumerator = enumerator.Where(
+                    x => !this._fileExcludePatterns.Any(p => p.IsMatch(x)));
             }
 
             return enumerator.Select(
