@@ -21,3 +21,6 @@ FAQ
 
 ### Why was the project renamed ?
 Because I discovered that [the  "FastGrep" name was already taken by a commercial application](http://www.fastgrep.com/), so I renamed this one to avoid confusion. This utility is *not* in anyway affiliated or connected with the one being sold there. *Please do not contact the owners of that site about this utility.*
+
+### What is this project licensed under ?
+This project is licensed under the [MIT license](http://opensource.org/licenses/MIT). You are free to use it for personal or commercial use, though it would be nice if you contributed new features or bug fixes if it helped you out during your day :-).
