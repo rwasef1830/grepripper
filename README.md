@@ -16,6 +16,8 @@ This is a playground/hobby project. Maybe it will grow into a nice utility somed
 Note: MSBuild Community Tasks is no longer required to compile the project as of rev 1dc0d1e065ad.
 
 
-FAQ:
-Q: Why was the project renamed ?
-A: Because I discovered the name "FastGrep" was already taken by a commercial application, so I renamed this one to avoid confusion. This utility is not in anyway affiliated or connected with the one being sold here: http://fastgrep.com/. Do not contact the owners of that site for support issues for this utility.
+FAQ
+---
+
+### Why was the project renamed ?
+Because I discovered that [the  "FastGrep" name was already taken by a commercial application](http://www.fastgrep.com/), so I renamed this one to avoid confusion. This utility is *not* in anyway affiliated or connected with the one being sold there. *Please do not contact the owners of that site about this utility.*
