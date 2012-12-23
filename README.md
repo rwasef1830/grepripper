@@ -1,5 +1,5 @@
-FastGrep
-========
+FunkyGrep, formerly FastGrep
+============================
 
 This project aims to provide a free clone for some of the functionality of the 
 famous BareGrep utility and act as a playground for async programming models 
@@ -14,3 +14,8 @@ embedded into the version number.
 This is a playground/hobby project. Maybe it will grow into a nice utility someday.
 
 Note: MSBuild Community Tasks is no longer required to compile the project as of rev 1dc0d1e065ad.
+
+
+FAQ:
+Q: Why was the project renamed ?
+A: Because I discovered the name "FastGrep" was already taken by a commercial application, so I renamed this one to avoid confusion. This utility is not in anyway affiliated or connected with the one being sold here: http://fastgrep.com/. Do not contact the owners of that site for support issues for this utility.
