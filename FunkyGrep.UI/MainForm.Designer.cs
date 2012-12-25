@@ -31,8 +31,9 @@ namespace FunkyGrep.UI
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this._labelFolderPath = new System.Windows.Forms.Label();
             this._textBoxFolderPath = new System.Windows.Forms.TextBox();
             this._checkBoxSearchSubfolders = new System.Windows.Forms.CheckBox();
@@ -163,14 +164,14 @@ namespace FunkyGrep.UI
             this._columnFilePath,
             this._columnLineNumber,
             this._columnText});
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle4.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle4.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle4.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this._dataGridViewResults.DefaultCellStyle = dataGridViewCellStyle4;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("Consolas", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this._dataGridViewResults.DefaultCellStyle = dataGridViewCellStyle2;
             this._dataGridViewResults.GridColor = System.Drawing.SystemColors.ControlLight;
             this._dataGridViewResults.Location = new System.Drawing.Point(1, 102);
             this._dataGridViewResults.MultiSelect = false;
@@ -195,8 +196,8 @@ namespace FunkyGrep.UI
             // 
             // _columnLineNumber
             // 
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this._columnLineNumber.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this._columnLineNumber.DefaultCellStyle = dataGridViewCellStyle1;
             this._columnLineNumber.HeaderText = "Line";
             this._columnLineNumber.Name = "_columnLineNumber";
             this._columnLineNumber.ReadOnly = true;
@@ -372,6 +373,7 @@ namespace FunkyGrep.UI
             this.Controls.Add(this._checkBoxSearchSubfolders);
             this.Controls.Add(this._textBoxFolderPath);
             this.Controls.Add(this._labelFolderPath);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(450, 250);
             this.Name = "MainForm";
             this.Text = "FunkyGrep";
