@@ -66,6 +66,20 @@ namespace FunkyGrep.Tests.Engine
                 "\r\nBBBBBBBBACDEF\r\n",
                 "BBBBBBBBAC")
                 .SetName("Head excess with CRLF");
+
+            yield return new TestCaseData(
+                maxContextLength,
+                "ABC",
+                "\r\nXXXXXXXABC\r\n",
+                "XXXXXXXABC")
+                .SetName("Match at end of line");
+
+            yield return new TestCaseData(
+                maxContextLength,
+                "ABC",
+                "\r\nABCXXXXXXX\r\n",
+                "ABCXXXXXXX")
+                .SetName("Match at the beginning of line");
         }
 
         /// <summary>

@@ -266,7 +266,7 @@ namespace FunkyGrep.Engine
                     index--;
                 }
 
-                contextLength = Math.Min(index - contextStartIndex, this._maxContextLength);
+                contextLength = Math.Min(index - contextStartIndex + 1, this._maxContextLength);
                 break;
             }
 
