@@ -114,6 +114,6 @@
       <Output ItemName="AssembliesToMerge" TaskParameter="Include" />
     </CreateItem>
     <Exec Command="&quot;$(MSBuildProjectPath)..\Build\ILMerge.exe&quot; /ndebug /out:&quot;$(TargetDir)FunkyGrep.exe&quot; /targetplatform:v4,$(MSBuildToolsPath) &quot;@(IntermediateAssembly)&quot; @(AssembliesToMerge->'&quot;%(FullPath)&quot;', ' ')" />
-    <Delete Files="@(ReferenceCopyLocalPaths->'$(OutDir)%(DestinationSubDirectory)%(Filename)%(Extension)')" />
+    <!-- <Delete Files="@(ReferenceCopyLocalPaths->'$(OutDir)%(DestinationSubDirectory)%(Filename)%(Extension)')" /> -->
   </Target>
 </Project>
