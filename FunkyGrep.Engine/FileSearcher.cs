@@ -42,7 +42,7 @@ namespace FunkyGrep.Engine
         readonly CancellationTokenSource _cancelSrc;
 
         readonly IEnumerable<IDataSource> _dataSources;
-        readonly Regex _expression;
+        readonly ThreadLocal<Regex> _threadLocalRegex;
 
         readonly object _locker = new object();
         readonly int _maxContextLength;
@@ -55,9 +55,9 @@ namespace FunkyGrep.Engine
         long _totalCount;
 
         public FileSearcher(
-            Regex expression,
+            Regex threadLocalRegex,
             IEnumerable<IDataSource> dataSources)
-            : this(expression, dataSources, DefaultMaxContextLength) {}
+            : this(threadLocalRegex, dataSources, DefaultMaxContextLength) {}
 
         public FileSearcher(
             Regex expression,
@@ -68,7 +68,7 @@ namespace FunkyGrep.Engine
             Ensure.That(() => dataSources).IsNotNull();
 
             this._dataSources = dataSources;
-            this._expression = expression;
+            this._threadLocalRegex = new ThreadLocal<Regex>(() => new Regex(expression.ToString(), expression.Options));
             this._maxContextLength = maxContextLength;
 
             this._cancelSrc = new CancellationTokenSource();
@@ -172,54 +172,61 @@ namespace FunkyGrep.Engine
 
         ParallelLoopResult DoSearch(CancellationToken token)
         {
-            return Parallel.ForEach(
-                this._dataSources,
-                new ParallelOptions
-                {
-                    CancellationToken = token,
-                    MaxDegreeOfParallelism = Environment.ProcessorCount
-                },
-                (dataSource, loopState, i) =>
-                {
-                    try
+            try
+            {
+                return Parallel.ForEach(
+                    this._dataSources,
+                    new ParallelOptions
                     {
-                        if (dataSource.GetLength() > MaxFileSize) return;
-
-                        token.ThrowIfCancellationRequested();
-
-                        string fileContents;
-                        using (TextReader reader = dataSource.OpenReader())
+                        CancellationToken = token,
+                        MaxDegreeOfParallelism = Environment.ProcessorCount
+                    },
+                    (dataSource, loopState, i) =>
+                    {
+                        try
                         {
-                            fileContents = reader.ReadToEnd();
+                            if (dataSource.GetLength() > MaxFileSize) return;
+
+                            token.ThrowIfCancellationRequested();
+
+                            string fileContents;
+                            using (TextReader reader = dataSource.OpenReader())
+                            {
+                                fileContents = reader.ReadToEnd();
+                            }
+
+                            MatchCollection regexMatches = this._threadLocalRegex.Value.Matches(fileContents);
+                            if (regexMatches.Count == 0) return;
+
+                            IEnumerable<MatchedLine> matches = regexMatches
+                                .OfType<Match>()
+                                .Select(
+                                    match =>
+                                    {
+                                        string lineText = this.GetMatchFullLineTextClamped(
+                                            match, fileContents);
+                                        int lineNumber = GetLineNumber(fileContents, match.Index);
+                                        return new MatchedLine(lineNumber, lineText);
+                                    });
+
+                            this.OnMatchFound(new MatchFoundEventArgs(dataSource.Identifier, matches));
                         }
-
-                        MatchCollection regexMatches = this._expression.Matches(fileContents);
-                        if (regexMatches.Count == 0) return;
-
-                        IEnumerable<MatchedLine> matches = regexMatches
-                            .OfType<Match>()
-                            .Select(
-                                match =>
-                                {
-                                    string lineText = this.GetMatchFullLineTextClamped(
-                                        match, fileContents);
-                                    int lineNumber = GetLineNumber(fileContents, match.Index);
-                                    return new MatchedLine(lineNumber, lineText);
-                                });
-
-                        this.OnMatchFound(new MatchFoundEventArgs(dataSource.Identifier, matches));
-                    }
-                    catch (Exception)
-                    {
-                        // TODO: Log these exceptions and let the user view them somehow.
-                        Interlocked.Increment(ref this._failedCount);
-                    }
-                    finally
-                    {
-                        // TODO: Log skipped files and let the user view them somehow.
-                        Interlocked.Increment(ref this._doneCount);
-                    }
-                });
+                        catch (Exception)
+                        {
+                            // TODO: Log these exceptions and let the user view them somehow.
+                            Interlocked.Increment(ref this._failedCount);
+                        }
+                        finally
+                        {
+                            // TODO: Log skipped files and let the user view them somehow.
+                            Interlocked.Increment(ref this._doneCount);
+                        }
+                    });
+            }
+            finally
+            {
+                this._threadLocalRegex.Dispose();
+            }
         }
 
         string GetMatchFullLineTextClamped(Capture match, string fileContents)
