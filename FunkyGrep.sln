@@ -1,16 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 15
+VisualStudioVersion = 15.0.26228.9
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunkyGrep.Engine", "FunkyGrep.Engine\FunkyGrep.Engine.csproj", "{89E8E9E8-8A5C-4B9B-A7AD-71B27A1D0105}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunkyGrep.Tests", "FunkyGrep.Tests\FunkyGrep.Tests.csproj", "{8E7A73C7-76E1-4FB5-BEFC-245245E54169}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{3AC7ADFD-BD94-4D16-81AD-4AA89054708A}"
-	ProjectSection(SolutionItems) = preProject
-		.nuget\NuGet.Config = .nuget\NuGet.Config
-		.nuget\nuget.exe = .nuget\nuget.exe
-		.nuget\NuGet.targets = .nuget\NuGet.targets
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FunkyGrep.UI", "FunkyGrep.UI\FunkyGrep.UI.csproj", "{DA6652AD-F1E9-4D07-B580-905B1FBE1AE5}"
 EndProject
