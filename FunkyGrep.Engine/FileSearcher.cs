@@ -55,14 +55,9 @@ namespace FunkyGrep.Engine
         long _totalCount;
 
         public FileSearcher(
-            Regex threadLocalRegex,
-            IEnumerable<IDataSource> dataSources)
-            : this(threadLocalRegex, dataSources, DefaultMaxContextLength) {}
-
-        public FileSearcher(
             Regex expression,
             IEnumerable<IDataSource> dataSources,
-            int maxContextLength)
+            int maxContextLength = DefaultMaxContextLength)
         {
             Ensure.That(() => expression).IsNotNull();
             Ensure.That(() => dataSources).IsNotNull();
@@ -96,7 +91,7 @@ namespace FunkyGrep.Engine
 
                         if (loopResult.IsCompleted)
                         {
-                            this.OnCompleted(new CompletedEventArgs(stopwatch.Elapsed));
+                            this.Completed?.Invoke(this, new CompletedEventArgs(stopwatch.Elapsed));
                         }
                     },
                     this._cancelSrc.Token);
@@ -126,11 +121,10 @@ namespace FunkyGrep.Engine
                         // Enter report loop
                         do
                         {
-                            this.OnProgressChanged(
-                                new ProgressEventArgs(
-                                    Interlocked.Read(ref this._doneCount),
-                                    Interlocked.Read(ref this._totalCount),
-                                    Interlocked.Read(ref this._failedCount)));
+                            this.ProgressChanged?.Invoke(this, new ProgressEventArgs(
+                                Interlocked.Read(ref this._doneCount),
+                                Interlocked.Read(ref this._totalCount),
+                                Interlocked.Read(ref this._failedCount)));
                         }
                         while (!this._cancelSrc.Token.WaitHandle.WaitOne(100)
                                && !this._searchTask.IsCompleted);
@@ -195,7 +189,7 @@ namespace FunkyGrep.Engine
                                 fileContents = reader.ReadToEnd();
                             }
 
-                            MatchCollection regexMatches = this._threadLocalRegex.Value.Matches(fileContents);
+                            var regexMatches = this._threadLocalRegex.Value.Matches(fileContents);
                             if (regexMatches.Count == 0) return;
 
                             IEnumerable<MatchedLine> matches = regexMatches
@@ -209,7 +203,7 @@ namespace FunkyGrep.Engine
                                         return new MatchedLine(lineNumber, lineText);
                                     });
 
-                            this.OnMatchFound(new MatchFoundEventArgs(dataSource.Identifier, matches));
+                            this.MatchFound?.Invoke(this, new MatchFoundEventArgs(dataSource.Identifier, matches));
                         }
                         catch (Exception)
                         {
@@ -311,24 +305,6 @@ namespace FunkyGrep.Engine
             }
 
             return lineNumber;
-        }
-
-        void OnMatchFound(MatchFoundEventArgs e)
-        {
-            EventHandler<MatchFoundEventArgs> handler = this.MatchFound;
-            if (handler != null) handler(this, e);
-        }
-
-        void OnCompleted(CompletedEventArgs e)
-        {
-            EventHandler<CompletedEventArgs> handler = this.Completed;
-            if (handler != null) handler(this, e);
-        }
-
-        void OnProgressChanged(ProgressEventArgs e)
-        {
-            EventHandler<ProgressEventArgs> handler = this.ProgressChanged;
-            if (handler != null) handler(this, e);
         }
     }
 }
