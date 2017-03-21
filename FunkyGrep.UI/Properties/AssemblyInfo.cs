@@ -35,7 +35,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Raif Atef Wasef")]
 [assembly: AssemblyProduct("FunkyGrep")]
-[assembly: AssemblyCopyright("Copyright © Raif Atef Wasef 2012")]
+[assembly: AssemblyCopyright("Copyright © Raif Atef Wasef 2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
