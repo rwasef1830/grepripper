@@ -24,7 +24,6 @@
 
 using System;
 using System.Text.RegularExpressions;
-using EnsureThat;
 
 namespace FunkyGrep.Engine.Specifications
 {
@@ -37,7 +36,10 @@ namespace FunkyGrep.Engine.Specifications
             bool isRegex,
             bool ignoreCase)
         {
-            Ensure.That(() => text).IsNotNullOrWhiteSpace();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(text));
+            }
 
             var options = RegexOptions.None;
             if (ignoreCase) options |= RegexOptions.IgnoreCase;

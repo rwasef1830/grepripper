@@ -39,7 +39,7 @@ namespace FunkyGrep.Tests.Engine.Specifications
         string _tempPath;
         string _tempSubfolder;
 
-        [TestFixtureSetUp]
+        [SetUp]
         public void Setup()
         {
             var random = new Random();
@@ -70,7 +70,7 @@ namespace FunkyGrep.Tests.Engine.Specifications
             }
         }
 
-        [TestFixtureTearDown]
+        [TearDown]
         public void TearDown()
         {
             Directory.Delete(this._tempPath, true);
@@ -96,7 +96,7 @@ namespace FunkyGrep.Tests.Engine.Specifications
         }
 
         [Test]
-        public void Enumeration_Toplevel_Only()
+        public void Enumeration_TopLevel_Only()
         {
             var fileSpec = new FileSpecification(this._tempPath, false, null, null);
             List<IDataSource> files = fileSpec.EnumerateFiles().ToList();
@@ -115,7 +115,7 @@ namespace FunkyGrep.Tests.Engine.Specifications
                 this._tempPath, true, null, new[] { "*.asp", "*.bmp", "*.txt" });
             List<IDataSource> files = fileSpec.EnumerateFiles().ToList();
 
-            Assert.That(files.Count(), Is.EqualTo(1));
+            Assert.That(files.Count, Is.EqualTo(1));
             Assert.That(
                 files.Any(x => x.Identifier == Path.Combine(this._tempPath, "temp1.css")), Is.True);
         }
@@ -127,7 +127,7 @@ namespace FunkyGrep.Tests.Engine.Specifications
                 this._tempPath, true, new[] { "temp1.css", "temp2.txt" }, null);
             List<IDataSource> files = fileSpec.EnumerateFiles().ToList();
 
-            Assert.That(files.Count(), Is.EqualTo(2));
+            Assert.That(files.Count, Is.EqualTo(2));
             Assert.That(
                 files.Any(x => x.Identifier == Path.Combine(this._tempPath, "temp1.css")), Is.True);
             Assert.That(
@@ -140,7 +140,7 @@ namespace FunkyGrep.Tests.Engine.Specifications
             var fileSpec = new FileSpecification(this._tempPath, true, new[] { "*.xyz" }, null);
             List<IDataSource> files = fileSpec.EnumerateFiles().ToList();
 
-            Assert.That(files.Count(), Is.EqualTo(0));
+            Assert.That(files.Count, Is.EqualTo(0));
         }
     }
 }

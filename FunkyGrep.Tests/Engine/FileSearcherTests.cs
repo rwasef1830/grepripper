@@ -24,6 +24,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -33,6 +34,7 @@ using NUnit.Framework;
 namespace FunkyGrep.Tests.Engine
 {
     [TestFixture]
+    [SuppressMessage("ReSharper", "StringLiteralTypo")]
     public class FileSearcherTests
     {
         static IEnumerable<TestCaseData> LongLinesClampTestSource()
@@ -108,10 +110,8 @@ namespace FunkyGrep.Tests.Engine
         static IEnumerable<IDataSource> MakeDataSourceList(
             IEnumerable<KeyValuePair<string, string>> dictionary)
         {
-            return dictionary == null
-                       ? null
-                       : dictionary.Select(
-                           x => new TestDataSource(x.Key, x.Value, Encoding.Unicode));
+            return dictionary?.Select(
+                x => new TestDataSource(x.Key, x.Value, Encoding.Unicode));
         }
 
         [Test]
