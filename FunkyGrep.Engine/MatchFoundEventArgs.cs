@@ -25,7 +25,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using EnsureThat;
 
 namespace FunkyGrep.Engine
 {
@@ -36,12 +35,12 @@ namespace FunkyGrep.Engine
 
         public MatchFoundEventArgs(string filePath, IEnumerable<MatchedLine> matches)
         {
-            Ensure.That(filePath, "filePath").IsNotNullOrWhiteSpace();
-            // ReSharper disable PossibleMultipleEnumeration
-            Ensure.That(matches, "matches").IsNotNull();
+            if (string.IsNullOrWhiteSpace(filePath))
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(filePath));
+
+            if (matches == null) throw new ArgumentNullException(nameof(matches));
 
             IList<MatchedLine> matchedLines = matches as IList<MatchedLine> ?? matches.ToList();
-            // ReSharper restore PossibleMultipleEnumeration
 
             this.FilePath = filePath;
             this.Matches = matchedLines;

@@ -26,7 +26,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using EnsureThat;
 
 namespace FunkyGrep.Engine.Specifications
 {
@@ -43,7 +42,10 @@ namespace FunkyGrep.Engine.Specifications
             IEnumerable<string> filePatterns,
             IEnumerable<string> fileExcludePatterns)
         {
-            Ensure.That(() => folderPath).IsNotNullOrWhiteSpace();
+            if (string.IsNullOrWhiteSpace(folderPath))
+            {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(folderPath));
+            }
 
             this._folderPath = folderPath;
             this._includeSubfolders = includeSubfolders;

@@ -30,7 +30,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using EnsureThat;
 
 namespace FunkyGrep.Engine
 {
@@ -59,10 +58,9 @@ namespace FunkyGrep.Engine
             IEnumerable<IDataSource> dataSources,
             int maxContextLength = DefaultMaxContextLength)
         {
-            Ensure.That(() => expression).IsNotNull();
-            Ensure.That(() => dataSources).IsNotNull();
+            if (expression == null) throw new ArgumentNullException(nameof(expression));
 
-            this._dataSources = dataSources;
+            this._dataSources = dataSources ?? throw new ArgumentNullException(nameof(dataSources));
             this._threadLocalRegex = new ThreadLocal<Regex>(() => new Regex(expression.ToString(), expression.Options));
             this._maxContextLength = maxContextLength;
 
@@ -189,6 +187,7 @@ namespace FunkyGrep.Engine
                                 fileContents = reader.ReadToEnd();
                             }
 
+                            // ReSharper disable once AccessToDisposedClosure - Dispose happens after lambda is called.
                             var regexMatches = this._threadLocalRegex.Value.Matches(fileContents);
                             if (regexMatches.Count == 0) return;
 

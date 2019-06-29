@@ -24,7 +24,6 @@
 
 using System;
 using System.IO;
-using EnsureThat;
 
 namespace FunkyGrep.Engine
 {
@@ -34,15 +33,16 @@ namespace FunkyGrep.Engine
 
         public FileDataSource(string filePath)
         {
-            Ensure.That("filePath").IsNotNullOrWhiteSpace();
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(filePath));
+            }
+
             this._fileInfo = new FileInfo(filePath);
         }
 
         #region IDataSource Members
-        public string Identifier
-        {
-            get { return this._fileInfo.FullName; }
-        }
+        public string Identifier => this._fileInfo.FullName;
 
         public long GetLength()
         {

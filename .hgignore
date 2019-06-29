@@ -6,3 +6,4 @@ obj/*
 *.suo
 VersionInfo.cs
 packages/*
+.vs

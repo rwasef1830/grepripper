@@ -22,7 +22,6 @@
 // THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endregion
 
-using System;
 using System.Collections.Generic;
 using FunkyGrep.Engine;
 using NUnit.Framework;
@@ -37,12 +36,12 @@ namespace FunkyGrep.Tests.Engine
         {
             return new[]
             {
-                new TestCaseData("test.txt", "*.txt"),
-                new TestCaseData("test1.txt", "test?.txt"),
-                new TestCaseData("Xtest.txt", "?test.txt"),
-                new TestCaseData("test.exe", "test.*"),
-                new TestCaseData("a", "a"),
-                new TestCaseData("test1Abc.tot", "test1???.t?t")
+                new TestCaseData(@"test.txt", "*.txt"),
+                new TestCaseData(@"test1.txt", "test?.txt"),
+                new TestCaseData(@"Xtest.txt", "?test.txt"),
+                new TestCaseData(@"test.exe", "test.*"),
+                new TestCaseData(@"a", "a"),
+                new TestCaseData(@"test1Abc.tot", "test1???.t?t")
             };
         }
 
@@ -50,12 +49,12 @@ namespace FunkyGrep.Tests.Engine
         {
             return new[]
             {
-                new TestCaseData("test.txt", "*.txx"),
-                new TestCaseData("test1.txt", "test_.txt"),
-                new TestCaseData("Xtest.txt", "_test.txt"),
-                new TestCaseData("test.exe", "test.?"),
-                new TestCaseData("a", "ab"),
-                new TestCaseData("test1Abc.tot", "test1??X.t?t")
+                new TestCaseData(@"test.txt", "*.txx"),
+                new TestCaseData(@"test1.txt", "test_.txt"),
+                new TestCaseData(@"Xtest.txt", "_test.txt"),
+                new TestCaseData(@"test.exe", "test.?"),
+                new TestCaseData(@"a", "ab"),
+                new TestCaseData(@"test1Abc.tot", "test1??X.t?t")
             };
         }
 

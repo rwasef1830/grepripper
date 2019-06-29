@@ -23,7 +23,6 @@
 #endregion
 
 using System;
-using EnsureThat;
 
 namespace FunkyGrep.Engine
 {
@@ -34,7 +33,7 @@ namespace FunkyGrep.Engine
 
         public MatchedLine(int number, string text)
         {
-            Ensure.That(number, "number").IsGt(0);
+            if (number <= 0) throw new ArgumentOutOfRangeException(nameof(number));
 
             this.Number = number;
             this.Text = text ?? String.Empty;
