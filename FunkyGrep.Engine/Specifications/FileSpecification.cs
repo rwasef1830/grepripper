@@ -52,7 +52,7 @@ namespace FunkyGrep.Engine.Specifications
 
             if (filePatterns == null)
             {
-                filePatterns = new[] { "*.*" };
+                filePatterns = new[] { "*" };
             }
             else
             {

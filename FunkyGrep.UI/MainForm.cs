@@ -59,7 +59,7 @@ namespace FunkyGrep.UI
 
         void InitializeDefaults(string initialFolder)
         {
-            this._textBoxFilePattern.Text = "*.*";
+            this._textBoxFilePattern.Text = "*";
 
             this._textBoxFolderPath.Text = initialFolder != null
                                                ? new DirectoryInfo(initialFolder).FullName
