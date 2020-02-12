@@ -28,7 +28,7 @@ namespace FunkyGrep.Engine
 {
     public class CompletedEventArgs : EventArgs
     {
-        public TimeSpan Duration { get; private set; }
+        public TimeSpan Duration { get; }
 
         public CompletedEventArgs(TimeSpan duration)
         {

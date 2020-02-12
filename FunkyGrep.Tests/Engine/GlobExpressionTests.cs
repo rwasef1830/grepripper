@@ -23,88 +23,87 @@
 #endregion
 
 using System.Collections.Generic;
+using FluentAssertions;
 using FunkyGrep.Engine;
-using NUnit.Framework;
+using Xunit;
 
 namespace FunkyGrep.Tests.Engine
 {
-    [TestFixture]
     public class GlobExpressionTests
     {
         // ReSharper disable UnusedMethodReturnValue.Local
-        static IEnumerable<TestCaseData> GetPositiveGlobTestCases()
+        public static IEnumerable<object[]> GetPositiveGlobTestCases()
         {
             return new[]
             {
-                new TestCaseData(@"test.txt", "*.txt"),
-                new TestCaseData(@"test1.txt", "test?.txt"),
-                new TestCaseData(@"Xtest.txt", "?test.txt"),
-                new TestCaseData(@"test.exe", "test.*"),
-                new TestCaseData(@"a", "a"),
-                new TestCaseData(@"test1Abc.tot", "test1???.t?t")
+                new[] { @"test.txt", "*.txt" },
+                new[] { @"test1.txt", "test?.txt" },
+                new[] { @"Xtest.txt", "?test.txt" },
+                new[] { @"test.exe", "test.*" },
+                new[] { @"a", "a" },
+                new[] { @"test1Abc.tot", "test1???.t?t" }
             };
         }
 
-        static IEnumerable<TestCaseData> GetNegativeGlobTestCases()
+        public static IEnumerable<object[]> GetNegativeGlobTestCases()
         {
             return new[]
             {
-                new TestCaseData(@"test.txt", "*.txx"),
-                new TestCaseData(@"test1.txt", "test_.txt"),
-                new TestCaseData(@"Xtest.txt", "_test.txt"),
-                new TestCaseData(@"test.exe", "test.?"),
-                new TestCaseData(@"a", "ab"),
-                new TestCaseData(@"test1Abc.tot", "test1??X.t?t")
+                new[] { @"test.txt", "*.txx" },
+                new[] { @"test1.txt", "test_.txt" },
+                new[] { @"Xtest.txt", "_test.txt" },
+                new[] { @"test.exe", "test.?" },
+                new[] { @"a", "ab" },
+                new[] { @"test1Abc.tot", "test1??X.t?t" }
             };
         }
 
-        static IEnumerable<TestCaseData> GetGlobTestCases()
+        public static IEnumerable<object[]> GetGlobTestCases()
         {
             return new[]
             {
-                new TestCaseData("*.css", true),
-                new TestCaseData("*.cs?", true),
-                new TestCaseData("\\*.css", false),
-                new TestCaseData("??*.??s", true),
-                new TestCaseData("test", true),
-                new TestCaseData("^", true)
+                new object[] { "*.css", true },
+                new object[] { "*.cs?", true },
+                new object[] { "\\*.css", false },
+                new object[] { "??*.??s", true },
+                new object[] { "test", true },
+                new object[] { "^", true }
             };
         }
 
-        [Test]
-        [TestCaseSource("GetNegativeGlobTestCases")]
+        [Theory]
+        [MemberData(nameof(GetNegativeGlobTestCases))]
         public void IsMatch_Instance_Negative(string input, string expression)
         {
-            Assert.That(!new GlobExpression(expression).IsMatch(input));
+            new GlobExpression(expression).IsMatch(input).Should().BeFalse();
         }
 
-        [Test]
-        [TestCaseSource("GetPositiveGlobTestCases")]
+        [Theory]
+        [MemberData(nameof(GetPositiveGlobTestCases))]
         public void IsMatch_Instance_Positive(string input, string expression)
         {
-            Assert.That(new GlobExpression(expression).IsMatch(input));
+            new GlobExpression(expression).IsMatch(input).Should().BeTrue();
         }
 
-        [Test]
-        [TestCaseSource("GetNegativeGlobTestCases")]
+        [Theory]
+        [MemberData(nameof(GetNegativeGlobTestCases))]
         public void IsMatch_Static_Negative(string input, string expression)
         {
-            Assert.That(!GlobExpression.IsMatch(input, expression));
+            GlobExpression.IsMatch(input, expression).Should().BeFalse();
         }
 
-        [Test]
-        [TestCaseSource("GetPositiveGlobTestCases")]
+        [Theory]
+        [MemberData(nameof(GetPositiveGlobTestCases))]
         public void IsMatch_Static_Positive(string input, string expression)
         {
-            Assert.That(GlobExpression.IsMatch(input, expression));
+            GlobExpression.IsMatch(input, expression).Should().BeTrue();
         }
 
-        [Test]
-        [TestCaseSource("GetGlobTestCases")]
+        [Theory]
+        [MemberData(nameof(GetGlobTestCases))]
         public void IsValid(string expression, bool isPositive)
         {
-            bool isValid = GlobExpression.IsValid(expression);
-            Assert.That(isValid, Is.EqualTo(isPositive));
+            GlobExpression.IsValid(expression).Should().Be(isPositive);
         }
 
         // ReSharper restore UnusedMethodReturnValue.Local

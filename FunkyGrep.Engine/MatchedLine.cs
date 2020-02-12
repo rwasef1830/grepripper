@@ -28,8 +28,8 @@ namespace FunkyGrep.Engine
 {
     public class MatchedLine
     {
-        public int Number { get; private set; }
-        public string Text { get; private set; }
+        public int Number { get; }
+        public string Text { get; }
 
         public MatchedLine(int number, string text)
         {

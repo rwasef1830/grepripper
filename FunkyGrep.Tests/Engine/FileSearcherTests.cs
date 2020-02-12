@@ -28,65 +28,77 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using FluentAssertions;
 using FunkyGrep.Engine;
-using NUnit.Framework;
+using Xunit;
 
 namespace FunkyGrep.Tests.Engine
 {
-    [TestFixture]
     [SuppressMessage("ReSharper", "StringLiteralTypo")]
     public class FileSearcherTests
     {
-        static IEnumerable<TestCaseData> LongLinesClampTestSource()
+        public static IEnumerable<object[]> LongLinesClampTestSource()
         {
             const int maxContextLength = 10;
 
-            yield return new TestCaseData(
+            // Tail excess no CRLF
+            yield return new object[]
+            {
                 maxContextLength,
                 "A",
                 "ABBBBBBBBCDEF",
-                "ABBBBBBBBC")
-                .SetName("Tail excess no CRLF");
+                "ABBBBBBBBC"
+            };
 
-            yield return new TestCaseData(
+            // Head excess no CRLF
+            yield return new object[]
+            {
                 maxContextLength,
                 "A",
                 "BBBBBBBBACDEF",
-                "BBBBBBBBAC")
-                .SetName("Head excess no CRLF");
+                "BBBBBBBBAC"
+            };
 
-            yield return new TestCaseData(
+            // Tail excess with CRLF
+            yield return new object[]
+            {
                 maxContextLength,
                 "A",
                 "\r\nABBBBBBBBCDEF\r\n",
-                "ABBBBBBBBC")
-                .SetName("Tail excess with CRLF");
+                "ABBBBBBBBC"
+            };
 
-            yield return new TestCaseData(
+            // Head excess with CRLF
+            yield return new object[]
+            {
                 maxContextLength,
                 "A",
                 "\r\nBBBBBBBBACDEF\r\n",
-                "BBBBBBBBAC")
-                .SetName("Head excess with CRLF");
+                "BBBBBBBBAC"
+            };
 
-            yield return new TestCaseData(
+            // Match at end of line
+            yield return new object[]
+            {
                 maxContextLength,
                 "ABC",
                 "\r\nXXXXXXXABC\r\n",
-                "XXXXXXXABC")
-                .SetName("Match at end of line");
+                "XXXXXXXABC"
+            };
 
-            yield return new TestCaseData(
+            // Match at the beginning of line
+            yield return new object[]
+            {
                 maxContextLength,
                 "ABC",
                 "\r\nABCXXXXXXX\r\n",
-                "ABCXXXXXXX")
-                .SetName("Match at the beginning of line");
+                "ABCXXXXXXX"
+            };
         }
 
         /// <summary>
-        ///     Each element of the passed list represents the fake file contents.
-        ///     The file name is a randomly generated GUID.
+        /// Each element of the passed list represents the fake file contents.
+        /// The file name is a randomly generated GUID.
         /// </summary>
         static IEnumerable<IDataSource> MakeDataSourceList(
             string file1Data,
@@ -95,15 +107,16 @@ namespace FunkyGrep.Tests.Engine
             return
                 MakeDataSourceList(
                     new[] { file1Data }.Union(fileNData)
-                                       .Select(
-                                           x =>
-                                           new KeyValuePair<string, string>(
-                                               Guid.NewGuid().ToString(), x)));
+                        .Select(
+                            x =>
+                                new KeyValuePair<string, string>(
+                                    Guid.NewGuid().ToString(),
+                                    x)));
         }
 
         /// <summary>
-        ///     The dictionary key is the fake file name.
-        ///     The dictionary value is the fake file contents.
+        /// The dictionary key is the fake file name.
+        /// The dictionary value is the fake file contents.
         /// </summary>
         /// <param name="dictionary"></param>
         /// <returns></returns>
@@ -114,7 +127,7 @@ namespace FunkyGrep.Tests.Engine
                 x => new TestDataSource(x.Key, x.Value, Encoding.Unicode));
         }
 
-        [Test]
+        [Fact]
         public void FileSearcher_FindsAMatch_FiresEvents()
         {
             const string fileName = "Test";
@@ -124,7 +137,8 @@ namespace FunkyGrep.Tests.Engine
                 MakeDataSourceList(new Dictionary<string, string> { { fileName, fileContent } });
 
             var fileSearcher = new FileSearcher(
-                new Regex("speedy", RegexOptions.None), dataSources);
+                new Regex("speedy", RegexOptions.None),
+                dataSources);
 
             bool matchFoundFired = false;
             Exception assertionException = null;
@@ -136,10 +150,10 @@ namespace FunkyGrep.Tests.Engine
 
                     try
                     {
-                        Assert.That(args.FilePath, Is.EqualTo(fileName));
-                        Assert.That(args.Matches.Count(), Is.EqualTo(1));
-                        Assert.That(args.Matches.First().Number, Is.EqualTo(1));
-                        Assert.That(args.Matches.First().Text, Is.EqualTo(fileContent));
+                        args.FilePath.Should().Be(fileName);
+                        args.Matches.Count().Should().Be(1);
+                        args.Matches.First().Number.Should().Be(1);
+                        args.Matches.First().Text.Should().Be(fileContent);
                     }
                     catch (Exception ex)
                     {
@@ -155,13 +169,13 @@ namespace FunkyGrep.Tests.Engine
             fileSearcher.Begin();
             fileSearcher.Wait();
 
-            Assert.That(matchFoundFired, "Match found event was not fired.");
-            Assert.That(assertionException, Is.Null);
-            Assert.That(completedFired, "Completion event was not fired.");
+            matchFoundFired.Should().BeTrue("Match found event should have fired.");
+            assertionException.Should().BeNull("No exceptions should have been raised in the event.");
+            completedFired.Should().BeTrue("Completion event should have fired.");
         }
 
-        [Test]
-        [TestCaseSource("LongLinesClampTestSource")]
+        [Theory]
+        [MemberData(nameof(LongLinesClampTestSource))]
         public void Long_lines_in_results_are_clamped_properly_around_match(
             int contextLength, string matchText, string lineToSearch, string expectedContext)
         {
@@ -169,15 +183,16 @@ namespace FunkyGrep.Tests.Engine
             var searcher = new FileSearcher(
                 new Regex(Regex.Escape(matchText)), dataSources, contextLength);
 
-            Exception failedAssertion = new AssertionException("MatchFound event was not fired.");
+            bool eventWasFired = false;
+            Exception failedAssertion = null;
 
             searcher.MatchFound +=
                 (sender, args) =>
                 {
                     try
                     {
-                        Assert.That(args.Matches.First().Text, Is.EqualTo(expectedContext));
-                        failedAssertion = null;
+                        eventWasFired = true;
+                        args.Matches.First().Text.Should().Be(expectedContext);
                     }
                     catch (Exception ex)
                     {
@@ -188,10 +203,8 @@ namespace FunkyGrep.Tests.Engine
             searcher.Begin();
             searcher.Wait();
 
-            if (failedAssertion != null)
-            {
-                throw failedAssertion;
-            }
+            eventWasFired.Should().BeTrue();
+            failedAssertion.Should().BeNull();
         }
     }
 }

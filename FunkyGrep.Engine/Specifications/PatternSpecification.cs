@@ -29,7 +29,7 @@ namespace FunkyGrep.Engine.Specifications
 {
     public class PatternSpecification
     {
-        public Regex Expression { get; private set; }
+        public Regex Expression { get; }
 
         public PatternSpecification(
             string text,

@@ -30,8 +30,8 @@ namespace FunkyGrep.Engine
 {
     public class MatchFoundEventArgs : EventArgs
     {
-        public string FilePath { get; private set; }
-        public IEnumerable<MatchedLine> Matches { get; private set; }
+        public string FilePath { get; }
+        public IEnumerable<MatchedLine> Matches { get; }
 
         public MatchFoundEventArgs(string filePath, IEnumerable<MatchedLine> matches)
         {

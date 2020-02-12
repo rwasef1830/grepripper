@@ -27,31 +27,34 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using FluentAssertions;
 using FunkyGrep.Engine;
 using FunkyGrep.Engine.Specifications;
-using NUnit.Framework;
+using Xunit;
 
 namespace FunkyGrep.Tests.Engine.Specifications
 {
-    [TestFixture]
-    public class FileSpecificationTests
+    public class FileSpecificationTests : IDisposable
     {
-        string _tempPath;
-        string _tempSubfolder;
+        readonly string _tempPath;
+        readonly string _tempSubfolder;
 
-        [SetUp]
-        public void Setup()
+        public FileSpecificationTests()
         {
             var random = new Random();
 
-            string tempPath = Path.Combine(Path.GetTempPath(), "FNGREP_" + random.Next());
-            if (Directory.Exists(tempPath)) Directory.Delete(tempPath, true);
+            string tempPath = Path.Combine(Path.GetTempPath(), @"FNGREP_" + random.Next());
+            if (Directory.Exists(tempPath))
+            {
+                Directory.Delete(tempPath, true);
+            }
 
             Directory.CreateDirectory(tempPath);
             this._tempPath = tempPath;
 
             string tempSubfolder = Path.Combine(
-                tempPath, random.Next().ToString(Thread.CurrentThread.CurrentCulture));
+                tempPath,
+                random.Next().ToString(Thread.CurrentThread.CurrentCulture));
             Directory.CreateDirectory(tempSubfolder);
             this._tempSubfolder = tempSubfolder;
 
@@ -70,77 +73,71 @@ namespace FunkyGrep.Tests.Engine.Specifications
             }
         }
 
-        [TearDown]
-        public void TearDown()
+        public void Dispose()
         {
             Directory.Delete(this._tempPath, true);
         }
 
-        [Test]
+        [Fact]
         public void Enumeration_IncludeSubdirectories()
         {
             var fileSpec = new FileSpecification(this._tempPath, true, null, null);
             List<IDataSource> files = fileSpec.EnumerateFiles().ToList();
 
-            Assert.That(files.Count, Is.EqualTo(4));
-            Assert.That(
-                files.Any(x => x.Identifier == Path.Combine(this._tempPath, "temp1.css")), Is.True);
-            Assert.That(
-                files.Any(x => x.Identifier == Path.Combine(this._tempPath, "temp2.txt")), Is.True);
-            Assert.That(
-                files.Any(x => x.Identifier == Path.Combine(this._tempSubfolder, "temp3.asp")),
-                Is.True);
-            Assert.That(
-                files.Any(x => x.Identifier == Path.Combine(this._tempSubfolder, "temp4.bmp")),
-                Is.True);
+            files.Count.Should().Be(4);
+            files.Should().Contain(x => x.Identifier == Path.Combine(this._tempPath, "temp1.css"));
+            files.Should().Contain(x => x.Identifier == Path.Combine(this._tempPath, "temp2.txt"));
+            files.Should().Contain(x => x.Identifier == Path.Combine(this._tempSubfolder, "temp3.asp"));
+            files.Should().Contain(x => x.Identifier == Path.Combine(this._tempSubfolder, "temp4.bmp"));
         }
 
-        [Test]
+        [Fact]
         public void Enumeration_TopLevel_Only()
         {
             var fileSpec = new FileSpecification(this._tempPath, false, null, null);
             List<IDataSource> files = fileSpec.EnumerateFiles().ToList();
 
-            Assert.That(files.Count, Is.EqualTo(2));
-            Assert.That(
-                files.Any(x => x.Identifier == Path.Combine(this._tempPath, "temp1.css")), Is.True);
-            Assert.That(
-                files.Any(x => x.Identifier == Path.Combine(this._tempPath, "temp2.txt")), Is.True);
+            files.Count.Should().Be(2);
+            files.Should().Contain(x => x.Identifier == Path.Combine(this._tempPath, "temp1.css"));
+            files.Should().Contain(x => x.Identifier == Path.Combine(this._tempPath, "temp2.txt"));
         }
 
-        [Test]
+        [Fact]
         public void Enumeration_excluding_patterns_Returns_CorrectResult()
         {
             var fileSpec = new FileSpecification(
-                this._tempPath, true, null, new[] { "*.asp", "*.bmp", "*.txt" });
+                this._tempPath,
+                true,
+                null,
+                new[] { "*.asp", "*.bmp", "*.txt" });
             List<IDataSource> files = fileSpec.EnumerateFiles().ToList();
 
-            Assert.That(files.Count, Is.EqualTo(1));
-            Assert.That(
-                files.Any(x => x.Identifier == Path.Combine(this._tempPath, "temp1.css")), Is.True);
+            files.Count.Should().Be(1);
+            files.Should().Contain(x => x.Identifier == Path.Combine(this._tempPath, "temp1.css"));
         }
 
-        [Test]
+        [Fact]
         public void Enumeration_matching_filePatterns_Returns_CorrectResult()
         {
             var fileSpec = new FileSpecification(
-                this._tempPath, true, new[] { "temp1.css", "temp2.txt" }, null);
+                this._tempPath,
+                true,
+                new[] { "temp1.css", "temp2.txt" },
+                null);
             List<IDataSource> files = fileSpec.EnumerateFiles().ToList();
 
-            Assert.That(files.Count, Is.EqualTo(2));
-            Assert.That(
-                files.Any(x => x.Identifier == Path.Combine(this._tempPath, "temp1.css")), Is.True);
-            Assert.That(
-                files.Any(x => x.Identifier == Path.Combine(this._tempPath, "temp2.txt")), Is.True);
+            files.Count.Should().Be(2);
+            files.Should().Contain(x => x.Identifier == Path.Combine(this._tempPath, "temp1.css"));
+            files.Should().Contain(x => x.Identifier == Path.Combine(this._tempPath, "temp2.txt"));
         }
 
-        [Test]
+        [Fact]
         public void Enumeration_none_matching_filePattern_Returns_EmptyResult()
         {
             var fileSpec = new FileSpecification(this._tempPath, true, new[] { "*.xyz" }, null);
             List<IDataSource> files = fileSpec.EnumerateFiles().ToList();
 
-            Assert.That(files.Count, Is.EqualTo(0));
+            files.Count.Should().Be(0);
         }
     }
 }

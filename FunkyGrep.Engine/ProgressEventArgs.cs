@@ -28,9 +28,9 @@ namespace FunkyGrep.Engine
 {
     public class ProgressEventArgs : EventArgs
     {
-        public long NumberOfSearchedFiles { get; private set; }
-        public long TotalNumberOfFiles { get; private set; }
-        public long NumberOfFailedFiles { get; private set; }
+        public long NumberOfSearchedFiles { get; }
+        public long TotalNumberOfFiles { get; }
+        public long NumberOfFailedFiles { get; }
 
         public ProgressEventArgs(
             long numberOfSearchedFiles, long totalNumberOfFiles, long numberOfFailedFiles)

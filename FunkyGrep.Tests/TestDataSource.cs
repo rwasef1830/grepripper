@@ -41,7 +41,7 @@ namespace FunkyGrep.Tests
         }
 
         #region IDataSource Members
-        public string Identifier { get; private set; }
+        public string Identifier { get; }
 
         public long GetLength()
         {

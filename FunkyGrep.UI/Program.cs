@@ -26,7 +26,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
-using NDesk.Options;
+using Mono.Options;
 
 namespace FunkyGrep.UI
 {
