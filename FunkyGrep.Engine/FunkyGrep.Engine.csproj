@@ -2,4 +2,6 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp31</TargetFramework>
   </PropertyGroup>
+  
+  <Import Project="..\Build\Version.xml" />
 </Project>

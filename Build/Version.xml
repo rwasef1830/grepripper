@@ -1,0 +1,30 @@
+﻿<Project>
+  <!-- Project version properties (follows semantic versioning 2.0.0 rules) -->
+  <PropertyGroup>
+    <VersionPrefix>0.2.0</VersionPrefix>
+    <VersionSuffix></VersionSuffix>
+    <Company>Raif Atef Wasef</Company>
+    <Copyright>Copyright © Raif Atef Wasef 2020</Copyright>
+    <Product>FunkyGrep</Product>
+  </PropertyGroup>
+  
+  <!-- Do not change anything below this comment -->
+  <PropertyGroup>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+    <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
+  </PropertyGroup>
+  
+  <Target Name="GenerateVersionInfo" BeforeTargets="CoreCompile">
+    <Exec Command="dotnet tool restore" />
+    <Exec Command="dotnet tool run rw-project-version -s=git -t=cs -v=$(VersionPrefix) -m=$(VersionSuffix)" />
+    
+    <ItemGroup>
+      <Compile Remove="Properties\VersionInfo.cs" />
+      <Compile Include="Properties\VersionInfo.cs" />
+    </ItemGroup>
+  </Target>
+</Project>

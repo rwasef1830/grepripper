@@ -13,4 +13,5 @@
   <ItemGroup>
     <ProjectReference Include="..\FunkyGrep.Engine\FunkyGrep.Engine.csproj" />
   </ItemGroup>
+  <Import Project="..\Build\Version.xml" />
 </Project>
