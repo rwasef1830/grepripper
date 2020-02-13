@@ -6,6 +6,7 @@ FunkyGrep is a free Windows grep utility that aims to provide fast regular expre
 a friendly UI similar to the popular (but out-of-date) BareGrep utility.
 
 It is written in C# and requires the .NET Core 3.1 to build and run.
+
 It is preferable to compile from a git working copy to get changeset ids embedded into the version number.
 
 FAQ
