@@ -5,10 +5,7 @@ What is FunkyGrep ?
 FunkyGrep is a free Windows grep utility that aims to provide fast regular expression search with
 a friendly UI similar to the popular (but out-of-date) BareGrep utility.
 
-It is written in C# and requires the .NET Framework 4.0 to run.
-This utility can be compiled with MSBUILD from a command line or with Visual Studio 2010 or higher.
-Visual Studio Express Edition 2010 and higher should also work, but hasn't been tested.
-
+It is written in C# and requires the .NET Core 3.1 to build and run.
 It is preferable to compile from a git working copy to get changeset ids embedded into the version number.
 
 FAQ
