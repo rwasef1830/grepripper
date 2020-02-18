@@ -5,3 +5,4 @@ obj
 *.suo
 VersionInfo.cs
 .vs
+/FunkyGrep.UI/Properties/launchSettings.json
