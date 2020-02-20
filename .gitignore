@@ -6,3 +6,4 @@ obj
 VersionInfo.cs
 .vs
 /FunkyGrep.UI/Properties/launchSettings.json
+/FunkyGrep.UI/Properties/PublishProfiles
