@@ -24,26 +24,23 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace FunkyGrep.Engine
 {
     public class MatchFoundEventArgs : EventArgs
     {
         public string FilePath { get; }
-        public IEnumerable<MatchedLine> Matches { get; }
+        public IReadOnlyList<MatchedLine> Matches { get; }
 
-        public MatchFoundEventArgs(string filePath, IEnumerable<MatchedLine> matches)
+        public MatchFoundEventArgs(string filePath, IReadOnlyList<MatchedLine> matches)
         {
             if (string.IsNullOrWhiteSpace(filePath))
+            {
                 throw new ArgumentException("Value cannot be null or whitespace.", nameof(filePath));
-
-            if (matches == null) throw new ArgumentNullException(nameof(matches));
-
-            IList<MatchedLine> matchedLines = matches as IList<MatchedLine> ?? matches.ToList();
+            }
 
             this.FilePath = filePath;
-            this.Matches = matchedLines;
+            this.Matches = matches ?? throw new ArgumentNullException(nameof(matches));
         }
     }
 }

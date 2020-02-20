@@ -56,7 +56,6 @@ namespace FunkyGrep.UI.ViewModels
         bool _ignoreCase;
         bool _searchIsRunning;
         SearchProgressViewModel _searchProgress;
-        ObservableCollection<SearchResultItem> _searchResults;
         bool? _lastSearchCompleted;
         TimeSpan? _lastSearchDuration;
         FileSearcher _searcher;
@@ -125,11 +124,9 @@ namespace FunkyGrep.UI.ViewModels
             set => this.SetProperty(ref this._searchProgress, value);
         }
 
-        public ObservableCollection<SearchResultItem> SearchResults
-        {
-            get => this._searchResults;
-            set => this.SetProperty(ref this._searchResults, value);
-        }
+        public ObservableCollection<SearchResultItem> SearchResults { get; }
+
+        public object SearchResultsLocker { get; }
 
         public bool? LastSearchCompleted
         {
@@ -205,6 +202,7 @@ namespace FunkyGrep.UI.ViewModels
             this.FilePatternsSpaceSeparated = "*";
             this.SearchTextIsRegex = true;
             this.SearchResults = new ObservableCollection<SearchResultItem>();
+            this.SearchResultsLocker = new object();
         }
 
         void ShowSelectFolderDialog()
@@ -301,7 +299,10 @@ namespace FunkyGrep.UI.ViewModels
                     this.FilePatterns,
                     new string[0]);
 
-                this.SearchResults.Clear();
+                lock (this.SearchResultsLocker)
+                {
+                    this.SearchResults.Clear();
+                }
 
                 this._searcher = new FileSearcher(patternSpec.Expression, fileSpec.EnumerateFiles());
                 this._searcher.MatchFound += (_, args) =>
@@ -313,13 +314,12 @@ namespace FunkyGrep.UI.ViewModels
                         basenameLength++;
                     }
 
-                    lock (this.SearchResults)
+                    lock (this.SearchResultsLocker)
                     {
                         foreach (var line in args.Matches)
                         {
                             var localLine = line;
                             string relativePath = args.FilePath.Substring(basenameLength);
-
                             this.SearchResults.Add(new SearchResultItem(relativePath, localLine));
                         }
                     }

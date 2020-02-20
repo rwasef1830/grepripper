@@ -1,5 +1,9 @@
-﻿using System.IO;
+﻿using System.ComponentModel;
+using System.IO;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using FunkyGrep.UI.ViewModels;
 
 namespace FunkyGrep.UI.Views
 {
@@ -8,6 +12,26 @@ namespace FunkyGrep.UI.Views
         public MainWindow()
         {
             this.InitializeComponent();
+        }
+
+        protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
+        {
+            if (e.Property == DataContextProperty)
+            {
+                if (e.OldValue != null && e.OldValue is MainWindowViewModel oldViewModel)
+                {
+                    BindingOperations.DisableCollectionSynchronization(oldViewModel.SearchResults);
+                }
+
+                if (e.NewValue != null && e.NewValue is MainWindowViewModel newViewModel)
+                {
+                    BindingOperations.EnableCollectionSynchronization(
+                        newViewModel.SearchResults,
+                        newViewModel.SearchResultsLocker);
+                }
+            }
+
+            base.OnPropertyChanged(e);
         }
 
         void HandleDirectoryAutoCompleteBoxPopulating(object sender, PopulatingEventArgs e)

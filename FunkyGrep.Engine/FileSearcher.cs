@@ -80,49 +80,65 @@ namespace FunkyGrep.Engine
                     throw new InvalidOperationException("Searcher task is already running.");
                 }
 
-                this._searchTask = Task.Factory.StartNew(
+                this._searchTask = Task.Run(
                     () =>
                     {
-                        Stopwatch stopwatch = Stopwatch.StartNew();
-                        ParallelLoopResult loopResult = this.DoSearch(this._cancelSrc.Token);
-                        stopwatch.Stop();
-
-                        if (loopResult.IsCompleted)
+                        try
                         {
-                            this.Completed?.Invoke(this, new CompletedEventArgs(stopwatch.Elapsed));
+                            var stopwatch = Stopwatch.StartNew();
+                            var loopResult = this.DoSearch(this._cancelSrc.Token);
+                            stopwatch.Stop();
+
+                            if (loopResult.IsCompleted)
+                            {
+                                this.Completed?.Invoke(this, new CompletedEventArgs(stopwatch.Elapsed));
+                            }
                         }
+                        catch (OperationCanceledException) { }
                     },
                     this._cancelSrc.Token);
 
                 // Find out the total number of files on a separate thread
-                Task.Factory.StartNew(
+                Task.Run(
                     () =>
                     {
-                        int totalCount = 0;
-
-                        using (
-                            IEnumerator<IDataSource> enumerator = this._dataSources.GetEnumerator())
+                        try
                         {
-                            while (enumerator.MoveNext())
-                            {
-                                this._cancelSrc.Token.ThrowIfCancellationRequested();
-                                totalCount++;
-                            }
-                        }
+                            int totalCount = 0;
 
-                        Interlocked.Exchange(ref this._totalCount, totalCount);
+                            using (IEnumerator<IDataSource> enumerator = this._dataSources.GetEnumerator())
+                            {
+                                while (enumerator.MoveNext())
+                                {
+                                    if (this._cancelSrc.IsCancellationRequested)
+                                    {
+                                        return;
+                                    }
+
+                                    totalCount++;
+                                }
+                            }
+
+                            Interlocked.Exchange(ref this._totalCount, totalCount);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine(ex);
+                        }
                     });
 
-                this._progressReportTask = Task.Factory.StartNew(
+                this._progressReportTask = Task.Run(
                     () =>
                     {
                         // Enter report loop
                         do
                         {
-                            this.ProgressChanged?.Invoke(this, new ProgressEventArgs(
-                                Interlocked.Read(ref this._doneCount),
-                                Interlocked.Read(ref this._totalCount),
-                                Interlocked.Read(ref this._failedCount)));
+                            this.ProgressChanged?.Invoke(
+                                this,
+                                new ProgressEventArgs(
+                                    Interlocked.Read(ref this._doneCount),
+                                    Interlocked.Read(ref this._totalCount),
+                                    Interlocked.Read(ref this._failedCount)));
                         }
                         while (!this._cancelSrc.Token.WaitHandle.WaitOne(100)
                                && !this._searchTask.IsCompleted);
@@ -135,7 +151,10 @@ namespace FunkyGrep.Engine
         {
             lock (this._locker)
             {
-                if (this._searchTask == null) return;
+                if (this._searchTask == null)
+                {
+                    return;
+                }
 
                 this._cancelSrc.Cancel();
                 this.Wait();
@@ -168,50 +187,54 @@ namespace FunkyGrep.Engine
             {
                 return Parallel.ForEach(
                     this._dataSources,
-                    new ParallelOptions
-                    {
-                        CancellationToken = token,
-                        MaxDegreeOfParallelism = Environment.ProcessorCount
-                    },
+                    new ParallelOptions { CancellationToken = token },
                     (dataSource, loopState, i) =>
                     {
                         try
                         {
-                            if (dataSource.GetLength() > MaxFileSize) return;
+                            if (dataSource.GetLength() > MaxFileSize)
+                            {
+                                return;
+                            }
 
                             token.ThrowIfCancellationRequested();
 
                             string fileContents;
-                            using (TextReader reader = dataSource.OpenReader())
+                            using (var reader = dataSource.OpenReader())
                             {
                                 fileContents = reader.ReadToEnd();
                             }
 
+                            token.ThrowIfCancellationRequested();
+
                             // ReSharper disable once AccessToDisposedClosure - Dispose happens after lambda is called.
                             var regexMatches = this._threadLocalRegex.Value.Matches(fileContents);
-                            if (regexMatches.Count == 0) return;
+                            if (regexMatches.Count == 0)
+                            {
+                                return;
+                            }
 
-                            IEnumerable<MatchedLine> matches = regexMatches
-                                .OfType<Match>()
+                            var matches = regexMatches
                                 .Select(
                                     match =>
                                     {
                                         string lineText = this.GetMatchFullLineTextClamped(
-                                            match, fileContents);
+                                            match,
+                                            fileContents);
                                         int lineNumber = GetLineNumber(fileContents, match.Index);
                                         return new MatchedLine(lineNumber, lineText);
-                                    });
+                                    })
+                                .ToList();
 
                             this.MatchFound?.Invoke(this, new MatchFoundEventArgs(dataSource.Identifier, matches));
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
-                            // TODO: Log these exceptions and let the user view them somehow.
+                            Debug.WriteLine(ex);
                             Interlocked.Increment(ref this._failedCount);
                         }
                         finally
                         {
-                            // TODO: Log skipped files and let the user view them somehow.
                             Interlocked.Increment(ref this._doneCount);
                         }
                     });
