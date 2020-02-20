@@ -174,9 +174,9 @@
         <DataGrid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" ItemsSource="{Binding SearchResults}" 
                   IsReadOnly="True" AutoGenerateColumns="False" VerticalGridLinesBrush="LightGray" 
                   HorizontalGridLinesBrush="LightGray" AlternatingRowBackground="Gainsboro" AlternationCount="2"
-                  SelectionMode="Single" CanUserSortColumns="True">
+                  SelectionMode="Single" CanUserSortColumns="False">
             <DataGrid.Columns>
-                <DataGridTextColumn Binding="{Binding FilePath, Mode=OneTime}" Header="File" Width="Auto" />
+                <DataGridTextColumn Binding="{Binding FilePath, Mode=OneTime}" Header="File" Width="*" />
                 <DataGridTextColumn Binding="{Binding LineNumber, Mode=OneTime}" Header="Line" Width="50">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
