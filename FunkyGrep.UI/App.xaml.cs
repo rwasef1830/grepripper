@@ -29,7 +29,9 @@ namespace FunkyGrep.UI
 
                 string initialDirectory = unprocessed.FirstOrDefault();
 
-                if (this.MainWindow != null && this.MainWindow.DataContext is MainWindowViewModel viewModel)
+                if (this.MainWindow != null
+                    && this.MainWindow.DataContext is MainWindowViewModel viewModel
+                    && !string.IsNullOrWhiteSpace(initialDirectory))
                 {
                     viewModel.Directory = initialDirectory;
                 }
