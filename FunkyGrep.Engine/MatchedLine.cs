@@ -36,7 +36,7 @@ namespace FunkyGrep.Engine
             if (number <= 0) throw new ArgumentOutOfRangeException(nameof(number));
 
             this.Number = number;
-            this.Text = text ?? String.Empty;
+            this.Text = text ?? string.Empty;
         }
     }
 }

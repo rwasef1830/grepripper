@@ -60,11 +60,11 @@ namespace FunkyGrep.Engine.Specifications
             }
 
             this._filePatterns = filePatterns
-                .Where(x => !String.IsNullOrWhiteSpace(x))
+                .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Select(p => new GlobExpression(p));
 
             this._fileExcludePatterns = (fileExcludePatterns ?? new string[0])
-                .Where(x => !String.IsNullOrWhiteSpace(x))
+                .Where(x => !string.IsNullOrWhiteSpace(x))
                 .Select(p => new GlobExpression(p));
         }
 
