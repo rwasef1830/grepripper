@@ -1,7 +1,7 @@
 ﻿<Project>
   <!-- Project version properties (follows semantic versioning 2.0.0 rules) -->
   <PropertyGroup>
-    <VersionPrefix>0.3.0</VersionPrefix>
+    <VersionPrefix>0.3.1</VersionPrefix>
     <VersionSuffix></VersionSuffix>
     <Company>Raif Atef Wasef</Company>
     <Copyright>Copyright © Raif Atef Wasef 2020</Copyright>
