@@ -25,7 +25,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -199,32 +198,38 @@ namespace FunkyGrep.Engine
 
                             token.ThrowIfCancellationRequested();
 
-                            string fileContents;
+                            var matches = new List<MatchedLine>();
+
                             using (var reader = dataSource.OpenReader())
                             {
-                                fileContents = reader.ReadToEnd();
-                            }
-
-                            token.ThrowIfCancellationRequested();
-
-                            // ReSharper disable once AccessToDisposedClosure - Dispose happens after lambda is called.
-                            var regexMatches = this._threadLocalRegex.Value.Matches(fileContents);
-                            if (regexMatches.Count == 0)
-                            {
-                                return;
-                            }
-
-                            var matches = regexMatches
-                                .Select(
-                                    match =>
+                                int lineNumber = 1;
+                                for (string line = reader.ReadLine();
+                                    line != null;
+                                    line = reader.ReadLine(), lineNumber++)
+                                {
+                                    // ReSharper disable once AccessToDisposedClosure - Dispose happens after lambda is called.
+                                    var regexMatches = this._threadLocalRegex.Value.Matches(line);
+                                    if (regexMatches.Count == 0)
                                     {
-                                        string lineText = this.GetMatchFullLineTextClamped(
-                                            match,
-                                            fileContents);
-                                        int lineNumber = GetLineNumber(fileContents, match.Index);
-                                        return new MatchedLine(lineNumber, lineText);
-                                    })
-                                .ToList();
+                                        continue;
+                                    }
+
+                                    MatchedLine lastMatchedLine = null;
+                                    foreach (Match match in regexMatches)
+                                    {
+                                        string lineText = this.GetMatchFullLineTextClamped(match, line);
+                                        if (lastMatchedLine != null && ReferenceEquals(lineText, lastMatchedLine.Text))
+                                        {
+                                            continue;
+                                        }
+
+                                        lastMatchedLine = new MatchedLine(lineNumber, lineText);
+                                        matches.Add(lastMatchedLine);
+                                    }
+
+                                    token.ThrowIfCancellationRequested();
+                                }
+                            }
 
                             this.MatchFound?.Invoke(this, new MatchFoundEventArgs(dataSource.Identifier, matches));
                         }
@@ -245,61 +250,25 @@ namespace FunkyGrep.Engine
             }
         }
 
-        string GetMatchFullLineTextClamped(Capture match, string fileContents)
+        string GetMatchFullLineTextClamped(Capture match, string line)
         {
-            int contextStartIndex = -1;
-            int contextLength = -1;
-
             int maxLeftChars = this._maxContextLength - Math.Max(1, match.Length / 2);
             int minLeftIndex = match.Index - maxLeftChars;
-            if (minLeftIndex < 0) minLeftIndex = 0;
-
-            foreach (char newLineChar in "\r\n")
+            
+            if (minLeftIndex < 0)
             {
-                int index = fileContents.LastIndexOf(newLineChar, match.Index);
-                if (index < 0) continue;
-
-                // Skip CR or LF
-                index++;
-                // If we had got a CR and next is LF, skip that too.
-                if (newLineChar == '\r' && fileContents[index] == '\n')
-                {
-                    index++;
-                }
-
-                contextStartIndex = Math.Max(index, minLeftIndex);
-                break;
+                minLeftIndex = 0;
             }
 
-            if (contextStartIndex == -1)
+            int contextStartIndex = Math.Max(0, minLeftIndex);
+            int contextLength = Math.Min(line.Length - contextStartIndex, this._maxContextLength);
+
+            if (contextStartIndex == 0 && contextLength == line.Length)
             {
-                contextStartIndex = 0;
+                return line;
             }
 
-            foreach (char newLineChar in "\n\r")
-            {
-                int index = fileContents.IndexOf(newLineChar, match.Index + match.Length);
-                if (index < 0) continue;
-
-                // Skip CR or LF
-                index--;
-                // If we had got a LF and prev is CR, skip that too.
-                if (newLineChar == '\n' && fileContents[index] == '\r')
-                {
-                    index--;
-                }
-
-                contextLength = Math.Min(index - contextStartIndex + 1, this._maxContextLength);
-                break;
-            }
-
-            if (contextLength == -1)
-            {
-                contextLength = Math.Min(fileContents.Length, this._maxContextLength);
-            }
-
-            string result = fileContents.Substring(contextStartIndex, contextLength);
-
+            string result = line.Substring(contextStartIndex, contextLength);
             return result;
         }
 
