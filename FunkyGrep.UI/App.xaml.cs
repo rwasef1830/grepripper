@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Windows;
 using FunkyGrep.UI.Services;
 using FunkyGrep.UI.ViewModels;
@@ -13,6 +14,10 @@ namespace FunkyGrep.UI
 {
     public partial class App
     {
+        public static readonly string Version = Assembly.GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion ?? "<unknown version>";
+
         StartupEventArgs _startupArgs;
 
         void HandleStartup(object sender, StartupEventArgs e)

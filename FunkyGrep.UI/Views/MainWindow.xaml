@@ -7,9 +7,10 @@
         xmlns:viewModels="clr-namespace:FunkyGrep.UI.ViewModels"
         xmlns:md="https://github.com/fantasticfiasco/mvvm-dialogs"
         xmlns:controls="clr-namespace:System.Windows.Controls;assembly=DotNetProjects.Input.Toolkit"
+        xmlns:ui="clr-namespace:FunkyGrep.UI"
         mvvm:ViewModelLocator.AutoWireViewModel="True"
         mc:Ignorable="d"
-        Title="FunkyGrep" 
+        Title="{Binding Source={x:Static ui:App.Version}, StringFormat=FunkyGrep {0}}"
         Height="450" 
         Width="800" 
         Icon="/Resources/FunkyGrep.ico" 
@@ -147,7 +148,8 @@
                                     <Setter Property="Content" Value="Last search was cancelled." />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding LastSearchDurationIsSet}" Value="True">
-                                    <Setter Property="Content" Value="{Binding LastSearchDuration, StringFormat=Last search duration: {0}}" />
+                                    <Setter Property="Content" Value="{Binding LastSearchDuration}" />
+                                    <Setter Property="ContentStringFormat" Value="Last search duration: {0}" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
