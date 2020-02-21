@@ -28,7 +28,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.IO;
-using System.Windows;
 using System.Windows.Input;
 using FunkyGrep.Engine;
 using FunkyGrep.Engine.Specifications;
@@ -341,6 +340,15 @@ namespace FunkyGrep.UI.ViewModels
                     this.LastSearchDuration = args.Duration;
                     this.LastSearchCompleted = true;
                     this.SearchIsRunning = false;
+
+                    if (args.Error != null)
+                    {
+                        this.SetAllErrors(
+                            new Dictionary<string, ReadOnlyCollection<string>>
+                            {
+                                [string.Empty] = new ReadOnlyCollection<string>(new[] { args.Error.ToString() })
+                            });
+                    }
                 };
 
                 this._searcher.Begin();
@@ -353,10 +361,12 @@ namespace FunkyGrep.UI.ViewModels
                 }
                 catch
                 {
-                    // ignore
+                    this.SetAllErrors(
+                        new Dictionary<string, ReadOnlyCollection<string>>
+                        {
+                            [string.Empty] = new ReadOnlyCollection<string>(new[] { ex.ToString() })
+                        });
                 }
-
-                MessageBox.Show(ex.ToString(), "Unhandled Exception", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -373,7 +383,11 @@ namespace FunkyGrep.UI.ViewModels
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.ToString(), "Unhandled Exception", MessageBoxButton.OK, MessageBoxImage.Error);
+                this.SetAllErrors(
+                    new Dictionary<string, ReadOnlyCollection<string>>
+                    {
+                        [string.Empty] = new ReadOnlyCollection<string>(new[] { ex.ToString() })
+                    });
             }
             finally
             {

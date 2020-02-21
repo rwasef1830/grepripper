@@ -25,7 +25,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -82,18 +81,22 @@ namespace FunkyGrep.Engine
                 this._searchTask = Task.Run(
                     () =>
                     {
+                        var stopwatch = Stopwatch.StartNew();
+                        Exception error = null;
+
                         try
                         {
-                            var stopwatch = Stopwatch.StartNew();
-                            var loopResult = this.DoSearch(this._cancelSrc.Token);
-                            stopwatch.Stop();
-
-                            if (loopResult.IsCompleted)
-                            {
-                                this.Completed?.Invoke(this, new CompletedEventArgs(stopwatch.Elapsed));
-                            }
+                            _ = this.DoSearch(this._cancelSrc.Token);
                         }
                         catch (OperationCanceledException) { }
+                        catch (Exception ex)
+                        {
+                            error = ex;
+                        }
+                        finally
+                        {
+                            this.Completed?.Invoke(this, new CompletedEventArgs(stopwatch.Elapsed, error));
+                        }
                     },
                     this._cancelSrc.Token);
 
@@ -129,18 +132,25 @@ namespace FunkyGrep.Engine
                 this._progressReportTask = Task.Run(
                     () =>
                     {
-                        // Enter report loop
-                        do
+                        try
                         {
-                            this.ProgressChanged?.Invoke(
-                                this,
-                                new ProgressEventArgs(
-                                    Interlocked.Read(ref this._doneCount),
-                                    Interlocked.Read(ref this._totalCount),
-                                    Interlocked.Read(ref this._failedCount)));
+                            // Enter report loop
+                            do
+                            {
+                                this.ProgressChanged?.Invoke(
+                                    this,
+                                    new ProgressEventArgs(
+                                        Interlocked.Read(ref this._doneCount),
+                                        Interlocked.Read(ref this._totalCount),
+                                        Interlocked.Read(ref this._failedCount)));
+                            }
+                            while (!this._cancelSrc.Token.WaitHandle.WaitOne(100)
+                                   && !this._searchTask.IsCompleted);
                         }
-                        while (!this._cancelSrc.Token.WaitHandle.WaitOne(100)
-                               && !this._searchTask.IsCompleted);
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine(ex);
+                        }
                     },
                     this._cancelSrc.Token);
             }

@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using FunkyGrep.UI.ViewModels;
+using Prism.Validation;
 
 namespace FunkyGrep.UI.Views
 {
@@ -21,6 +22,7 @@ namespace FunkyGrep.UI.Views
                 if (e.OldValue != null && e.OldValue is MainWindowViewModel oldViewModel)
                 {
                     BindingOperations.DisableCollectionSynchronization(oldViewModel.SearchResults);
+                    oldViewModel.ErrorsChanged -= HandleModelPropertyChanged;
                 }
 
                 if (e.NewValue != null && e.NewValue is MainWindowViewModel newViewModel)
@@ -28,10 +30,25 @@ namespace FunkyGrep.UI.Views
                     BindingOperations.EnableCollectionSynchronization(
                         newViewModel.SearchResults,
                         newViewModel.SearchResultsLocker);
+                    newViewModel.ErrorsChanged += HandleModelPropertyChanged;
                 }
             }
 
             base.OnPropertyChanged(e);
+        }
+
+        static void HandleModelPropertyChanged(object sender, DataErrorsChangedEventArgs e)
+        {
+            var viewModel = (BindableValidator)sender;
+
+            if (e.PropertyName.Length == 0 && viewModel.Errors[string.Empty].Count > 0)
+            {
+                MessageBox.Show(
+                    viewModel.Errors[string.Empty][0],
+                    "Error during search",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
 
         void HandleDirectoryAutoCompleteBoxPopulating(object sender, PopulatingEventArgs e)
