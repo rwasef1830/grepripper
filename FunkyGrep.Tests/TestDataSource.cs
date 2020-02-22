@@ -32,12 +32,14 @@ namespace FunkyGrep.Tests
     {
         readonly string _content;
         readonly long _length;
+        readonly byte[] _contentBytes;
 
         public TestDataSource(string identifier, string content, Encoding encoding)
         {
             this.Identifier = identifier;
             this._content = content;
             this._length = encoding.GetByteCount(content);
+            this._contentBytes = encoding.GetBytes(content);
         }
 
         #region IDataSource Members
@@ -48,9 +50,9 @@ namespace FunkyGrep.Tests
             return this._length;
         }
 
-        public TextReader OpenReader()
+        public Stream OpenRead()
         {
-            return new StringReader(this._content);
+            return new MemoryStream(this._contentBytes);
         }
         #endregion
     }

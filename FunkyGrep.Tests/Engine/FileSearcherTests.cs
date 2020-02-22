@@ -124,7 +124,7 @@ namespace FunkyGrep.Tests.Engine
             IEnumerable<KeyValuePair<string, string>> dictionary)
         {
             return dictionary?.Select(
-                x => new TestDataSource(x.Key, x.Value, Encoding.Unicode));
+                x => new TestDataSource(x.Key, x.Value, Encoding.UTF8));
         }
 
         [Fact]
@@ -138,7 +138,8 @@ namespace FunkyGrep.Tests.Engine
 
             var fileSearcher = new FileSearcher(
                 new Regex("speedy", RegexOptions.None),
-                dataSources);
+                dataSources, 
+                false);
 
             bool matchFoundFired = false;
             Exception assertionException = null;
@@ -181,7 +182,10 @@ namespace FunkyGrep.Tests.Engine
         {
             IEnumerable<IDataSource> dataSources = MakeDataSourceList(lineToSearch);
             var searcher = new FileSearcher(
-                new Regex(Regex.Escape(matchText)), dataSources, contextLength);
+                new Regex(Regex.Escape(matchText)),
+                dataSources,
+                false,
+                contextLength);
 
             bool eventWasFired = false;
             Exception failedAssertion = null;

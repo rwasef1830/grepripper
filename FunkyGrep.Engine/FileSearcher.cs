@@ -23,8 +23,10 @@
 #endregion
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,12 +41,14 @@ namespace FunkyGrep.Engine
         readonly CancellationTokenSource _cancelSrc;
 
         readonly IEnumerable<IDataSource> _dataSources;
+        readonly bool _skipBinaryFiles;
         readonly ThreadLocal<Regex> _threadLocalRegex;
 
         readonly object _locker = new object();
         readonly int _maxContextLength;
         long _doneCount;
         long _failedCount;
+        long _skippedCount;
         Task _progressReportTask;
         Task _searchTask;
 
@@ -54,11 +58,13 @@ namespace FunkyGrep.Engine
         public FileSearcher(
             Regex expression,
             IEnumerable<IDataSource> dataSources,
+            bool skipBinaryFiles,
             int maxContextLength = DefaultMaxContextLength)
         {
             if (expression == null) throw new ArgumentNullException(nameof(expression));
 
             this._dataSources = dataSources ?? throw new ArgumentNullException(nameof(dataSources));
+            this._skipBinaryFiles = skipBinaryFiles;
             this._threadLocalRegex = new ThreadLocal<Regex>(() => new Regex(expression.ToString(), expression.Options));
             this._maxContextLength = maxContextLength;
 
@@ -142,7 +148,8 @@ namespace FunkyGrep.Engine
                                     new ProgressEventArgs(
                                         Interlocked.Read(ref this._doneCount),
                                         Interlocked.Read(ref this._totalCount),
-                                        Interlocked.Read(ref this._failedCount)));
+                                        Interlocked.Read(ref this._failedCount),
+                                        Interlocked.Read(ref this._skippedCount)));
                             }
                             while (!this._cancelSrc.Token.WaitHandle.WaitOne(100)
                                    && !this._searchTask.IsCompleted);
@@ -192,6 +199,9 @@ namespace FunkyGrep.Engine
 
         ParallelLoopResult DoSearch(CancellationToken token)
         {
+            var byteArrayPool = ArrayPool<byte>.Shared;
+            var sByteArrayPool = ArrayPool<sbyte>.Shared;
+
             try
             {
                 return Parallel.ForEach(
@@ -201,7 +211,9 @@ namespace FunkyGrep.Engine
                     {
                         try
                         {
-                            if (dataSource.GetLength() > MaxFileSize)
+                            var length = dataSource.GetLength();
+
+                            if (length > MaxFileSize || length == 0)
                             {
                                 return;
                             }
@@ -210,8 +222,27 @@ namespace FunkyGrep.Engine
 
                             var matches = new List<MatchedLine>();
 
-                            using (var reader = dataSource.OpenReader())
+                            using (var stream = dataSource.OpenRead())
                             {
+                                var byteBuffer = byteArrayPool.Rent(4096);
+                                try
+                                {
+                                    var bytesRead = stream.Read(byteBuffer, 0, byteBuffer.Length);
+                                    if (IsLikelyToBeBinary(byteBuffer, bytesRead))
+                                    {
+                                        Interlocked.Increment(ref this._skippedCount);
+                                        return;
+                                    }
+                                }
+                                finally
+                                {
+                                    byteArrayPool.Return(byteBuffer);
+                                }
+
+                                stream.Seek(0, SeekOrigin.Begin);
+
+                                using var reader = new StreamReader(stream, true);
+
                                 int lineNumber = 1;
                                 for (string line = reader.ReadLine();
                                     line != null;
@@ -228,7 +259,9 @@ namespace FunkyGrep.Engine
                                     foreach (Match match in regexMatches)
                                     {
                                         string lineText = this.GetMatchFullLineTextClamped(match, line);
-                                        if (lastMatchedLine != null && ReferenceEquals(lineText, lastMatchedLine.Text))
+                                        if (lastMatchedLine != null && ReferenceEquals(
+                                            lineText,
+                                            lastMatchedLine.Text))
                                         {
                                             continue;
                                         }
@@ -258,6 +291,37 @@ namespace FunkyGrep.Engine
             {
                 this._threadLocalRegex.Dispose();
             }
+        }
+
+        static bool IsLikelyToBeBinary(byte[] byteBuffer, int bytesRead)
+        {
+            var nullCount = 0;
+            var twoConsecutiveNullsFound = false;
+
+            for (var j = 0; j < bytesRead; j++)
+            {
+                if (byteBuffer[j] != 0)
+                {
+                    continue;
+                }
+
+                nullCount++;
+                if (bytesRead <= j + 1)
+                {
+                    continue;
+                }
+
+                if (byteBuffer[j + 1] != 0)
+                {
+                    continue;
+                }
+
+                nullCount++;
+                twoConsecutiveNullsFound = true;
+                break;
+            }
+
+            return twoConsecutiveNullsFound && nullCount > 2;
         }
 
         string GetMatchFullLineTextClamped(Capture match, string line)

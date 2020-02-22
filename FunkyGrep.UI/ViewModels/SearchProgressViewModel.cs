@@ -30,6 +30,7 @@ namespace FunkyGrep.UI.ViewModels
     {
         long _searchedFileCount;
         long _failedFileCount;
+        long _skippedFileCount;
         long? _totalFileCount;
 
         public long SearchedFileCount
@@ -42,6 +43,12 @@ namespace FunkyGrep.UI.ViewModels
         {
             get => this._failedFileCount;
             set => this.SetProperty(ref this._failedFileCount, value);
+        }
+
+        public long SkippedFileCount
+        {
+            get => this._skippedFileCount;
+            set => this.SetProperty(ref this._skippedFileCount, value);
         }
 
         public long? TotalFileCount

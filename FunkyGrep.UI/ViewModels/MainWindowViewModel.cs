@@ -50,6 +50,7 @@ namespace FunkyGrep.UI.ViewModels
         bool _includeSubDirectories;
         string _filePatternsSpaceSeparated;
         IReadOnlyList<string> _filePatterns;
+        bool _skipBinaryFiles;
         string _searchText;
         bool _searchTextIsRegex;
         bool _ignoreCase;
@@ -93,6 +94,12 @@ namespace FunkyGrep.UI.ViewModels
         }
 
         public IReadOnlyList<string> FilePatterns => this._filePatterns;
+
+        public bool SkipBinaryFiles
+        {
+            get => this._skipBinaryFiles;
+            set => this.SetProperty(ref this._skipBinaryFiles, value);
+        }
 
         [PossiblyValidRegex]
         public string SearchText
@@ -199,6 +206,7 @@ namespace FunkyGrep.UI.ViewModels
             this.Directory = Environment.CurrentDirectory;
             this.IncludeSubDirectories = true;
             this.FilePatternsSpaceSeparated = "*";
+            this.SkipBinaryFiles = true;
             this.SearchTextIsRegex = true;
             this.SearchResults = new ObservableCollection<SearchResultItem>();
             this.SearchResultsLocker = new object();
@@ -303,7 +311,11 @@ namespace FunkyGrep.UI.ViewModels
                     this.SearchResults.Clear();
                 }
 
-                this._searcher = new FileSearcher(patternSpec.Expression, fileSpec.EnumerateFiles());
+                this._searcher = new FileSearcher(
+                    patternSpec.Expression,
+                    fileSpec.EnumerateFiles(),
+                    this.SkipBinaryFiles);
+
                 this._searcher.MatchFound += (_, args) =>
                 {
                     int basenameLength = this.Directory.Length;
@@ -332,6 +344,7 @@ namespace FunkyGrep.UI.ViewModels
                     }
 
                     this.SearchProgress.SearchedFileCount = args.NumberOfSearchedFiles;
+                    this.SearchProgress.SkippedFileCount = args.NumberOfSkippedFiles;
                     this.SearchProgress.FailedFileCount = args.NumberOfFailedFiles;
                 };
 

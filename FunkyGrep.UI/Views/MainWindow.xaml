@@ -62,6 +62,10 @@
         <Label Grid.Row="1" Grid.Column="0" Content="_Files" Target="{Binding ElementName=TextBoxFiles}" />
         <TextBox Grid.Row="1" Grid.Column="1" Width="Auto" Text="{Binding FilePatternsSpaceSeparated, UpdateSourceTrigger=PropertyChanged}"
                  IsEnabled="{Binding SearchIsNotRunning}" x:Name="TextBoxFiles" />
+        <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal">
+            <CheckBox Content="Skip _binary files" VerticalAlignment="Center" Margin="5, 0, 5, 0" IsChecked="{Binding SkipBinaryFiles}" 
+                      IsEnabled="{Binding SearchIsNotRunning}" />
+        </StackPanel>
 
         <Label Grid.Row="2" Grid.Column="0" Content="_Text" Target="{Binding ElementName=TextBoxSearchText}" />
         <TextBox Grid.Row="2" Grid.Column="1" Width="Auto" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
@@ -113,8 +117,9 @@
                                             <Setter.Value>
                                                 <TextBlock>
                                                     <TextBlock.Text>
-                                                        <MultiBinding StringFormat="{}{0:n0} done. {1:n0} failed.">
+                                                        <MultiBinding StringFormat="{}{0:n0} done. {1:n0} skipped. {2:n0} failed.">
                                                             <Binding Path="SearchProgress.SearchedFileCount" />
+                                                            <Binding Path="SearchProgress.SkippedFileCount" />
                                                             <Binding Path="SearchProgress.FailedFileCount" />
                                                         </MultiBinding>
                                                     </TextBlock.Text>
@@ -133,9 +138,10 @@
                                             <Setter.Value>
                                                 <TextBlock>
                                                     <TextBlock.Text>
-                                                        <MultiBinding StringFormat="{}{0:n0} of {1:n0} done. {2:n0} failed.">
+                                                        <MultiBinding StringFormat="{}{0:n0} of {1:n0} done. {2:n0} skipped. {3:n0} failed.">
                                                             <Binding Path="SearchProgress.SearchedFileCount" />
                                                             <Binding Path="SearchProgress.TotalFileCount" />
+                                                            <Binding Path="SearchProgress.SkippedFileCount" />
                                                             <Binding Path="SearchProgress.FailedFileCount" />
                                                         </MultiBinding>
                                                     </TextBlock.Text>

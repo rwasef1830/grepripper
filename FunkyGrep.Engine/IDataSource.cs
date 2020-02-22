@@ -30,6 +30,6 @@ namespace FunkyGrep.Engine
     {
         string Identifier { get; }
         long GetLength();
-        TextReader OpenReader();
+        Stream OpenRead();
     }
 }

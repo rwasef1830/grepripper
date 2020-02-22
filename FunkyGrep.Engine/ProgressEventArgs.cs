@@ -31,13 +31,15 @@ namespace FunkyGrep.Engine
         public long NumberOfSearchedFiles { get; }
         public long TotalNumberOfFiles { get; }
         public long NumberOfFailedFiles { get; }
+        public long NumberOfSkippedFiles { get; }
 
         public ProgressEventArgs(
-            long numberOfSearchedFiles, long totalNumberOfFiles, long numberOfFailedFiles)
+            long numberOfSearchedFiles, long totalNumberOfFiles, long numberOfFailedFiles, long numberOfSkippedFiles)
         {
             this.NumberOfSearchedFiles = numberOfSearchedFiles;
             this.TotalNumberOfFiles = totalNumberOfFiles;
             this.NumberOfFailedFiles = numberOfFailedFiles;
+            this.NumberOfSkippedFiles = numberOfSkippedFiles;
         }
     }
 }

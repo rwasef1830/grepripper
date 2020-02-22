@@ -49,9 +49,9 @@ namespace FunkyGrep.Engine
             return this._fileInfo.Length;
         }
 
-        public TextReader OpenReader()
+        public Stream OpenRead()
         {
-            return this._fileInfo.OpenText();
+            return this._fileInfo.OpenRead();
         }
         #endregion
     }
