@@ -22,33 +22,35 @@
 // THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endregion
 
+using System;
+using FunkyGrep.Engine;
 using Prism.Mvvm;
 
 namespace FunkyGrep.UI.ViewModels
 {
     public class SearchProgressViewModel : BindableBase
     {
-        long _searchedFileCount;
-        long _failedFileCount;
-        long _skippedFileCount;
+        long _searchedCount;
+        long _failedCount;
+        long _skippedCount;
         long? _totalFileCount;
 
-        public long SearchedFileCount
+        public long SearchedCount
         {
-            get => this._searchedFileCount;
-            set => this.SetProperty(ref this._searchedFileCount, value);
+            get => this._searchedCount;
+            set => this.SetProperty(ref this._searchedCount, value);
         }
 
-        public long FailedFileCount
+        public long FailedCount
         {
-            get => this._failedFileCount;
-            set => this.SetProperty(ref this._failedFileCount, value);
+            get => this._failedCount;
+            set => this.SetProperty(ref this._failedCount, value);
         }
 
-        public long SkippedFileCount
+        public long SkippedCount
         {
-            get => this._skippedFileCount;
-            set => this.SetProperty(ref this._skippedFileCount, value);
+            get => this._skippedCount;
+            set => this.SetProperty(ref this._skippedCount, value);
         }
 
         public long? TotalFileCount
@@ -64,5 +66,22 @@ namespace FunkyGrep.UI.ViewModels
         }
 
         public bool TotalFileCountIsSet => this.TotalFileCount.HasValue;
+
+        public void Update(ProgressEventArgs progressEventArgs)
+        {
+            if (progressEventArgs == null)
+            {
+                throw new ArgumentNullException(nameof(progressEventArgs));
+            }
+        
+            this.SearchedCount = progressEventArgs.SearchedCount;
+            this.SkippedCount = progressEventArgs.SkippedCount;
+            this.FailedCount = progressEventArgs.FailedCount;
+
+            if (progressEventArgs.TotalCount > 0)
+            {
+                this.TotalFileCount = progressEventArgs.TotalCount;
+            }
+        }
     }
 }

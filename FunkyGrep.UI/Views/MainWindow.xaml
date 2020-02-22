@@ -84,7 +84,7 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Vertical">
-                <ProgressBar Height="5" Value="{Binding SearchProgress.SearchedFileCount}" Maximum="{Binding SearchProgress.TotalFileCount}">
+                <ProgressBar Height="5" Value="{Binding SearchProgress.SearchedCount}" Maximum="{Binding SearchProgress.TotalFileCount}">
                     <ProgressBar.Style>
                         <Style TargetType="ProgressBar">
                             <Setter Property="IsIndeterminate" Value="False" />
@@ -118,9 +118,9 @@
                                                 <TextBlock>
                                                     <TextBlock.Text>
                                                         <MultiBinding StringFormat="{}{0:n0} done. {1:n0} skipped. {2:n0} failed.">
-                                                            <Binding Path="SearchProgress.SearchedFileCount" />
-                                                            <Binding Path="SearchProgress.SkippedFileCount" />
-                                                            <Binding Path="SearchProgress.FailedFileCount" />
+                                                            <Binding Path="SearchProgress.SearchedCount" />
+                                                            <Binding Path="SearchProgress.SkippedCount" />
+                                                            <Binding Path="SearchProgress.FailedCount" />
                                                         </MultiBinding>
                                                     </TextBlock.Text>
                                                 </TextBlock>
@@ -139,10 +139,10 @@
                                                 <TextBlock>
                                                     <TextBlock.Text>
                                                         <MultiBinding StringFormat="{}{0:n0} of {1:n0} done. {2:n0} skipped. {3:n0} failed.">
-                                                            <Binding Path="SearchProgress.SearchedFileCount" />
+                                                            <Binding Path="SearchProgress.SearchedCount" />
                                                             <Binding Path="SearchProgress.TotalFileCount" />
-                                                            <Binding Path="SearchProgress.SkippedFileCount" />
-                                                            <Binding Path="SearchProgress.FailedFileCount" />
+                                                            <Binding Path="SearchProgress.SkippedCount" />
+                                                            <Binding Path="SearchProgress.FailedCount" />
                                                         </MultiBinding>
                                                     </TextBlock.Text>
                                                 </TextBlock>

@@ -336,17 +336,7 @@ namespace FunkyGrep.UI.ViewModels
                     }
                 };
 
-                this._searcher.ProgressChanged += (_, args) =>
-                {
-                    if (args.TotalNumberOfFiles > 0)
-                    {
-                        this.SearchProgress.TotalFileCount = args.TotalNumberOfFiles;
-                    }
-
-                    this.SearchProgress.SearchedFileCount = args.NumberOfSearchedFiles;
-                    this.SearchProgress.SkippedFileCount = args.NumberOfSkippedFiles;
-                    this.SearchProgress.FailedFileCount = args.NumberOfFailedFiles;
-                };
+                this._searcher.ProgressChanged += (_, args) => { this.SearchProgress.Update(args); };
 
                 this._searcher.Completed += (_, args) =>
                 {

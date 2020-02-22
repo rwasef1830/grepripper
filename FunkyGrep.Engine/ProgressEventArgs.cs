@@ -28,18 +28,17 @@ namespace FunkyGrep.Engine
 {
     public class ProgressEventArgs : EventArgs
     {
-        public long NumberOfSearchedFiles { get; }
-        public long TotalNumberOfFiles { get; }
-        public long NumberOfFailedFiles { get; }
-        public long NumberOfSkippedFiles { get; }
+        public long SearchedCount { get; }
+        public long TotalCount { get; }
+        public long FailedCount { get; }
+        public long SkippedCount { get; }
 
-        public ProgressEventArgs(
-            long numberOfSearchedFiles, long totalNumberOfFiles, long numberOfFailedFiles, long numberOfSkippedFiles)
+        public ProgressEventArgs(long searchedCount, long totalCount, long failedCount, long skippedCount)
         {
-            this.NumberOfSearchedFiles = numberOfSearchedFiles;
-            this.TotalNumberOfFiles = totalNumberOfFiles;
-            this.NumberOfFailedFiles = numberOfFailedFiles;
-            this.NumberOfSkippedFiles = numberOfSkippedFiles;
+            this.SearchedCount = searchedCount;
+            this.TotalCount = totalCount;
+            this.FailedCount = failedCount;
+            this.SkippedCount = skippedCount;
         }
     }
 }
