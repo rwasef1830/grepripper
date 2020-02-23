@@ -64,7 +64,7 @@
         <TextBox Grid.Row="1" Grid.Column="1" Width="Auto" Text="{Binding FilePatternsSpaceSeparated, UpdateSourceTrigger=PropertyChanged}"
                  IsEnabled="{Binding SearchIsNotRunning}" x:Name="TextBoxFiles" />
         <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal">
-            <CheckBox Content="Skip _binary files" VerticalAlignment="Center" Margin="5, 0, 5, 0" IsChecked="{Binding SkipBinaryFiles}" 
+            <CheckBox Content="Skip _Binaries" VerticalAlignment="Center" Margin="5, 0, 5, 0" IsChecked="{Binding SkipBinaryFiles}" 
                       IsEnabled="{Binding SearchIsNotRunning}" />
         </StackPanel>
 
