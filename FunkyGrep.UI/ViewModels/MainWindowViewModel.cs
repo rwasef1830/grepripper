@@ -101,6 +101,7 @@ namespace FunkyGrep.UI.ViewModels
             set => this.SetProperty(ref this._skipBinaryFiles, value);
         }
 
+        [RequiredAllowWhiteSpace]
         [PossiblyValidRegex]
         public string SearchText
         {
@@ -346,11 +347,7 @@ namespace FunkyGrep.UI.ViewModels
 
                     if (args.Error != null)
                     {
-                        this.SetAllErrors(
-                            new Dictionary<string, ReadOnlyCollection<string>>
-                            {
-                                [string.Empty] = new ReadOnlyCollection<string>(new[] { args.Error.ToString() })
-                            });
+                        this.SetGeneralError(args.Error);
                     }
                 };
 
@@ -361,14 +358,16 @@ namespace FunkyGrep.UI.ViewModels
                 try
                 {
                     this.CleanUpSearch();
+                    this.SetGeneralError(ex);
                 }
                 catch
                 {
-                    this.SetAllErrors(
-                        new Dictionary<string, ReadOnlyCollection<string>>
-                        {
-                            [string.Empty] = new ReadOnlyCollection<string>(new[] { ex.ToString() })
-                        });
+                    // ignore
+                }
+                finally
+                {
+                    this.SearchIsRunning = false;
+                    this.LastSearchCompleted = false;
                 }
             }
         }
@@ -386,11 +385,7 @@ namespace FunkyGrep.UI.ViewModels
             }
             catch (Exception ex)
             {
-                this.SetAllErrors(
-                    new Dictionary<string, ReadOnlyCollection<string>>
-                    {
-                        [string.Empty] = new ReadOnlyCollection<string>(new[] { ex.ToString() })
-                    });
+                this.SetGeneralError(ex);
             }
             finally
             {
@@ -402,6 +397,15 @@ namespace FunkyGrep.UI.ViewModels
         void CleanUpSearch()
         {
             this._searcher?.Cancel();
+        }
+
+        void SetGeneralError(Exception ex)
+        {
+            this.SetAllErrors(
+                new Dictionary<string, ReadOnlyCollection<string>>
+                {
+                    [string.Empty] = new ReadOnlyCollection<string>(new[] { ex.ToString() })
+                });
         }
     }
 }

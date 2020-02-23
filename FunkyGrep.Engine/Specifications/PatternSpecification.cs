@@ -36,7 +36,7 @@ namespace FunkyGrep.Engine.Specifications
             bool isRegex,
             bool ignoreCase)
         {
-            if (string.IsNullOrWhiteSpace(text))
+            if (string.IsNullOrEmpty(text))
             {
                 throw new ArgumentException("Value cannot be null or whitespace.", nameof(text));
             }
