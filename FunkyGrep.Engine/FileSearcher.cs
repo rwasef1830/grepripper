@@ -301,19 +301,31 @@ namespace FunkyGrep.Engine
                 }
 
                 nullCount++;
+
+                if (twoConsecutiveNullsFound)
+                {
+                    if (nullCount > 2)
+                    {
+                        break;
+                    }
+
+                    continue;
+                }
+
                 if (bytesRead <= j + 1)
                 {
                     continue;
                 }
 
-                if (byteBuffer[j + 1] != 0)
+                j++;
+
+                if (byteBuffer[j] != 0)
                 {
                     continue;
                 }
 
                 nullCount++;
                 twoConsecutiveNullsFound = true;
-                break;
             }
 
             return twoConsecutiveNullsFound && nullCount > 2;
