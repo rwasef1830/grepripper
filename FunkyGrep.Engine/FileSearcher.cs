@@ -200,7 +200,6 @@ namespace FunkyGrep.Engine
         ParallelLoopResult DoSearch(CancellationToken token)
         {
             var byteArrayPool = ArrayPool<byte>.Shared;
-            var sByteArrayPool = ArrayPool<sbyte>.Shared;
 
             try
             {
