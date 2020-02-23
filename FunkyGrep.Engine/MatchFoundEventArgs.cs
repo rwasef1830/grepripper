@@ -30,9 +30,9 @@ namespace FunkyGrep.Engine
     public class MatchFoundEventArgs : EventArgs
     {
         public string FilePath { get; }
-        public IReadOnlyList<MatchedLine> Matches { get; }
+        public IReadOnlyList<SearchMatch> Matches { get; }
 
-        public MatchFoundEventArgs(string filePath, IReadOnlyList<MatchedLine> matches)
+        public MatchFoundEventArgs(string filePath, IReadOnlyList<SearchMatch> matches)
         {
             if (string.IsNullOrWhiteSpace(filePath))
             {

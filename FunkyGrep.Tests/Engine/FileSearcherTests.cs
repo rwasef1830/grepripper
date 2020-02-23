@@ -91,7 +91,7 @@ namespace FunkyGrep.Tests.Engine
             int contextLength, 
             string searchPattern, 
             string textToSearch, 
-            MatchedLine expectedResult)
+            SearchMatch expectedResult)
         {
             IEnumerable<IDataSource> dataSources = MakeDataSourceList(textToSearch);
             var searcher = new FileSearcher(
@@ -134,7 +134,7 @@ namespace FunkyGrep.Tests.Engine
                 maxContextLength,
                 "A",
                 "ABBBBBBBBCDEF",
-                new MatchedLine(1, "ABBBBBBBBC", 0, 1)
+                new SearchMatch(1, "ABBBBBBBBC", 0, 1)
             };
 
             // Head excess no CRLF
@@ -143,7 +143,7 @@ namespace FunkyGrep.Tests.Engine
                 maxContextLength,
                 "A",
                 "BBBBBBBBACDEF",
-                new MatchedLine(1, "BBBBBBBBAC", 8, 1)
+                new SearchMatch(1, "BBBBBBBBAC", 8, 1)
             };
 
             // Tail excess with CRLF
@@ -152,7 +152,7 @@ namespace FunkyGrep.Tests.Engine
                 maxContextLength,
                 "A",
                 "\r\nABBBBBBBBCDEF\r\n",
-                new MatchedLine(2, "ABBBBBBBBC", 0, 1)
+                new SearchMatch(2, "ABBBBBBBBC", 0, 1)
             };
 
             // Head excess with CRLF
@@ -161,7 +161,7 @@ namespace FunkyGrep.Tests.Engine
                 maxContextLength,
                 "A",
                 "\r\nBBBBBBBBACDEF\r\n",
-                new MatchedLine(2, "BBBBBBBBAC", 8, 1)
+                new SearchMatch(2, "BBBBBBBBAC", 8, 1)
             };
 
             // Match at end of line
@@ -170,7 +170,7 @@ namespace FunkyGrep.Tests.Engine
                 maxContextLength,
                 "ABC",
                 "\r\nXXXXXXXABC\r\n",
-                new MatchedLine(2, "XXXXXXXABC", 7, 3)
+                new SearchMatch(2, "XXXXXXXABC", 7, 3)
             };
 
             // Match at the beginning of line
@@ -179,7 +179,7 @@ namespace FunkyGrep.Tests.Engine
                 maxContextLength,
                 "ABC",
                 "\r\nABCXXXXXXX\r\n",
-                new MatchedLine(2, "ABCXXXXXXX", 0, 3)
+                new SearchMatch(2, "ABCXXXXXXX", 0, 3)
             };
         }
 

@@ -220,7 +220,7 @@ namespace FunkyGrep.Engine
 
                             token.ThrowIfCancellationRequested();
 
-                            var matches = new List<MatchedLine>();
+                            var matches = new List<SearchMatch>();
 
                             using (var stream = dataSource.OpenRead())
                             {
@@ -262,7 +262,7 @@ namespace FunkyGrep.Engine
                                             continue;
                                         }
 
-                                        var lastMatchedLine = this.GetMatchedLine(match, line, lineNumber);
+                                        var lastMatchedLine = this.GetMatch(match, line, lineNumber);
                                         matches.Add(lastMatchedLine);
                                     }
 
@@ -320,7 +320,7 @@ namespace FunkyGrep.Engine
             return twoConsecutiveNullsFound && nullCount > 2;
         }
 
-        MatchedLine GetMatchedLine(Capture match, string line, int lineNumber)
+        SearchMatch GetMatch(Capture match, string line, int lineNumber)
         {
             int maxLeftChars = this._maxContextLength - Math.Max(1, match.Length / 2);
             int minLeftIndex = match.Index - maxLeftChars;
@@ -342,7 +342,7 @@ namespace FunkyGrep.Engine
                 adjustedMatchIndex -= contextStartIndex;
             }
 
-            return new MatchedLine(
+            return new SearchMatch(
                 lineNumber,
                 clampedLine,
                 adjustedMatchIndex,

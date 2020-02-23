@@ -31,27 +31,27 @@ namespace FunkyGrep.UI.ViewModels
     {
         public string FilePath { get; }
         public int LineNumber { get; }
-        public string MatchedLine { get; }
+        public string Line { get; }
         public int MatchIndex { get; }
         public int MatchLength { get; }
 
-        public SearchResultItem(string filePath, MatchedLine matchedLine)
+        public SearchResultItem(string filePath, SearchMatch searchMatch)
         {
             if (string.IsNullOrWhiteSpace(filePath))
             {
                 throw new ArgumentException("Value cannot be null or whitespace.", nameof(filePath));
             }
 
-            if (matchedLine == null)
+            if (searchMatch == null)
             {
-                throw new ArgumentNullException(nameof(matchedLine));
+                throw new ArgumentNullException(nameof(searchMatch));
             }
 
             this.FilePath = filePath;
-            this.LineNumber = matchedLine.Number;
-            this.MatchedLine = matchedLine.Text;
-            this.MatchIndex = matchedLine.MatchIndex;
-            this.MatchLength = matchedLine.MatchLength;
+            this.LineNumber = searchMatch.Number;
+            this.Line = searchMatch.Text;
+            this.MatchIndex = searchMatch.MatchIndex;
+            this.MatchLength = searchMatch.MatchLength;
         }
     }
 }

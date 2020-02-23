@@ -186,14 +186,14 @@
                   SelectionMode="Single" CanUserSortColumns="False">
             <DataGrid.Resources>
                 <ResourceDictionary>
-                    <converters:MatchedLineToXamlConverter x:Key="MatchedLineToXamlConverter">
-                        <converters:MatchedLineToXamlConverter.MatchRunStyle>
+                    <converters:SearchResultItemToXamlConverter x:Key="SearchResultItemToXamlConverter">
+                        <converters:SearchResultItemToXamlConverter.MatchRunStyle>
                             <Style TargetType="Run">
                                 <Setter Property="Foreground" Value="DarkRed" />
                                 <Setter Property="FontWeight" Value="Bold" />
                             </Style>
-                        </converters:MatchedLineToXamlConverter.MatchRunStyle>
-                    </converters:MatchedLineToXamlConverter>
+                        </converters:SearchResultItemToXamlConverter.MatchRunStyle>
+                    </converters:SearchResultItemToXamlConverter>
                 </ResourceDictionary>
             </DataGrid.Resources>
             <DataGrid.Columns>
@@ -208,7 +208,7 @@
                 <DataGridTemplateColumn Header="Text" Width="*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate DataType="viewModels:SearchResultItem">
-                            <ContentControl Content="{Binding Mode=OneTime, Converter={StaticResource MatchedLineToXamlConverter}}" />
+                            <ContentControl Content="{Binding Mode=OneTime, Converter={StaticResource SearchResultItemToXamlConverter}}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

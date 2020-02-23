@@ -26,14 +26,14 @@ using System;
 
 namespace FunkyGrep.Engine
 {
-    public class MatchedLine
+    public class SearchMatch
     {
         public int Number { get; }
         public string Text { get; }
         public int MatchIndex { get; }
         public int MatchLength { get; }
 
-        public MatchedLine(int number, string text, int matchIndex, int matchLength)
+        public SearchMatch(int number, string text, int matchIndex, int matchLength)
         {
             if (number <= 0) throw new ArgumentOutOfRangeException(nameof(number));
 
