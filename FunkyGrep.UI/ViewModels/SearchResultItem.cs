@@ -23,21 +23,17 @@
 #endregion
 
 using System;
-using System.ComponentModel.DataAnnotations;
 using FunkyGrep.Engine;
 
 namespace FunkyGrep.UI.ViewModels
 {
     public class SearchResultItem
     {
-        [Display(Name = "File")]
         public string FilePath { get; }
-        
-        [Display(Name = "Line")]
         public int LineNumber { get; }
-
-        [Display(Name = "Text")]
         public string MatchedLine { get; }
+        public int MatchIndex { get; }
+        public int MatchLength { get; }
 
         public SearchResultItem(string filePath, MatchedLine matchedLine)
         {
@@ -54,6 +50,8 @@ namespace FunkyGrep.UI.ViewModels
             this.FilePath = filePath;
             this.LineNumber = matchedLine.Number;
             this.MatchedLine = matchedLine.Text;
+            this.MatchIndex = matchedLine.MatchIndex;
+            this.MatchLength = matchedLine.MatchLength;
         }
     }
 }

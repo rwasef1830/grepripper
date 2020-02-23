@@ -8,6 +8,7 @@
         xmlns:md="https://github.com/fantasticfiasco/mvvm-dialogs"
         xmlns:controls="clr-namespace:System.Windows.Controls;assembly=DotNetProjects.Input.Toolkit"
         xmlns:ui="clr-namespace:FunkyGrep.UI"
+        xmlns:converters="clr-namespace:FunkyGrep.UI.Converters"
         mvvm:ViewModelLocator.AutoWireViewModel="True"
         mc:Ignorable="d"
         Title="{Binding Source={x:Static ui:App.Version}, StringFormat=FunkyGrep {0}}"
@@ -183,6 +184,18 @@
                   IsReadOnly="True" AutoGenerateColumns="False" VerticalGridLinesBrush="LightGray" 
                   HorizontalGridLinesBrush="LightGray" AlternatingRowBackground="Gainsboro" AlternationCount="2"
                   SelectionMode="Single" CanUserSortColumns="False">
+            <DataGrid.Resources>
+                <ResourceDictionary>
+                    <converters:MatchedLineToXamlConverter x:Key="MatchedLineToXamlConverter">
+                        <converters:MatchedLineToXamlConverter.MatchRunStyle>
+                            <Style TargetType="Run">
+                                <Setter Property="Foreground" Value="DarkRed" />
+                                <Setter Property="FontWeight" Value="Bold" />
+                            </Style>
+                        </converters:MatchedLineToXamlConverter.MatchRunStyle>
+                    </converters:MatchedLineToXamlConverter>
+                </ResourceDictionary>
+            </DataGrid.Resources>
             <DataGrid.Columns>
                 <DataGridTextColumn Binding="{Binding FilePath, Mode=OneTime}" Header="File" Width="*" />
                 <DataGridTextColumn Binding="{Binding LineNumber, Mode=OneTime}" Header="Line" Width="50">
@@ -192,7 +205,13 @@
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Binding="{Binding MatchedLine, Mode=OneTime}" Header="Text" Width="*" />
+                <DataGridTemplateColumn Header="Text" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate DataType="viewModels:SearchResultItem">
+                            <ContentControl Content="{Binding Mode=OneTime, Converter={StaticResource MatchedLineToXamlConverter}}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
             </DataGrid.Columns>
             <DataGrid.ContextMenu>
                 <ContextMenu>

@@ -255,18 +255,14 @@ namespace FunkyGrep.Engine
                                         continue;
                                     }
 
-                                    MatchedLine lastMatchedLine = null;
                                     foreach (Match match in regexMatches)
                                     {
-                                        string lineText = this.GetMatchFullLineTextClamped(match, line);
-                                        if (lastMatchedLine != null && ReferenceEquals(
-                                            lineText,
-                                            lastMatchedLine.Text))
+                                        if (!match.Success)
                                         {
                                             continue;
                                         }
 
-                                        lastMatchedLine = new MatchedLine(lineNumber, lineText);
+                                        var lastMatchedLine = this.GetMatchedLine(match, line, lineNumber);
                                         matches.Add(lastMatchedLine);
                                     }
 
@@ -324,11 +320,11 @@ namespace FunkyGrep.Engine
             return twoConsecutiveNullsFound && nullCount > 2;
         }
 
-        string GetMatchFullLineTextClamped(Capture match, string line)
+        MatchedLine GetMatchedLine(Capture match, string line, int lineNumber)
         {
             int maxLeftChars = this._maxContextLength - Math.Max(1, match.Length / 2);
             int minLeftIndex = match.Index - maxLeftChars;
-            
+
             if (minLeftIndex < 0)
             {
                 minLeftIndex = 0;
@@ -337,13 +333,20 @@ namespace FunkyGrep.Engine
             int contextStartIndex = Math.Max(0, minLeftIndex);
             int contextLength = Math.Min(line.Length - contextStartIndex, this._maxContextLength);
 
-            if (contextStartIndex == 0 && contextLength == line.Length)
+            var clampedLine = line;
+            var adjustedMatchIndex = match.Index;
+
+            if (contextStartIndex != 0 || contextLength != line.Length)
             {
-                return line;
+                clampedLine = line.Substring(contextStartIndex, contextLength);
+                adjustedMatchIndex -= contextStartIndex;
             }
 
-            string result = line.Substring(contextStartIndex, contextLength);
-            return result;
+            return new MatchedLine(
+                lineNumber,
+                clampedLine,
+                adjustedMatchIndex,
+                match.Length);
         }
 
         static int GetLineNumber(string text, int position)

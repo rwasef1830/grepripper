@@ -37,96 +37,6 @@ namespace FunkyGrep.Tests.Engine
     [SuppressMessage("ReSharper", "StringLiteralTypo")]
     public class FileSearcherTests
     {
-        public static IEnumerable<object[]> LongLinesClampTestSource()
-        {
-            const int maxContextLength = 10;
-
-            // Tail excess no CRLF
-            yield return new object[]
-            {
-                maxContextLength,
-                "A",
-                "ABBBBBBBBCDEF",
-                "ABBBBBBBBC"
-            };
-
-            // Head excess no CRLF
-            yield return new object[]
-            {
-                maxContextLength,
-                "A",
-                "BBBBBBBBACDEF",
-                "BBBBBBBBAC"
-            };
-
-            // Tail excess with CRLF
-            yield return new object[]
-            {
-                maxContextLength,
-                "A",
-                "\r\nABBBBBBBBCDEF\r\n",
-                "ABBBBBBBBC"
-            };
-
-            // Head excess with CRLF
-            yield return new object[]
-            {
-                maxContextLength,
-                "A",
-                "\r\nBBBBBBBBACDEF\r\n",
-                "BBBBBBBBAC"
-            };
-
-            // Match at end of line
-            yield return new object[]
-            {
-                maxContextLength,
-                "ABC",
-                "\r\nXXXXXXXABC\r\n",
-                "XXXXXXXABC"
-            };
-
-            // Match at the beginning of line
-            yield return new object[]
-            {
-                maxContextLength,
-                "ABC",
-                "\r\nABCXXXXXXX\r\n",
-                "ABCXXXXXXX"
-            };
-        }
-
-        /// <summary>
-        /// Each element of the passed list represents the fake file contents.
-        /// The file name is a randomly generated GUID.
-        /// </summary>
-        static IEnumerable<IDataSource> MakeDataSourceList(
-            string file1Data,
-            params string[] fileNData)
-        {
-            return
-                MakeDataSourceList(
-                    new[] { file1Data }.Union(fileNData)
-                        .Select(
-                            x =>
-                                new KeyValuePair<string, string>(
-                                    Guid.NewGuid().ToString(),
-                                    x)));
-        }
-
-        /// <summary>
-        /// The dictionary key is the fake file name.
-        /// The dictionary value is the fake file contents.
-        /// </summary>
-        /// <param name="dictionary"></param>
-        /// <returns></returns>
-        static IEnumerable<IDataSource> MakeDataSourceList(
-            IEnumerable<KeyValuePair<string, string>> dictionary)
-        {
-            return dictionary?.Select(
-                x => new TestDataSource(x.Key, x.Value, Encoding.UTF8));
-        }
-
         [Fact]
         public void FileSearcher_FindsAMatch_FiresEvents()
         {
@@ -178,11 +88,14 @@ namespace FunkyGrep.Tests.Engine
         [Theory]
         [MemberData(nameof(LongLinesClampTestSource))]
         public void Long_lines_in_results_are_clamped_properly_around_match(
-            int contextLength, string matchText, string lineToSearch, string expectedContext)
+            int contextLength, 
+            string searchPattern, 
+            string textToSearch, 
+            MatchedLine expectedResult)
         {
-            IEnumerable<IDataSource> dataSources = MakeDataSourceList(lineToSearch);
+            IEnumerable<IDataSource> dataSources = MakeDataSourceList(textToSearch);
             var searcher = new FileSearcher(
-                new Regex(Regex.Escape(matchText)),
+                new Regex(Regex.Escape(searchPattern)),
                 dataSources,
                 false,
                 contextLength);
@@ -196,7 +109,7 @@ namespace FunkyGrep.Tests.Engine
                     try
                     {
                         eventWasFired = true;
-                        args.Matches.First().Text.Should().Be(expectedContext);
+                        args.Matches.First().Should().BeEquivalentTo(expectedResult);
                     }
                     catch (Exception ex)
                     {
@@ -209,6 +122,96 @@ namespace FunkyGrep.Tests.Engine
 
             eventWasFired.Should().BeTrue();
             failedAssertion.Should().BeNull();
+        }
+
+        public static IEnumerable<object[]> LongLinesClampTestSource()
+        {
+            const int maxContextLength = 10;
+
+            // Tail excess no CRLF
+            yield return new object[]
+            {
+                maxContextLength,
+                "A",
+                "ABBBBBBBBCDEF",
+                new MatchedLine(1, "ABBBBBBBBC", 0, 1)
+            };
+
+            // Head excess no CRLF
+            yield return new object[]
+            {
+                maxContextLength,
+                "A",
+                "BBBBBBBBACDEF",
+                new MatchedLine(1, "BBBBBBBBAC", 8, 1)
+            };
+
+            // Tail excess with CRLF
+            yield return new object[]
+            {
+                maxContextLength,
+                "A",
+                "\r\nABBBBBBBBCDEF\r\n",
+                new MatchedLine(2, "ABBBBBBBBC", 0, 1)
+            };
+
+            // Head excess with CRLF
+            yield return new object[]
+            {
+                maxContextLength,
+                "A",
+                "\r\nBBBBBBBBACDEF\r\n",
+                new MatchedLine(2, "BBBBBBBBAC", 8, 1)
+            };
+
+            // Match at end of line
+            yield return new object[]
+            {
+                maxContextLength,
+                "ABC",
+                "\r\nXXXXXXXABC\r\n",
+                new MatchedLine(2, "XXXXXXXABC", 7, 3)
+            };
+
+            // Match at the beginning of line
+            yield return new object[]
+            {
+                maxContextLength,
+                "ABC",
+                "\r\nABCXXXXXXX\r\n",
+                new MatchedLine(2, "ABCXXXXXXX", 0, 3)
+            };
+        }
+
+        /// <summary>
+        /// Each element of the passed list represents the fake file contents.
+        /// The file name is a randomly generated GUID.
+        /// </summary>
+        static IEnumerable<IDataSource> MakeDataSourceList(
+            string file1Data,
+            params string[] fileNData)
+        {
+            return
+                MakeDataSourceList(
+                    new[] { file1Data }.Union(fileNData)
+                        .Select(
+                            x =>
+                                new KeyValuePair<string, string>(
+                                    Guid.NewGuid().ToString(),
+                                    x)));
+        }
+
+        /// <summary>
+        /// The dictionary key is the fake file name.
+        /// The dictionary value is the fake file contents.
+        /// </summary>
+        /// <param name="dictionary"></param>
+        /// <returns></returns>
+        static IEnumerable<IDataSource> MakeDataSourceList(
+            IEnumerable<KeyValuePair<string, string>> dictionary)
+        {
+            return dictionary?.Select(
+                x => new TestDataSource(x.Key, x.Value, Encoding.UTF8));
         }
     }
 }

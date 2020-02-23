@@ -30,13 +30,17 @@ namespace FunkyGrep.Engine
     {
         public int Number { get; }
         public string Text { get; }
+        public int MatchIndex { get; }
+        public int MatchLength { get; }
 
-        public MatchedLine(int number, string text)
+        public MatchedLine(int number, string text, int matchIndex, int matchLength)
         {
             if (number <= 0) throw new ArgumentOutOfRangeException(nameof(number));
 
             this.Number = number;
             this.Text = text ?? string.Empty;
+            this.MatchIndex = matchIndex;
+            this.MatchLength = matchLength;
         }
     }
 }
