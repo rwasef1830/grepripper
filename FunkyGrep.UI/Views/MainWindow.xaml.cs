@@ -1,8 +1,10 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using FunkyGrep.UI.Util;
 using FunkyGrep.UI.ViewModels;
 using Prism.Validation;
 
@@ -60,7 +62,7 @@ namespace FunkyGrep.UI.Views
             if (!string.IsNullOrWhiteSpace(text))
             {
                 string directoryName = Path.GetDirectoryName(text);
-                if (Directory.Exists(directoryName ?? text))
+                if (DirectoryUtil.ExistsOrNullIfTimeout(directoryName ?? text, TimeSpan.FromSeconds(2)) ?? false)
                 {
                     subDirectories = Directory.GetDirectories(
                         directoryName ?? text,

@@ -24,7 +24,7 @@
 
 using System;
 using System.ComponentModel.DataAnnotations;
-using System.IO;
+using FunkyGrep.UI.Util;
 
 namespace FunkyGrep.UI.Validation.DataAnnotations
 {
@@ -44,12 +44,22 @@ namespace FunkyGrep.UI.Validation.DataAnnotations
 
             try
             {
-                return Directory.Exists(path)
-                    ? ValidationResult.Success
-                    : new ValidationResult("Directory doesn't exist.");
+                var result = DirectoryUtil.ExistsOrNullIfTimeout(path, TimeSpan.FromSeconds(2));
+
+                if (result == null)
+                {
+                    return new ValidationResult("Timed out accessing directory.");
+                }
+
+                return result.Value ? ValidationResult.Success : new ValidationResult("Directory doesn't exist.");
             }
             catch (Exception ex)
             {
+                if (ex is AggregateException aggregate)
+                {
+                    ex = aggregate.InnerException ?? ex;
+                }
+
                 return new ValidationResult("Cannot access directory: " + ex.Message);
             }
         }
