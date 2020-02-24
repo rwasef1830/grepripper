@@ -227,7 +227,7 @@ namespace FunkyGrep.Engine
                                 try
                                 {
                                     var bytesRead = stream.Read(byteBuffer, 0, byteBuffer.Length);
-                                    if (IsLikelyToBeBinary(byteBuffer, bytesRead))
+                                    if (this._skipBinaryFiles && IsLikelyToBeBinary(byteBuffer, bytesRead))
                                     {
                                         Interlocked.Increment(ref this._skippedCount);
                                         return;
