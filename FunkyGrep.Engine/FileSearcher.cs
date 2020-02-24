@@ -333,29 +333,50 @@ namespace FunkyGrep.Engine
 
         SearchMatch GetMatch(Capture match, string line, int lineNumber)
         {
-            int maxLeftChars = this._maxContextLength - Math.Max(1, match.Length / 2);
-            int minLeftIndex = match.Index - maxLeftChars;
+            var remainingContextCharCount = this._maxContextLength - match.Length;
 
-            if (minLeftIndex < 0)
+            string context;
+            int adjustedMatchIndex;
+
+            if (remainingContextCharCount <= 0)
             {
-                minLeftIndex = 0;
+                context = match.Value;
+                adjustedMatchIndex = 0;
             }
-
-            int contextStartIndex = Math.Max(0, minLeftIndex);
-            int contextLength = Math.Min(line.Length - contextStartIndex, this._maxContextLength);
-
-            var clampedLine = line;
-            var adjustedMatchIndex = match.Index;
-
-            if (contextStartIndex != 0 || contextLength != line.Length)
+            else
             {
-                clampedLine = line.Substring(contextStartIndex, contextLength);
-                adjustedMatchIndex -= contextStartIndex;
+                var contextStartIndex = match.Index;
+                var contextEndIndex = contextStartIndex + match.Length;
+                int remainingContextCharHalfCount = remainingContextCharCount / 2;
+                var newContextEndIndex = Math.Min(contextEndIndex + remainingContextCharHalfCount, line.Length - 1);
+                int charsAddedToContextEndIndex = newContextEndIndex - contextEndIndex;
+                contextEndIndex = newContextEndIndex;
+                remainingContextCharCount -= charsAddedToContextEndIndex;
+                var newContextStartIndex = Math.Max(0, contextStartIndex - remainingContextCharCount);
+                int charsAddedToContextStartIndex = contextStartIndex - newContextStartIndex;
+                contextStartIndex = newContextStartIndex;
+                remainingContextCharCount -= charsAddedToContextStartIndex;
+
+                if (remainingContextCharCount > 0)
+                {
+                    contextEndIndex = Math.Min(contextEndIndex + remainingContextCharCount, line.Length - 1);
+                }
+
+                if (contextStartIndex == 0 && contextEndIndex == line.Length - 1)
+                {
+                    context = line;
+                    adjustedMatchIndex = match.Index;
+                }
+                else
+                {
+                    context = line[contextStartIndex..contextEndIndex];
+                    adjustedMatchIndex = match.Index - contextStartIndex;
+                }
             }
 
             return new SearchMatch(
                 lineNumber,
-                clampedLine,
+                context,
                 adjustedMatchIndex,
                 match.Length);
         }

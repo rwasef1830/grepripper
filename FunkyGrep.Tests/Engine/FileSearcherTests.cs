@@ -143,7 +143,7 @@ namespace FunkyGrep.Tests.Engine
                 maxContextLength,
                 "A",
                 "BBBBBBBBACDEF",
-                new SearchMatch(1, "BBBBBBBBAC", 8, 1)
+                new SearchMatch(1, "BBBBBBACDE", 6, 1)
             };
 
             // Tail excess with CRLF
@@ -161,7 +161,7 @@ namespace FunkyGrep.Tests.Engine
                 maxContextLength,
                 "A",
                 "\r\nBBBBBBBBACDEF\r\n",
-                new SearchMatch(2, "BBBBBBBBAC", 8, 1)
+                new SearchMatch(2, "BBBBBBACDE", 6, 1)
             };
 
             // Match at end of line
@@ -180,6 +180,24 @@ namespace FunkyGrep.Tests.Engine
                 "ABC",
                 "\r\nABCXXXXXXX\r\n",
                 new SearchMatch(2, "ABCXXXXXXX", 0, 3)
+            };
+
+            // Context extraction around match
+            yield return new object[]
+            {
+                maxContextLength,
+                "ABC",
+                "1234567890ABC12345",
+                new SearchMatch(1, "7890ABC123", 4, 3)
+            };
+
+            // Match larger than context
+            yield return new object[]
+            {
+                maxContextLength,
+                "123456789012345",
+                "XXXXXX123456789012345XXXXXX",
+                new SearchMatch(1, "123456789012345", 0, 15)
             };
         }
 
