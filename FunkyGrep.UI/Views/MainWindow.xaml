@@ -185,19 +185,38 @@
                   HorizontalGridLinesBrush="LightGray" AlternatingRowBackground="Gainsboro" AlternationCount="2"
                   SelectionMode="Single" CanUserSortColumns="False">
             <DataGrid.Resources>
-                <ResourceDictionary>
-                    <converters:SearchResultItemToXamlConverter x:Key="SearchResultItemToXamlConverter">
-                        <converters:SearchResultItemToXamlConverter.MatchRunStyle>
-                            <Style TargetType="Run">
-                                <Setter Property="Foreground" Value="DarkRed" />
-                                <Setter Property="FontWeight" Value="Bold" />
-                            </Style>
-                        </converters:SearchResultItemToXamlConverter.MatchRunStyle>
-                    </converters:SearchResultItemToXamlConverter>
-                </ResourceDictionary>
+                <converters:SearchResultItemToXamlConverter x:Key="SearchResultItemToXamlConverter">
+                    <converters:SearchResultItemToXamlConverter.MatchRunStyle>
+                        <Style TargetType="Run">
+                            <Setter Property="Foreground" Value="DarkRed" />
+                            <Setter Property="FontWeight" Value="Bold" />
+                        </Style>
+                    </converters:SearchResultItemToXamlConverter.MatchRunStyle>
+                </converters:SearchResultItemToXamlConverter>
             </DataGrid.Resources>
             <DataGrid.Columns>
-                <DataGridTextColumn Binding="{Binding FilePath, Mode=OneTime}" Header="File" Width="*" />
+                <DataGridTemplateColumn Header="File" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate DataType="viewModels:SearchResultItem">
+                            <Label Content="{Binding FilePath}" Padding="0" Margin="0">
+                                <Label.Resources>
+                                    <Style TargetType="Label" BasedOn="{StaticResource LeftEllipsesLabelStyle}">
+                                        <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=DataGridRow}}" />
+                                        <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridRow}}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
+                                                <DataTrigger.Setters>
+                                                    <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=DataGridCell}}" />
+                                                    <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridCell}}" />
+                                                </DataTrigger.Setters>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Label.Resources>
+                            </Label>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTextColumn Binding="{Binding LineNumber, Mode=OneTime}" Header="Line" Width="50">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
@@ -216,13 +235,11 @@
             <DataGrid.ContextMenu>
                 <ContextMenu>
                     <ContextMenu.Resources>
-                        <ResourceDictionary>
-                            <Style TargetType="MenuItem">
-                                <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
-                                <Setter Property="CommandParameter" 
+                        <Style TargetType="MenuItem">
+                            <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
+                            <Setter Property="CommandParameter" 
                                         Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}},Path=PlacementTarget.SelectedItem}" />
-                            </Style>
-                        </ResourceDictionary>
+                        </Style>
                     </ContextMenu.Resources>
 
                     <MenuItem Header="_Copy">
