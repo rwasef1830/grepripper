@@ -33,6 +33,7 @@
     <Resource Include="Resources\FunkyGrep.ico" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Dirkster.NumericUpDownLib" Version="2.4.0" />
     <PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.0.77" />
     <PackageReference Include="Mono.Options" Version="6.6.0.161" />
     <PackageReference Include="MvvmDialogs" Version="7.0.0" />

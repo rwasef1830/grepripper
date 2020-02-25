@@ -15,7 +15,7 @@ namespace FunkyGrep.UI.Validation.DataAnnotations
                 return ValidationResult.Success;
             }
 
-            if (!viewModel.SearchTextIsRegex)
+            if (!viewModel.SearchPatternIsRegex)
             {
                 return ValidationResult.Success;
             }

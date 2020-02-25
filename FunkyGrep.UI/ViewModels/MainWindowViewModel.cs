@@ -51,8 +51,8 @@ namespace FunkyGrep.UI.ViewModels
         string _filePatternsSpaceSeparated;
         IReadOnlyList<string> _filePatterns;
         bool _skipBinaryFiles;
-        string _searchText;
-        bool _searchTextIsRegex;
+        string _searchPattern;
+        bool _searchPatternIsRegex;
         bool _ignoreCase;
         bool _searchIsRunning;
         SearchProgressViewModel _searchProgress;
@@ -103,19 +103,19 @@ namespace FunkyGrep.UI.ViewModels
 
         [RequiredAllowWhiteSpace]
         [PossiblyValidRegex]
-        public string SearchText
+        public string SearchPattern
         {
-            get => this._searchText;
-            set => this.SetProperty(ref this._searchText, value);
+            get => this._searchPattern;
+            set => this.SetProperty(ref this._searchPattern, value);
         }
 
-        public bool SearchTextIsRegex
+        public bool SearchPatternIsRegex
         {
-            get => this._searchTextIsRegex;
+            get => this._searchPatternIsRegex;
             set
             {
-                this.SetProperty(ref this._searchTextIsRegex, value);
-                this.RaisePropertyChanged(nameof(this.SearchText));
+                this.SetProperty(ref this._searchPatternIsRegex, value);
+                this.RaisePropertyChanged(nameof(this.SearchPattern));
             }
         }
 
@@ -208,7 +208,7 @@ namespace FunkyGrep.UI.ViewModels
             this.IncludeSubDirectories = true;
             this.FilePatternsSpaceSeparated = "*";
             this.SkipBinaryFiles = true;
-            this.SearchTextIsRegex = true;
+            this.SearchPatternIsRegex = true;
             this.SearchResults = new ObservableCollection<SearchResultItem>();
             this.SearchResultsLocker = new object();
         }
@@ -297,8 +297,8 @@ namespace FunkyGrep.UI.ViewModels
                 this.SearchIsRunning = true;
 
                 var patternSpec = new PatternSpecification(
-                    this.SearchText,
-                    this.SearchTextIsRegex,
+                    this.SearchPattern,
+                    this.SearchPatternIsRegex,
                     this.IgnoreCase);
 
                 var fileSpec = new FileSpecification(
