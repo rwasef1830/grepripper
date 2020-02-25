@@ -227,7 +227,8 @@
                 <DataGridTemplateColumn Header="Text" Width="*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate DataType="viewModels:SearchResultItem">
-                            <ContentControl Content="{Binding Mode=OneTime, Converter={StaticResource SearchResultItemToXamlConverter}}" />
+                            <ContentControl Content="{Binding Mode=OneTime, Converter={StaticResource SearchResultItemToXamlConverter}}" 
+                                            FontFamily="Cascadia Code, Fira Code, PragmataPro Mono, Source Code Pro, JetBrains Mono, Consolas, Courier New" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
