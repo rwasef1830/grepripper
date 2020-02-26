@@ -6,9 +6,10 @@
         xmlns:mvvm="http://prismlibrary.com/"
         xmlns:viewModels="clr-namespace:FunkyGrep.UI.ViewModels"
         xmlns:md="https://github.com/fantasticfiasco/mvvm-dialogs"
-        xmlns:controls="clr-namespace:System.Windows.Controls;assembly=DotNetProjects.Input.Toolkit"
+        xmlns:toolkit="clr-namespace:System.Windows.Controls;assembly=DotNetProjects.Input.Toolkit"
         xmlns:ui="clr-namespace:FunkyGrep.UI"
         xmlns:converters="clr-namespace:FunkyGrep.UI.Converters"
+        xmlns:numericUpDownLib="clr-namespace:NumericUpDownLib;assembly=NumericUpDownLib"
         mvvm:ViewModelLocator.AutoWireViewModel="True"
         mc:Ignorable="d"
         Title="{Binding Source={x:Static ui:App.Version}, StringFormat=FunkyGrep {0}}"
@@ -23,7 +24,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="70" />
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="150" />
+            <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -49,7 +50,7 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <controls:AutoCompleteBox Grid.Row="0" Grid.Column="0" Width="Auto" 
+            <toolkit:AutoCompleteBox Grid.Row="0" Grid.Column="0" Width="Auto" 
                                       Populating="HandleDirectoryAutoCompleteBoxPopulating"
                                       Text="{Binding Directory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                       IsEnabled="{Binding SearchIsNotRunning}"
@@ -69,14 +70,27 @@
         </StackPanel>
 
         <Label Grid.Row="2" Grid.Column="0" Content="_Pattern" Target="{Binding ElementName=TextBoxSearchPattern}" />
-        <TextBox Grid.Row="2" Grid.Column="1" Width="Auto" Text="{Binding SearchPattern, UpdateSourceTrigger=PropertyChanged}" 
-                 IsEnabled="{Binding SearchIsNotRunning}" x:Name="TextBoxSearchPattern" />
-        <StackPanel Grid.Row="2" Grid.Column="2" Orientation="Horizontal">
-            <CheckBox Content="_Regex" VerticalAlignment="Center" Margin="5, 0, 5, 0" IsChecked="{Binding SearchPatternIsRegex}" 
-                      IsEnabled="{Binding SearchIsNotRunning}" />
-            <CheckBox Content="Ignore _Case" VerticalAlignment="Center" IsChecked="{Binding IgnoreCase}"
-                      IsEnabled="{Binding SearchIsNotRunning}" />
-        </StackPanel>
+        <Grid Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Row="0" Grid.Column="0" Width="Auto" Text="{Binding SearchPattern, UpdateSourceTrigger=PropertyChanged}" 
+                     IsEnabled="{Binding SearchIsNotRunning}" x:Name="TextBoxSearchPattern" />
+            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="5, 0, 0, 0">
+                <CheckBox Content="_Regex"  Margin="0, 0, 5, 0" IsChecked="{Binding SearchPatternIsRegex}" VerticalAlignment="Center"
+                          IsEnabled="{Binding SearchIsNotRunning}" />
+                <CheckBox Content="Ignore _Case" IsChecked="{Binding IgnoreCase}" VerticalAlignment="Center"
+                          IsEnabled="{Binding SearchIsNotRunning}" />
+                <Label Content="Context _Lines" Target="{Binding ElementName=ByteUpDownContextLineCount}" VerticalAlignment="Center"
+                       Padding="5, 0, 5, 0" />
+                <numericUpDownLib:ByteUpDown MaxValue="255" MinValue="0"
+                                             Value="{Binding ContextLineCount, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                                             IsEnabled="{Binding SearchIsNotRunning}"
+                                             x:Name="ByteUpDownContextLineCount"
+                                             VerticalAlignment="Center" />
+            </StackPanel>
+        </Grid>
 
         <Grid Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="0, 5, 0, 5">
             <Grid.ColumnDefinitions>
@@ -217,10 +231,11 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Binding="{Binding LineNumber, Mode=OneTime}" Header="Line" Width="50">
+                <DataGridTextColumn Binding="{Binding Match.LineNumber, Mode=OneTime}" Header="Line" Width="50">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="HorizontalAlignment" Value="Right" />
+                            <Setter Property="VerticalAlignment" Value="Center" />
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>

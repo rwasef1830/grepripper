@@ -30,28 +30,17 @@ namespace FunkyGrep.UI.ViewModels
     public class SearchResultItem
     {
         public string FilePath { get; }
-        public int LineNumber { get; }
-        public string Line { get; }
-        public int MatchIndex { get; }
-        public int MatchLength { get; }
+        public SearchMatch Match { get; }
 
-        public SearchResultItem(string filePath, SearchMatch searchMatch)
+        public SearchResultItem(string filePath, SearchMatch match)
         {
             if (string.IsNullOrWhiteSpace(filePath))
             {
                 throw new ArgumentException("Value cannot be null or whitespace.", nameof(filePath));
             }
 
-            if (searchMatch == null)
-            {
-                throw new ArgumentNullException(nameof(searchMatch));
-            }
-
             this.FilePath = filePath;
-            this.LineNumber = searchMatch.Number;
-            this.Line = searchMatch.Text;
-            this.MatchIndex = searchMatch.MatchIndex;
-            this.MatchLength = searchMatch.MatchLength;
+            this.Match = match ?? throw new ArgumentNullException(nameof(match));
         }
     }
 }

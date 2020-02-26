@@ -54,6 +54,7 @@ namespace FunkyGrep.UI.ViewModels
         string _searchPattern;
         bool _searchPatternIsRegex;
         bool _ignoreCase;
+        byte _contextLineCount;
         bool _searchIsRunning;
         SearchProgressViewModel _searchProgress;
         bool? _lastSearchCompleted;
@@ -123,6 +124,13 @@ namespace FunkyGrep.UI.ViewModels
         {
             get => this._ignoreCase;
             set => this.SetProperty(ref this._ignoreCase, value);
+        }
+
+        [Range(0, 255)]
+        public byte ContextLineCount
+        {
+            get => this._contextLineCount;
+            set => this.SetProperty(ref this._contextLineCount, value);
         }
 
         public SearchProgressViewModel SearchProgress
@@ -209,6 +217,7 @@ namespace FunkyGrep.UI.ViewModels
             this.FilePatternsSpaceSeparated = "*";
             this.SkipBinaryFiles = true;
             this.SearchPatternIsRegex = true;
+            this.ContextLineCount = 0;
             this.SearchResults = new ObservableCollection<SearchResultItem>();
             this.SearchResultsLocker = new object();
         }
@@ -259,7 +268,7 @@ namespace FunkyGrep.UI.ViewModels
                 return;
             }
 
-            this._clipboardService.SetText(item.LineNumber.ToString());
+            this._clipboardService.SetText(item.Match.LineNumber.ToString());
         }
 
         void OpenFileInEditor(SearchResultItem item)
@@ -315,24 +324,24 @@ namespace FunkyGrep.UI.ViewModels
                 this._searcher = new FileSearcher(
                     patternSpec.Expression,
                     fileSpec.EnumerateFiles(),
-                    this.SkipBinaryFiles);
+                    this.SkipBinaryFiles,
+                    this.ContextLineCount);
 
                 this._searcher.MatchFound += (_, args) =>
                 {
                     int basenameLength = this.Directory.Length;
 
-                    if (!this.Directory.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                    if (this.Directory[^1] != Path.DirectorySeparatorChar)
                     {
                         basenameLength++;
                     }
 
                     lock (this.SearchResultsLocker)
                     {
-                        foreach (var line in args.Matches)
+                        string relativePath = args.FilePath.Substring(basenameLength);
+                        foreach (var match in args.Matches)
                         {
-                            var localLine = line;
-                            string relativePath = args.FilePath.Substring(basenameLength);
-                            this.SearchResults.Add(new SearchResultItem(relativePath, localLine));
+                            this.SearchResults.Add(new SearchResultItem(relativePath, match));
                         }
                     }
                 };

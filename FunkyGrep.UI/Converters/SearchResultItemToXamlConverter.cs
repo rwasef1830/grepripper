@@ -65,14 +65,29 @@ namespace FunkyGrep.UI.Converters
         {
             if (!(value is SearchResultItem item))
             {
-                throw new ArgumentException("Invalid value type.");
+                return null;
             }
 
             var textBlock = new TextBlock();
 
-            if (item.MatchIndex > 0)
+            var match = item.Match;
+
+            if (match.PreMatchLines != null && match.PreMatchLines.Count > 0)
             {
-                var contextBeforeText = item.Line.Substring(0, item.MatchIndex);
+                foreach (var preMatchLine in match.PreMatchLines)
+                {
+                    var preMatchLineRun = new Run(preMatchLine)
+                    {
+                        Style = this.ContextRunStyle
+                    };
+                    textBlock.Inlines.Add(preMatchLineRun);
+                    textBlock.Inlines.Add(new LineBreak());
+                }
+            }
+
+            if (match.MatchIndex > 0)
+            {
+                var contextBeforeText = match.Line.Substring(0, match.MatchIndex);
                 var contextBeforeRun = new Run(contextBeforeText)
                 {
                     Style = this.ContextRunStyle
@@ -80,23 +95,36 @@ namespace FunkyGrep.UI.Converters
                 textBlock.Inlines.Add(contextBeforeRun);
             }
 
-            var matchText = item.Line.Substring(item.MatchIndex, item.MatchLength);
+            var matchText = match.Line.Substring(match.MatchIndex, match.MatchLength);
             var matchRun = new Run(matchText)
             {
                 Style = this.MatchRunStyle
             };
             textBlock.Inlines.Add(matchRun);
 
-            var contextAfterLength = item.Line.Length - item.MatchIndex - item.MatchLength;
+            var contextAfterLength = match.Line.Length - match.MatchIndex - match.MatchLength;
             if (contextAfterLength > 0)
             {
-                var contextAfterText = item.Line.Substring(item.MatchIndex + item.MatchLength, contextAfterLength);
+                var contextAfterText = match.Line.Substring(match.MatchIndex + match.MatchLength, contextAfterLength);
                 var contextAfterRun = new Run(
                     contextAfterText)
                 {
                     Style = this.ContextRunStyle
                 };
                 textBlock.Inlines.Add(contextAfterRun);
+            }
+
+            if (match.PostMatchLines != null && match.PostMatchLines.Count > 0)
+            {
+                foreach (var postMatchLine in match.PostMatchLines)
+                {
+                    textBlock.Inlines.Add(new LineBreak());
+                    var postMatchLineRun = new Run(postMatchLine)
+                    {
+                        Style = this.ContextRunStyle
+                    };
+                    textBlock.Inlines.Add(postMatchLineRun);
+                }
             }
 
             return textBlock;

@@ -23,24 +23,38 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 
 namespace FunkyGrep.Engine
 {
     public class SearchMatch
     {
-        public int Number { get; }
-        public string Text { get; }
+        public int LineNumber { get; }
+        public IReadOnlyList<string> PreMatchLines { get; }
+        public string Line { get; }
+        public IReadOnlyList<string> PostMatchLines { get; }
         public int MatchIndex { get; }
         public int MatchLength { get; }
 
-        public SearchMatch(int number, string text, int matchIndex, int matchLength)
+        public SearchMatch(
+            int matchedLineNumber,
+            string matchedLine,
+            int matchIndex,
+            int matchLength,
+            IReadOnlyList<string> preMatchLines,
+            IReadOnlyList<string> postMatchLines)
         {
-            if (number <= 0) throw new ArgumentOutOfRangeException(nameof(number));
+            if (matchedLineNumber <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(matchedLineNumber));
+            }
 
-            this.Number = number;
-            this.Text = text ?? string.Empty;
+            this.LineNumber = matchedLineNumber;
+            this.Line = matchedLine ?? string.Empty;
             this.MatchIndex = matchIndex;
             this.MatchLength = matchLength;
+            this.PreMatchLines = preMatchLines;
+            this.PostMatchLines = postMatchLines;
         }
     }
 }

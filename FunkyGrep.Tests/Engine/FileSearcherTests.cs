@@ -49,7 +49,8 @@ namespace FunkyGrep.Tests.Engine
             var fileSearcher = new FileSearcher(
                 new Regex("speedy", RegexOptions.None),
                 dataSources, 
-                false);
+                false,
+                0);
 
             bool matchFoundFired = false;
             Exception assertionException = null;
@@ -63,8 +64,8 @@ namespace FunkyGrep.Tests.Engine
                     {
                         args.FilePath.Should().Be(fileName);
                         args.Matches.Count().Should().Be(1);
-                        args.Matches.First().Number.Should().Be(1);
-                        args.Matches.First().Text.Should().Be(fileContent);
+                        args.Matches.First().LineNumber.Should().Be(1);
+                        args.Matches.First().Line.Should().Be(fileContent);
                     }
                     catch (Exception ex)
                     {
@@ -85,120 +86,159 @@ namespace FunkyGrep.Tests.Engine
             completedFired.Should().BeTrue("Completion event should have fired.");
         }
 
-        [Theory]
-        [MemberData(nameof(LongLinesClampTestSource))]
-        public void Long_lines_in_results_are_clamped_properly_around_match(
-            int contextLength, 
-            string searchPattern, 
-            string textToSearch, 
-            SearchMatch expectedResult)
+        public class MatchesWithLongLinesTests
         {
-            IEnumerable<IDataSource> dataSources = MakeDataSourceList(textToSearch);
-            var searcher = new FileSearcher(
-                new Regex(Regex.Escape(searchPattern)),
-                dataSources,
-                false,
-                contextLength);
+            const int c_MaxContextLength = 10;
 
-            bool eventWasFired = false;
-            Exception failedAssertion = null;
-
-            searcher.MatchFound +=
-                (sender, args) =>
-                {
-                    try
-                    {
-                        eventWasFired = true;
-                        args.Matches.First().Should().BeEquivalentTo(expectedResult);
-                    }
-                    catch (Exception ex)
-                    {
-                        failedAssertion = ex;
-                    }
-                };
-
-            searcher.Begin();
-            searcher.Wait();
-
-            eventWasFired.Should().BeTrue();
-            failedAssertion.Should().BeNull();
-        }
-
-        public static IEnumerable<object[]> LongLinesClampTestSource()
-        {
-            const int maxContextLength = 10;
-
-            // Tail excess no CRLF
-            yield return new object[]
+            [Fact]
+            public void Tail_excess_single_line()
             {
-                maxContextLength,
-                "A",
-                "ABBBBBBBBCDEF",
-                new SearchMatch(1, "ABBBBBBBBC", 0, 1)
-            };
+                this.DoTest(
+                    "A",
+                    "ABBBBBBBBCDEF",
+                    0,
+                    new SearchMatch(1, "ABBBBBBBBC", 0, 1, null, null));
+            }
 
-            // Head excess no CRLF
-            yield return new object[]
+            [Fact]
+            public void Head_excess_single_line()
             {
-                maxContextLength,
-                "A",
-                "BBBBBBBBACDEF",
-                new SearchMatch(1, "BBBBBBACDE", 6, 1)
-            };
+                this.DoTest(
+                    "A",
+                    "BBBBBBBBACDEF",
+                    0,
+                    new SearchMatch(1, "BBBBBBACDE", 6, 1, null, null));
+            }
 
-            // Tail excess with CRLF
-            yield return new object[]
+            [Fact]
+            public void Tail_excess_multiple_lines()
             {
-                maxContextLength,
-                "A",
-                "\r\nABBBBBBBBCDEF\r\n",
-                new SearchMatch(2, "ABBBBBBBBC", 0, 1)
-            };
+                this.DoTest(
+                    "A",
+                    "\r\nABBBBBBBBCDEF\r\n",
+                    0,
+                    new SearchMatch(2, "ABBBBBBBBC", 0, 1, null, null));
+            }
 
-            // Head excess with CRLF
-            yield return new object[]
+            [Fact]
+            public void Head_excess_multiple_lines()
             {
-                maxContextLength,
-                "A",
-                "\r\nBBBBBBBBACDEF\r\n",
-                new SearchMatch(2, "BBBBBBACDE", 6, 1)
-            };
+                this.DoTest(
+                    "A",
+                    "\r\nBBBBBBBBACDEF\r\n",
+                    0,
+                    new SearchMatch(2, "BBBBBBACDE", 6, 1, null, null));
+            }
 
-            // Match at end of line
-            yield return new object[]
+            [Fact]
+            public void Match_at_end_of_line()
             {
-                maxContextLength,
-                "ABC",
-                "\r\nXXXXXXXABC\r\n",
-                new SearchMatch(2, "XXXXXXXABC", 7, 3)
-            };
+                this.DoTest(
+                    "ABC",
+                    "\r\nXXXXXXXABC\r\n",
+                    0,
+                    new SearchMatch(2, "XXXXXXXABC", 7, 3, null, null));
+            }
 
-            // Match at the beginning of line
-            yield return new object[]
+            [Fact]
+            public void Match_at_start_of_line()
             {
-                maxContextLength,
-                "ABC",
-                "\r\nABCXXXXXXX\r\n",
-                new SearchMatch(2, "ABCXXXXXXX", 0, 3)
-            };
+                this.DoTest(
+                    "ABC",
+                    "\r\nABCXXXXXXX\r\n",
+                    0,
+                    new SearchMatch(2, "ABCXXXXXXX", 0, 3, null, null));
+            }
 
-            // Context extraction around match
-            yield return new object[]
+            [Fact]
+            public void Context_extraction_around_match()
             {
-                maxContextLength,
-                "ABC",
-                "1234567890ABC12345",
-                new SearchMatch(1, "7890ABC123", 4, 3)
-            };
+                this.DoTest(
+                    "ABC",
+                    "1234567890ABC12345",
+                    0,
+                    new SearchMatch(1, "7890ABC123", 4, 3, null, null));
+            }
 
-            // Match larger than context
-            yield return new object[]
+            [Fact]
+            public void Match_larger_than_context_clamp_limit()
             {
-                maxContextLength,
-                "123456789012345",
-                "XXXXXX123456789012345XXXXXX",
-                new SearchMatch(1, "123456789012345", 0, 15)
-            };
+                this.DoTest(
+                    "123456789012345",
+                    "XXXXXX123456789012345XXXXXX",
+                    0,
+                    new SearchMatch(1, "123456789012345", 0, 15, null, null));
+            }
+
+            [Fact]
+            public void Context_lines_should_be_clamped()
+            {
+                this.DoTest(
+                    "ABC",
+                    "12345ABC9012345\r\n!!!!!!!!!!!ABC!!!!!!!!!\r\n______ABC_______\r\nXXXXXXABCX\r\nXXXXXXXXXXXXXABC",
+                    2,
+                    new SearchMatch(
+                        1,
+                        "2345ABC901",
+                        4,
+                        3,
+                        null,
+                        new[] { "!!!!!!!!!!", "______ABC_" }),
+                    new SearchMatch(
+                        2,
+                        "!!!!ABC!!!",
+                        4,
+                        3,
+                        new[] { "12345ABC90" },
+                        new[] { "______ABC_", "XXXXXXABCX" }),
+                    new SearchMatch(
+                        3,
+                        "____ABC___",
+                        4,
+                        3,
+                        new[] { "12345ABC90", "!!!!!!!!!!" },
+                        new[] { "XXXXXXABCX", "XXXXXXXXXX" }),
+                    new SearchMatch(
+                        4,
+                        "XXXXXXABCX",
+                        6,
+                        3,
+                        new[] { "!!!!!!!!!!", "______ABC_" },
+                        new[] { "XXXXXXXXXX" }),
+                    new SearchMatch(
+                        5,
+                        "XXXXXXXABC",
+                        7,
+                        3,
+                        new[] { "______ABC_", "XXXXXXABCX" },
+                        null));
+            }
+
+            void DoTest(
+                string searchPattern,
+                string textToSearch,
+                int contextLineCount,
+                params SearchMatch[] expectedResults)
+            {
+                IEnumerable<IDataSource> dataSources = MakeDataSourceList(textToSearch);
+                var searcher = new FileSearcher(
+                    new Regex(Regex.Escape(searchPattern)),
+                    dataSources,
+                    false,
+                    contextLineCount,
+                    c_MaxContextLength);
+
+                using var monitor = searcher.Monitor();
+                searcher.Begin();
+                searcher.Wait();
+                monitor.OccurredEvents.Should()
+                    .Contain(x => x.EventName == nameof(searcher.MatchFound))
+                    .Which.Parameters[1].Should().BeOfType<MatchFoundEventArgs>()
+                    .Which.Matches.Should()
+                    .SatisfyRespectively(
+                        expectedResults.Select<SearchMatch, Action<SearchMatch>>(
+                            e => m => m.Should().BeEquivalentTo(e)));
+            }
         }
 
         /// <summary>

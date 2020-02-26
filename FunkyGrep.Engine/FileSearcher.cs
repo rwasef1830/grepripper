@@ -30,6 +30,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using FunkyGrep.Engine.Collections;
 
 namespace FunkyGrep.Engine
 {
@@ -40,9 +41,10 @@ namespace FunkyGrep.Engine
 
         readonly CancellationTokenSource _cancelSrc;
 
+        readonly Regex _expression;
         readonly IEnumerable<IDataSource> _dataSources;
         readonly bool _skipBinaryFiles;
-        readonly ThreadLocal<Regex> _threadLocalRegex;
+        readonly int _contextLineCount;
 
         readonly object _locker = new object();
         readonly int _maxContextLength;
@@ -59,13 +61,23 @@ namespace FunkyGrep.Engine
             Regex expression,
             IEnumerable<IDataSource> dataSources,
             bool skipBinaryFiles,
+            int contextLineCount,
             int maxContextLength = DefaultMaxContextLength)
         {
-            if (expression == null) throw new ArgumentNullException(nameof(expression));
+            if (contextLineCount < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(contextLineCount));
+            }
 
+            if (maxContextLength <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxContextLength));
+            }
+
+            this._expression = expression ?? throw new ArgumentNullException(nameof(expression));
             this._dataSources = dataSources ?? throw new ArgumentNullException(nameof(dataSources));
             this._skipBinaryFiles = skipBinaryFiles;
-            this._threadLocalRegex = new ThreadLocal<Regex>(() => new Regex(expression.ToString(), expression.Options));
+            this._contextLineCount = contextLineCount;
             this._maxContextLength = maxContextLength;
 
             this._cancelSrc = new CancellationTokenSource();
@@ -92,7 +104,7 @@ namespace FunkyGrep.Engine
 
                         try
                         {
-                            _ = this.DoSearch(this._cancelSrc.Token);
+                            this.DoSearch(this._cancelSrc.Token);
                         }
                         catch (OperationCanceledException) { }
                         catch (Exception ex)
@@ -197,98 +209,142 @@ namespace FunkyGrep.Engine
             }
         }
 
-        ParallelLoopResult DoSearch(CancellationToken token)
+        void DoSearch(CancellationToken token)
         {
-            var byteArrayPool = ArrayPool<byte>.Shared;
-
-            try
-            {
-                return Parallel.ForEach(
-                    this._dataSources,
-                    new ParallelOptions { CancellationToken = token },
-                    (dataSource, loopState, i) =>
+            Parallel.ForEach(
+                this._dataSources,
+                new ParallelOptions { CancellationToken = token },
+                () => new Regex(this._expression.ToString(), this._expression.Options),
+                (dataSource, loopState, _, regex) =>
+                {
+                    try
                     {
-                        try
-                        {
-                            var length = dataSource.GetLength();
+                        var byteArrayPool = ArrayPool<byte>.Shared;
 
-                            if (length > MaxFileSize || length == 0)
+                        var length = dataSource.GetLength();
+                        if (length > MaxFileSize || length == 0)
+                        {
+                            return regex;
+                        }
+
+                        token.ThrowIfCancellationRequested();
+                        List<SearchMatch> foundMatches = null;
+
+                        using (var stream = dataSource.OpenRead())
+                        {
+                            var byteBuffer = byteArrayPool.Rent(4096);
+                            try
                             {
-                                return;
+                                var bytesRead = stream.Read(byteBuffer, 0, byteBuffer.Length);
+                                if (this._skipBinaryFiles && IsLikelyToBeBinary(byteBuffer, bytesRead))
+                                {
+                                    Interlocked.Increment(ref this._skippedCount);
+                                    return regex;
+                                }
+                            }
+                            finally
+                            {
+                                byteArrayPool.Return(byteBuffer);
                             }
 
-                            token.ThrowIfCancellationRequested();
+                            stream.Seek(0, SeekOrigin.Begin);
 
-                            var matches = new List<SearchMatch>();
+                            using var reader = new StreamReader(stream, true);
 
-                            using (var stream = dataSource.OpenRead())
+                            var lineBuffer = new CircularBuffer<string>(this._contextLineCount * 2 + 1);
+                            var postMatchLineCount = 0;
+                            var readLineCount = 0;
+                            string lastReadLine;
+
+                            // At the beginning of the file, there are no pre-match lines
+                            for (int i = 0; i < this._contextLineCount; i++)
                             {
-                                var byteBuffer = byteArrayPool.Rent(4096);
-                                try
+                                lineBuffer.PushBack(null);
+                            }
+
+                            // Read first line and post-match lines
+                            var readFirstLine = false;
+                            do
+                            {
+                                lastReadLine = reader.ReadLine();
+                                token.ThrowIfCancellationRequested();
+
+                                if (lastReadLine == null)
                                 {
-                                    var bytesRead = stream.Read(byteBuffer, 0, byteBuffer.Length);
-                                    if (this._skipBinaryFiles && IsLikelyToBeBinary(byteBuffer, bytesRead))
-                                    {
-                                        Interlocked.Increment(ref this._skippedCount);
-                                        return;
-                                    }
+                                    break;
                                 }
-                                finally
+
+                                if (!readFirstLine)
                                 {
-                                    byteArrayPool.Return(byteBuffer);
+                                    readFirstLine = true;
+                                }
+                                else
+                                {
+                                    postMatchLineCount++;
                                 }
 
-                                stream.Seek(0, SeekOrigin.Begin);
+                                readLineCount++;
+                                lineBuffer.PushBack(lastReadLine);
+                            }
+                            while (!lineBuffer.IsFull);
 
-                                using var reader = new StreamReader(stream, true);
+                            Debug.Assert(lastReadLine == null != lineBuffer.IsFull);
 
-                                int lineNumber = 1;
-                                for (string line = reader.ReadLine();
-                                    line != null;
-                                    line = reader.ReadLine(), lineNumber++)
+                            for (string currentLine = lineBuffer[this._contextLineCount];
+                                currentLine != null;
+                                lastReadLine = reader.ReadLine(),
+                                readLineCount += lastReadLine == null ? 0 : 1,
+                                postMatchLineCount -= postMatchLineCount > 0 && lastReadLine == null ? 1 : 0,
+                                lineBuffer.PushBack(lastReadLine),
+                                currentLine = lineBuffer[this._contextLineCount])
+                            {
+                                // ReSharper disable once AccessToDisposedClosure - Dispose happens after all parallel iteration callbacks are done.
+                                var regexMatches = regex.Matches(currentLine);
+                                foreach (Match regexMatch in regexMatches)
                                 {
-                                    // ReSharper disable once AccessToDisposedClosure - Dispose happens after lambda is called.
-                                    var regexMatches = this._threadLocalRegex.Value.Matches(line);
-                                    if (regexMatches.Count == 0)
+                                    if (!regexMatch.Success)
                                     {
                                         continue;
                                     }
 
-                                    foreach (Match match in regexMatches)
-                                    {
-                                        if (!match.Success)
-                                        {
-                                            continue;
-                                        }
+                                    var match = this.GetMatch(
+                                        regexMatch,
+                                        lineBuffer,
+                                        readLineCount - postMatchLineCount);
 
-                                        var lastMatchedLine = this.GetMatch(match, line, lineNumber);
-                                        matches.Add(lastMatchedLine);
+                                    if (foundMatches == null)
+                                    {
+                                        foundMatches = new List<SearchMatch>();
                                     }
 
-                                    token.ThrowIfCancellationRequested();
+                                    foundMatches.Add(match);
                                 }
                             }
+                        }
 
-                            this.MatchFound?.Invoke(this, new MatchFoundEventArgs(dataSource.Identifier, matches));
-                        }
-                        catch (Exception ex)
+                        if (foundMatches != null && foundMatches.Count > 0)
                         {
-                            Debug.WriteLine(ex);
-                            Interlocked.Increment(ref this._failedCount);
+                            this.MatchFound?.Invoke(
+                                this,
+                                new MatchFoundEventArgs(dataSource.Identifier, foundMatches));
                         }
-                        finally
-                        {
-                            Interlocked.Increment(ref this._doneCount);
-                        }
-                    });
-            }
-            finally
-            {
-                this._threadLocalRegex.Dispose();
-            }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine(ex);
+                        Interlocked.Increment(ref this._failedCount);
+                    }
+                    finally
+                    {
+                        Interlocked.Increment(ref this._doneCount);
+                    }
+
+                    return regex;
+                },
+                _ => { });
         }
 
-        static bool IsLikelyToBeBinary(byte[] byteBuffer, int bytesRead)
+        static bool IsLikelyToBeBinary(IReadOnlyList<byte> byteBuffer, int bytesRead)
         {
             var nullCount = 0;
             var twoConsecutiveNullsFound = false;
@@ -331,8 +387,9 @@ namespace FunkyGrep.Engine
             return twoConsecutiveNullsFound && nullCount > 2;
         }
 
-        SearchMatch GetMatch(Capture match, string line, int lineNumber)
+        SearchMatch GetMatch(Capture match, CircularBuffer<string> lineBuffer, int matchLineNumber)
         {
+            string line = lineBuffer[this._contextLineCount];
             var remainingContextCharCount = this._maxContextLength - match.Length;
 
             string context;
@@ -346,7 +403,7 @@ namespace FunkyGrep.Engine
             else
             {
                 var contextStartIndex = match.Index;
-                var contextEndIndex = contextStartIndex + match.Length;
+                var contextEndIndex = contextStartIndex + match.Length - 1;
                 int remainingContextCharHalfCount = remainingContextCharCount / 2;
                 var newContextEndIndex = Math.Min(contextEndIndex + remainingContextCharHalfCount, line.Length - 1);
                 int charsAddedToContextEndIndex = newContextEndIndex - contextEndIndex;
@@ -369,42 +426,49 @@ namespace FunkyGrep.Engine
                 }
                 else
                 {
-                    context = line[contextStartIndex..contextEndIndex];
+                    context = line[contextStartIndex..(contextEndIndex + 1)];
                     adjustedMatchIndex = match.Index - contextStartIndex;
                 }
             }
 
-            return new SearchMatch(
-                lineNumber,
-                context,
-                adjustedMatchIndex,
-                match.Length);
-        }
+            List<string> preMatchLines = null;
+            List<string> postMatchLines = null;
 
-        static int GetLineNumber(string text, int position)
-        {
-            int lineNumber = 1;
-
-            for (int i = 0; i <= position - 1; i++)
+            void CaptureContextLines(int startIndex, ref List<string> targetLines)
             {
-                if (text[i] == '\r')
+                for (int i = startIndex; i < startIndex + this._contextLineCount; i++)
                 {
-                    if (i + 1 <= position - 1 && text[i + 1] == '\n')
+                    var contextLine = lineBuffer[i];
+
+                    if (contextLine == null)
                     {
-                        i++;
+                        continue;
                     }
 
-                    lineNumber++;
-                    continue;
-                }
+                    if (targetLines == null)
+                    {
+                        targetLines = new List<string>(this._contextLineCount);
+                    }
 
-                if (text[i] == '\n')
-                {
-                    lineNumber++;
+                    if (contextLine.Length > this._maxContextLength)
+                    {
+                        contextLine = contextLine.Substring(0, this._maxContextLength);
+                    }
+
+                    targetLines.Add(contextLine);
                 }
             }
 
-            return lineNumber;
+            CaptureContextLines(0, ref preMatchLines);
+            CaptureContextLines(this._contextLineCount + 1, ref postMatchLines);
+
+            return new SearchMatch(
+                matchLineNumber,
+                context,
+                adjustedMatchIndex,
+                match.Length,
+                preMatchLines,
+                postMatchLines);
         }
     }
 }
