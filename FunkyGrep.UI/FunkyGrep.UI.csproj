@@ -47,8 +47,5 @@
   <ItemGroup>
     <Page Include="App.xaml" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Infrastructure\" />
-  </ItemGroup>
   <Import Project="..\Build\Version.xml" />
 </Project>
