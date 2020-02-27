@@ -182,7 +182,9 @@ namespace FunkyGrep.UI.ViewModels
 
         public ICommand AbortSearchCommand { get; }
 
-        public ICommand CopyFilePathToClipboardCommand { get; }
+        public ICommand CopyAbsoluteFilePathToClipboardCommand { get; }
+
+        public ICommand CopyRelativeFilePathToClipboardCommand { get; }
 
         public ICommand CopyFileToClipboardCommand { get; }
 
@@ -205,7 +207,10 @@ namespace FunkyGrep.UI.ViewModels
 
             this.RunSearchCommand = new DelegateCommand(this.RunSearch);
             this.AbortSearchCommand = new DelegateCommand(this.AbortSearch);
-            this.CopyFilePathToClipboardCommand = new DelegateCommand<SearchResultItem>(this.CopyFilePathToClipboard);
+            this.CopyAbsoluteFilePathToClipboardCommand =
+                new DelegateCommand<SearchResultItem>(this.CopyAbsoluteFilePathToClipboard);
+            this.CopyRelativeFilePathToClipboardCommand =
+                new DelegateCommand<SearchResultItem>(this.CopyRelativeFilePathToClipboard);
             this.CopyFileToClipboardCommand = new DelegateCommand<SearchResultItem>(this.CopyFileToClipboard);
             this.CopyLineNumberToClipboardCommand =
                 new DelegateCommand<SearchResultItem>(this.CopyLineNumberToClipboard);
@@ -238,7 +243,7 @@ namespace FunkyGrep.UI.ViewModels
             }
         }
 
-        void CopyFilePathToClipboard(SearchResultItem item)
+        void CopyAbsoluteFilePathToClipboard(SearchResultItem item)
         {
             if (item == null)
             {
@@ -246,6 +251,17 @@ namespace FunkyGrep.UI.ViewModels
             }
 
             var itemFilePath = item.AbsoluteFilePath;
+            this._clipboardService.SetText(itemFilePath);
+        }
+
+        void CopyRelativeFilePathToClipboard(SearchResultItem item)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            var itemFilePath = item.RelativeFilePath;
             this._clipboardService.SetText(itemFilePath);
         }
 

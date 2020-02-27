@@ -229,7 +229,8 @@
                                             </ContextMenu.Resources>
 
                                             <MenuItem Header="_Copy">
-                                                <MenuItem Header="_Path" Command="{Binding CopyFilePathToClipboardCommand}" />
+                                                <MenuItem Header="Absolute _Path" Command="{Binding CopyAbsoluteFilePathToClipboardCommand}" />
+                                                <MenuItem Header="_Relative Path" Command="{Binding CopyRelativeFilePathToClipboardCommand}" />
                                                 <MenuItem Header="_File" Command="{Binding CopyFileToClipboardCommand}" />
                                                 <MenuItem Header="_Line Number" Command="{Binding CopyLineNumberToClipboardCommand}" />
                                             </MenuItem>
