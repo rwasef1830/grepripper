@@ -4,6 +4,7 @@
     <TargetFramework>netcoreapp31</TargetFramework>
     <ApplicationIcon>Resources\FunkyGrep.ico</ApplicationIcon>
     <UseWPF>True</UseWPF>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Update="Properties\Resources.resx">

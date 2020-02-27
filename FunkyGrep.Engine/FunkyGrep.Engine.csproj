@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netcoreapp31</TargetFramework>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
   
   <Import Project="..\Build\Version.xml" />
