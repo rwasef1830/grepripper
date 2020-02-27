@@ -92,5 +92,14 @@ namespace FunkyGrep.UI.Views
                 e.Handled = true;
             }
         }
+
+        void HandleDataGridRowPreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            var row = (DataGridRow)sender;
+            DragDrop.DoDragDrop(
+                row,
+                new DataObject(DataFormats.FileDrop, new[] { ((SearchResultItem)row.Item).AbsoluteFilePath }),
+                DragDropEffects.All);
+        }
     }
 }

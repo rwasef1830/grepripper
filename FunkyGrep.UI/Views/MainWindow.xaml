@@ -243,6 +243,9 @@
                         </Trigger>
                     </Style.Triggers>
                 </Style>
+                <Style TargetType="DataGridRow">
+                    <EventSetter Event="PreviewMouseDown" Handler="HandleDataGridRowPreviewMouseDown" />
+                </Style>
             </DataGrid.Resources>
             <DataGrid.Columns>
                 <DataGridTemplateColumn Header="File" Width="*">
