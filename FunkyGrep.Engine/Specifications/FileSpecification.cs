@@ -31,8 +31,8 @@ namespace FunkyGrep.Engine.Specifications
 {
     public class FileSpecification
     {
-        readonly IEnumerable<GlobExpression> _fileExcludePatterns;
-        readonly IEnumerable<GlobExpression> _filePatterns;
+        readonly List<string> _fileExcludePatterns;
+        readonly List<string> _filePatterns;
         readonly string _folderPath;
         readonly bool _includeSubfolders;
 
@@ -54,67 +54,48 @@ namespace FunkyGrep.Engine.Specifications
             {
                 filePatterns = new[] { "*" };
             }
-            else
-            {
-                filePatterns = filePatterns.ToList();
-            }
 
             this._filePatterns = filePatterns
                 .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(p => new GlobExpression(p));
+                .ToList();
 
             this._fileExcludePatterns = (fileExcludePatterns ?? new string[0])
                 .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(p => new GlobExpression(p));
+                .ToList();
         }
 
         public IEnumerable<IDataSource> EnumerateFiles()
         {
-            SearchOption searchOption = this._includeSubfolders
-                                            ? SearchOption.AllDirectories
-                                            : SearchOption.TopDirectoryOnly;
+            var searchOption = this._includeSubfolders ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
-            IEnumerable<string> enumerator =
-                EnumerateFiles(this._folderPath, searchOption)
-                    .Where(x => this._filePatterns.Any(p => p.IsMatch(Path.GetFileName(x))));
+            // https://stackoverflow.com/questions/7585087/multithreaded-use-of-regex
+            var filePatternExpressions = this._filePatterns
+                .Select(x => new GlobExpression(x))
+                .ToArray();
 
-            if (this._fileExcludePatterns.Any())
-            {
-                enumerator = enumerator.Where(
-                    x => !this._fileExcludePatterns.Any(p => p.IsMatch(x)));
-            }
-
-            return enumerator.Select(
-                x =>
-                {
-                    try
+            IEnumerable<string> enumerator = Directory
+                .EnumerateFiles(
+                    this._folderPath,
+                    "*",
+                    new EnumerationOptions
                     {
-                        return new FileDataSource(x);
-                    }
-                    catch (UnauthorizedAccessException)
-                    {
-                        return null;
-                    }
-                }).Where(x => x != null);
-        }
+                        IgnoreInaccessible = true,
+                        MatchType = MatchType.Simple,
+                        RecurseSubdirectories = searchOption == SearchOption.AllDirectories,
+                        MatchCasing = MatchCasing.PlatformDefault,
+                        ReturnSpecialDirectories = false
+                    })
+                .Where(x => filePatternExpressions.Any(e => e.IsMatch(x)));
 
-        static IEnumerable<string> EnumerateFiles(string path, SearchOption searchOption)
-        {
-            try
+            if (this._fileExcludePatterns.Count > 0)
             {
-                IEnumerable<string> dirFiles = Enumerable.Empty<string>();
-                if (searchOption == SearchOption.AllDirectories)
-                {
-                    dirFiles = Directory
-                        .EnumerateDirectories(path)
-                        .SelectMany(x => EnumerateFiles(x, searchOption));
-                }
-                return dirFiles.Concat(Directory.EnumerateFiles(path));
+                var fileExcludePatternExpressions = this._fileExcludePatterns
+                    .Select(x => new GlobExpression(x))
+                    .ToArray();
+                enumerator = enumerator.Where(x => !fileExcludePatternExpressions.Any(e => e.IsMatch(x)));
             }
-            catch (UnauthorizedAccessException)
-            {
-                return Enumerable.Empty<string>();
-            }
+
+            return enumerator.Select(x => new FileDataSource(x));
         }
     }
 }

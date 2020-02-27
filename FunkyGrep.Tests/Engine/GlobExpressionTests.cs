@@ -41,7 +41,8 @@ namespace FunkyGrep.Tests.Engine
                 new[] { @"Xtest.txt", "?test.txt" },
                 new[] { @"test.exe", "test.*" },
                 new[] { @"a", "a" },
-                new[] { @"test1Abc.tot", "test1???.t?t" }
+                new[] { @"test1Abc.tot", "test1???.t?t" },
+                new[] { @"dummy\test.txt", "test.*" }
             };
         }
 
@@ -54,7 +55,8 @@ namespace FunkyGrep.Tests.Engine
                 new[] { @"Xtest.txt", "_test.txt" },
                 new[] { @"test.exe", "test.?" },
                 new[] { @"a", "ab" },
-                new[] { @"test1Abc.tot", "test1??X.t?t" }
+                new[] { @"test1Abc.tot", "test1??X.t?t" },
+                new[] { @"dummy\test.txt", "wrong.*" }
             };
         }
 
@@ -83,20 +85,6 @@ namespace FunkyGrep.Tests.Engine
         public void IsMatch_Instance_Positive(string input, string expression)
         {
             new GlobExpression(expression).IsMatch(input).Should().BeTrue();
-        }
-
-        [Theory]
-        [MemberData(nameof(GetNegativeGlobTestCases))]
-        public void IsMatch_Static_Negative(string input, string expression)
-        {
-            GlobExpression.IsMatch(input, expression).Should().BeFalse();
-        }
-
-        [Theory]
-        [MemberData(nameof(GetPositiveGlobTestCases))]
-        public void IsMatch_Static_Positive(string input, string expression)
-        {
-            GlobExpression.IsMatch(input, expression).Should().BeTrue();
         }
 
         [Theory]

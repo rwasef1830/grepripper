@@ -49,26 +49,20 @@ namespace FunkyGrep.Engine
         {
             ValidateGlobPattern(pattern);
 
-            return "^" + Regex.Escape(pattern).Replace(@"\*", ".*").Replace(@"\?", ".") + "$";
+            return @"\G" + Regex.Escape(pattern).Replace(@"\*", ".*").Replace(@"\?", ".") + "$";
         }
 
         static void ValidateGlobPattern(string pattern)
         {
             if (!IsValid(pattern))
             {
-                throw new FormatException("Invalid pattern: '" + pattern + "'");
+                throw new FormatException($"Invalid pattern: '{pattern}'");
             }
         }
 
         public bool IsMatch(string filePath)
         {
-            string fileName = Path.GetFileName(filePath);
-            return fileName != null && this._pattern.IsMatch(fileName);
-        }
-
-        public static bool IsMatch(string filePath, string pattern)
-        {
-            return Regex.IsMatch(filePath, MakeRegexPattern(pattern), c_RegexOptions);
+            return this._pattern.IsMatch(filePath, filePath.LastIndexOf(Path.DirectorySeparatorChar) + 1);
         }
 
         public static char[] GetInvalidChars()
