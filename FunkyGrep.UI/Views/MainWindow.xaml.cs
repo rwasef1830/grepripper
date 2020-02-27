@@ -3,7 +3,10 @@ using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using System.Windows.Input;
+using System.Windows.Media;
 using FunkyGrep.UI.Util;
 using FunkyGrep.UI.ViewModels;
 using Prism.Validation;
@@ -73,6 +76,21 @@ namespace FunkyGrep.UI.Views
 
             autoCompleteBox.ItemsSource = subDirectories;
             autoCompleteBox.PopulateComplete();
+        }
+
+        void HandleDataGridPreviewMouseRightButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            var depObj = (DependencyObject)e.OriginalSource;
+
+            while (depObj != null && !(depObj is DataGridColumnHeader))
+            {
+                depObj = VisualTreeHelper.GetParent(depObj);
+            }
+
+            if (depObj != null)
+            {
+                e.Handled = true;
+            }
         }
     }
 }

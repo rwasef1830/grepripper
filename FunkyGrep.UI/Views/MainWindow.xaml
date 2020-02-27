@@ -197,7 +197,7 @@
         <DataGrid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" ItemsSource="{Binding SearchResults}" 
                   IsReadOnly="True" AutoGenerateColumns="False" VerticalGridLinesBrush="LightGray" 
                   HorizontalGridLinesBrush="LightGray" AlternatingRowBackground="Gainsboro" AlternationCount="2"
-                  SelectionMode="Single" CanUserSortColumns="False">
+                  SelectionMode="Single" CanUserSortColumns="False" PreviewMouseRightButtonUp="HandleDataGridPreviewMouseRightButtonUp">
             <DataGrid.Resources>
                 <converters:SearchResultItemToXamlConverter x:Key="SearchResultItemToXamlConverter">
                     <converters:SearchResultItemToXamlConverter.MatchRunStyle>
@@ -207,6 +207,42 @@
                         </Style>
                     </converters:SearchResultItemToXamlConverter.MatchRunStyle>
                 </converters:SearchResultItemToXamlConverter>
+                <Style TargetType="DataGrid">
+                    <Style.Triggers>
+                        <Trigger Property="HasItems" Value="False">
+                            <Trigger.Setters>
+                                <Setter Property="ContextMenu" Value="{x:Null}" />
+                            </Trigger.Setters>
+                        </Trigger>
+                        <Trigger Property="HasItems" Value="True">
+                            <Trigger.Setters>
+                                <Setter Property="ContextMenu">
+                                    <Setter.Value>
+                                        <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
+                                        <ContextMenu IsEnabled="{Binding PlacementTarget.HasItems, RelativeSource={RelativeSource Mode=Self}}">
+                                            <ContextMenu.Resources>
+                                                <Style TargetType="MenuItem">
+                                                    <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
+                                                    <Setter Property="CommandParameter" 
+                                                            Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.SelectedItem}" />
+                                                </Style>
+                                            </ContextMenu.Resources>
+
+                                            <MenuItem Header="_Copy">
+                                                <MenuItem Header="_Path" Command="{Binding CopyFilePathToClipboardCommand}" />
+                                                <MenuItem Header="_File" Command="{Binding CopyFileToClipboardCommand}" />
+                                                <MenuItem Header="_Line Number" Command="{Binding CopyLineNumberToClipboardCommand}" />
+                                            </MenuItem>
+                                            <MenuItem Header="_Open">
+                                                <MenuItem Header="_Notepad" Command="{Binding OpenFileInEditorCommand}" />
+                                            </MenuItem>
+                                        </ContextMenu>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger.Setters>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
             </DataGrid.Resources>
             <DataGrid.Columns>
                 <DataGridTemplateColumn Header="File" Width="*">
@@ -248,26 +284,6 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
             </DataGrid.Columns>
-            <DataGrid.ContextMenu>
-                <ContextMenu>
-                    <ContextMenu.Resources>
-                        <Style TargetType="MenuItem">
-                            <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
-                            <Setter Property="CommandParameter" 
-                                        Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}},Path=PlacementTarget.SelectedItem}" />
-                        </Style>
-                    </ContextMenu.Resources>
-
-                    <MenuItem Header="_Copy">
-                        <MenuItem Header="_Path" Command="{Binding CopyFilePathToClipboardCommand}" />
-                        <MenuItem Header="_File" Command="{Binding CopyFileToClipboardCommand}" />
-                        <MenuItem Header="_Line Number" Command="{Binding CopyLineNumberToClipboardCommand}" />
-                    </MenuItem>
-                    <MenuItem Header="_Open">
-                        <MenuItem Header="_Notepad" Command="{Binding OpenFileInEditorCommand}" />
-                    </MenuItem>
-                </ContextMenu>
-            </DataGrid.ContextMenu>
         </DataGrid>
     </Grid>
 </Window>
