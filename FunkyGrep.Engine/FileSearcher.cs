@@ -31,6 +31,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using FunkyGrep.Engine.Collections;
+using HeyRed.Mime;
 
 namespace FunkyGrep.Engine
 {
@@ -214,8 +215,22 @@ namespace FunkyGrep.Engine
             Parallel.ForEach(
                 this._dataSources,
                 new ParallelOptions { CancellationToken = token },
-                () => new Regex(this._expression.ToString(), this._expression.Options),
-                (dataSource, loopState, _, regex) =>
+                () => new
+                {
+                    Regex = new Regex(this._expression.ToString(), this._expression.Options),
+                    Magic = new Magic(MagicOpenFlags.MAGIC_MIME_TYPE 
+                                     | MagicOpenFlags.MAGIC_ERROR
+                                     | MagicOpenFlags.MAGIC_NO_CHECK_COMPRESS
+                                     | MagicOpenFlags.MAGIC_NO_CHECK_APPTYPE
+                                     | MagicOpenFlags.MAGIC_NO_CHECK_ELF
+                                     | MagicOpenFlags.MAGIC_NO_CHECK_SOFT
+                                     | MagicOpenFlags.MAGIC_NO_CHECK_TAR
+                                     | MagicOpenFlags.MAGIC_NO_CHECK_TOKENS
+                                     | MagicOpenFlags.MAGIC_NO_CHECK_JSON
+                                     | MagicOpenFlags.MAGIC_NO_CHECK_CDF
+                                     | MagicOpenFlags.MAGIC_PRESERVE_ATIME)
+                },
+                (dataSource, loopState, _, vars) =>
                 {
                     try
                     {
@@ -224,7 +239,7 @@ namespace FunkyGrep.Engine
                         var length = dataSource.GetLength();
                         if (length > MaxFileSize || length == 0)
                         {
-                            return regex;
+                            return vars;
                         }
 
                         token.ThrowIfCancellationRequested();
@@ -236,10 +251,10 @@ namespace FunkyGrep.Engine
                             try
                             {
                                 var bytesRead = stream.Read(byteBuffer, 0, byteBuffer.Length);
-                                if (this._skipBinaryFiles && IsLikelyToBeBinary(byteBuffer, bytesRead))
+                                if (this._skipBinaryFiles && IsLikelyToBeBinary(byteBuffer, bytesRead, vars.Magic))
                                 {
                                     Interlocked.Increment(ref this._skippedCount);
-                                    return regex;
+                                    return vars;
                                 }
                             }
                             finally
@@ -299,7 +314,7 @@ namespace FunkyGrep.Engine
                                 currentLine = lineBuffer[this._contextLineCount])
                             {
                                 // ReSharper disable once AccessToDisposedClosure - Dispose happens after all parallel iteration callbacks are done.
-                                var regexMatches = regex.Matches(currentLine);
+                                var regexMatches = vars.Regex.Matches(currentLine);
                                 foreach (Match regexMatch in regexMatches)
                                 {
                                     if (!regexMatch.Success)
@@ -339,13 +354,28 @@ namespace FunkyGrep.Engine
                         Interlocked.Increment(ref this._doneCount);
                     }
 
-                    return regex;
+                    return vars;
                 },
-                _ => { });
+                vars => vars.Magic.Dispose());
         }
 
-        static bool IsLikelyToBeBinary(IReadOnlyList<byte> byteBuffer, int bytesRead)
+        static bool IsLikelyToBeBinary(byte[] byteBuffer, int bytesRead, Magic magic)
         {
+            if (byteBuffer == null)
+            {
+                throw new ArgumentNullException(nameof(byteBuffer));
+            }
+
+            if (bytesRead > byteBuffer.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(bytesRead));
+            }
+
+            if (magic == null)
+            {
+                throw new ArgumentNullException(nameof(magic));
+            }
+
             var nullCount = 0;
             var twoConsecutiveNullsFound = false;
 
@@ -384,7 +414,14 @@ namespace FunkyGrep.Engine
                 twoConsecutiveNullsFound = true;
             }
 
-            return twoConsecutiveNullsFound && nullCount > 2;
+            if (twoConsecutiveNullsFound && nullCount > 2)
+            {
+                return true;
+            }
+
+            // Fallback to using libmagic (slower)
+            var mimeType = magic.Read(byteBuffer, bytesRead);
+            return !mimeType.StartsWith("text/", StringComparison.Ordinal);
         }
 
         SearchMatch GetMatch(Capture match, CircularBuffer<string> lineBuffer, int matchLineNumber)

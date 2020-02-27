@@ -5,4 +5,8 @@
   </PropertyGroup>
   
   <Import Project="..\Build\Version.xml" />
+  
+  <ItemGroup>
+    <PackageReference Include="Mime" Version="3.1.0" />
+  </ItemGroup>
 </Project>
