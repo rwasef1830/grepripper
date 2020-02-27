@@ -218,17 +218,18 @@ namespace FunkyGrep.Engine
                 () => new
                 {
                     Regex = new Regex(this._expression.ToString(), this._expression.Options),
-                    Magic = new Magic(MagicOpenFlags.MAGIC_MIME_TYPE 
-                                     | MagicOpenFlags.MAGIC_ERROR
-                                     | MagicOpenFlags.MAGIC_NO_CHECK_COMPRESS
-                                     | MagicOpenFlags.MAGIC_NO_CHECK_APPTYPE
-                                     | MagicOpenFlags.MAGIC_NO_CHECK_ELF
-                                     | MagicOpenFlags.MAGIC_NO_CHECK_SOFT
-                                     | MagicOpenFlags.MAGIC_NO_CHECK_TAR
-                                     | MagicOpenFlags.MAGIC_NO_CHECK_TOKENS
-                                     | MagicOpenFlags.MAGIC_NO_CHECK_JSON
-                                     | MagicOpenFlags.MAGIC_NO_CHECK_CDF
-                                     | MagicOpenFlags.MAGIC_PRESERVE_ATIME)
+                    Magic = new Magic(
+                        MagicOpenFlags.MAGIC_MIME_TYPE
+                        | MagicOpenFlags.MAGIC_ERROR
+                        | MagicOpenFlags.MAGIC_NO_CHECK_COMPRESS
+                        | MagicOpenFlags.MAGIC_NO_CHECK_APPTYPE
+                        | MagicOpenFlags.MAGIC_NO_CHECK_ELF
+                        | MagicOpenFlags.MAGIC_NO_CHECK_SOFT
+                        | MagicOpenFlags.MAGIC_NO_CHECK_TAR
+                        | MagicOpenFlags.MAGIC_NO_CHECK_TOKENS
+                        | MagicOpenFlags.MAGIC_NO_CHECK_JSON
+                        | MagicOpenFlags.MAGIC_NO_CHECK_CDF
+                        | MagicOpenFlags.MAGIC_PRESERVE_ATIME)
                 },
                 (dataSource, loopState, _, vars) =>
                 {
@@ -305,6 +306,11 @@ namespace FunkyGrep.Engine
 
                             Debug.Assert(lastReadLine == null != lineBuffer.IsFull);
 
+                            if (!readFirstLine)
+                            {
+                                lineBuffer.PushBack(null);
+                            }
+
                             for (string currentLine = lineBuffer[this._contextLineCount];
                                 currentLine != null;
                                 lastReadLine = reader.ReadLine(),
@@ -344,10 +350,18 @@ namespace FunkyGrep.Engine
                                 new MatchFoundEventArgs(dataSource.Identifier, foundMatches));
                         }
                     }
+                    catch (OperationCanceledException) { }
                     catch (Exception ex)
                     {
-                        Debug.WriteLine(ex);
                         Interlocked.Increment(ref this._failedCount);
+
+                        if (ex is IOException || ex is UnauthorizedAccessException)
+                        {
+                            Debug.WriteLine(ex);
+                            return vars;
+                        }
+
+                        throw;
                     }
                     finally
                     {

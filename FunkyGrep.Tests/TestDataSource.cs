@@ -22,7 +22,9 @@
 // THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endregion
 
+using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using FunkyGrep.Engine;
 
@@ -30,30 +32,33 @@ namespace FunkyGrep.Tests
 {
     class TestDataSource : IDataSource
     {
-        readonly string _content;
-        readonly long _length;
         readonly byte[] _contentBytes;
+
+        public TestDataSource(string content, Encoding encoding) : this(
+            Guid.NewGuid().ToString(),
+            content,
+            encoding) { }
 
         public TestDataSource(string identifier, string content, Encoding encoding)
         {
             this.Identifier = identifier;
-            this._content = content;
-            this._length = encoding.GetByteCount(content);
-            this._contentBytes = encoding.GetBytes(content);
+            this._contentBytes = encoding.GetPreamble().Concat(encoding.GetBytes(content)).ToArray();
         }
 
         #region IDataSource Members
+
         public string Identifier { get; }
 
         public long GetLength()
         {
-            return this._length;
+            return this._contentBytes.Length;
         }
 
         public Stream OpenRead()
         {
-            return new MemoryStream(this._contentBytes);
+            return new MemoryStream(this._contentBytes, false);
         }
+
         #endregion
     }
 }

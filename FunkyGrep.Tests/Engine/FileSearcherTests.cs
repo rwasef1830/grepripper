@@ -43,57 +43,45 @@ namespace FunkyGrep.Tests.Engine
             const string fileName = "Test";
             const string fileContent = "Speedy thing goes in, speedy thing comes out!";
 
-            IEnumerable<IDataSource> dataSources =
-                MakeDataSourceList(new Dictionary<string, string> { { fileName, fileContent } });
+            var dataSource = new TestDataSource(fileName, fileContent, Encoding.UTF8);
 
             var fileSearcher = new FileSearcher(
                 new Regex("speedy", RegexOptions.None),
-                dataSources, 
+                new[] { dataSource },
                 false,
                 0);
 
-            bool matchFoundFired = false;
-            Exception assertionException = null;
-
-            fileSearcher.MatchFound +=
-                (sender, args) =>
-                {
-                    matchFoundFired = true;
-
-                    try
-                    {
-                        args.FilePath.Should().Be(fileName);
-                        args.Matches.Count().Should().Be(1);
-                        args.Matches.First().LineNumber.Should().Be(1);
-                        args.Matches.First().Line.Should().Be(fileContent);
-                    }
-                    catch (Exception ex)
-                    {
-                        assertionException = ex;
-                    }
-                };
-
-            bool completedFired = false;
-
-            fileSearcher.Completed +=
-                (sender, args) => { completedFired = true; };
-
+            using var monitor = fileSearcher.Monitor();
             fileSearcher.Begin();
             fileSearcher.Wait();
 
-            matchFoundFired.Should().BeTrue("Match found event should have fired.");
-            assertionException.Should().BeNull("No exceptions should have been raised in the event.");
-            completedFired.Should().BeTrue("Completion event should have fired.");
+            monitor.OccurredEvents.Should().Contain(x => x.EventName == nameof(fileSearcher.MatchFound))
+                .Which.Parameters[1].Should().BeOfType<MatchFoundEventArgs>()
+                .Which.Matches.Should().BeEquivalentTo(new SearchMatch(1, fileContent, 22, 6, null, null));
+
+            monitor.OccurredEvents.Should().Contain(x => x.EventName == nameof(fileSearcher.Completed))
+                .Which.Parameters[1].Should().BeOfType<CompletedEventArgs>()
+                .Which.Error.Should().BeNull();
         }
 
-        public class MatchesWithLongLinesTests
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
+        public class Match_tests
         {
             const int c_MaxContextLength = 10;
 
             [Fact]
+            public void Empty_file_with_Unicode_BOM()
+            {
+                DoTest(
+                    "A",
+                    new TestDataSource(string.Empty, new UnicodeEncoding(false, true)),
+                    0);
+            }
+
+            [Fact]
             public void Tail_excess_single_line()
             {
-                this.DoTest(
+                DoTest(
                     "A",
                     "ABBBBBBBBCDEF",
                     0,
@@ -103,7 +91,7 @@ namespace FunkyGrep.Tests.Engine
             [Fact]
             public void Head_excess_single_line()
             {
-                this.DoTest(
+                DoTest(
                     "A",
                     "BBBBBBBBACDEF",
                     0,
@@ -113,7 +101,7 @@ namespace FunkyGrep.Tests.Engine
             [Fact]
             public void Tail_excess_multiple_lines()
             {
-                this.DoTest(
+                DoTest(
                     "A",
                     "\r\nABBBBBBBBCDEF\r\n",
                     0,
@@ -123,7 +111,7 @@ namespace FunkyGrep.Tests.Engine
             [Fact]
             public void Head_excess_multiple_lines()
             {
-                this.DoTest(
+                DoTest(
                     "A",
                     "\r\nBBBBBBBBACDEF\r\n",
                     0,
@@ -133,7 +121,7 @@ namespace FunkyGrep.Tests.Engine
             [Fact]
             public void Match_at_end_of_line()
             {
-                this.DoTest(
+                DoTest(
                     "ABC",
                     "\r\nXXXXXXXABC\r\n",
                     0,
@@ -143,7 +131,7 @@ namespace FunkyGrep.Tests.Engine
             [Fact]
             public void Match_at_start_of_line()
             {
-                this.DoTest(
+                DoTest(
                     "ABC",
                     "\r\nABCXXXXXXX\r\n",
                     0,
@@ -153,7 +141,7 @@ namespace FunkyGrep.Tests.Engine
             [Fact]
             public void Context_extraction_around_match()
             {
-                this.DoTest(
+                DoTest(
                     "ABC",
                     "1234567890ABC12345",
                     0,
@@ -163,7 +151,7 @@ namespace FunkyGrep.Tests.Engine
             [Fact]
             public void Match_larger_than_context_clamp_limit()
             {
-                this.DoTest(
+                DoTest(
                     "123456789012345",
                     "XXXXXX123456789012345XXXXXX",
                     0,
@@ -173,7 +161,7 @@ namespace FunkyGrep.Tests.Engine
             [Fact]
             public void Context_lines_should_be_clamped()
             {
-                this.DoTest(
+                DoTest(
                     "ABC",
                     "12345ABC9012345\r\n!!!!!!!!!!!ABC!!!!!!!!!\r\n______ABC_______\r\nXXXXXXABCX\r\nXXXXXXXXXXXXXABC",
                     2,
@@ -214,16 +202,25 @@ namespace FunkyGrep.Tests.Engine
                         null));
             }
 
-            void DoTest(
+            static void DoTest(
                 string searchPattern,
                 string textToSearch,
                 int contextLineCount,
                 params SearchMatch[] expectedResults)
             {
-                IEnumerable<IDataSource> dataSources = MakeDataSourceList(textToSearch);
+                var dataSource = new TestDataSource(textToSearch, Encoding.UTF8);
+                DoTest(searchPattern, dataSource, contextLineCount, expectedResults);
+            }
+
+            static void DoTest(
+                string searchPattern,
+                IDataSource dataSource,
+                int contextLineCount,
+                params SearchMatch[] expectedResults)
+            {
                 var searcher = new FileSearcher(
                     new Regex(Regex.Escape(searchPattern)),
-                    dataSources,
+                    new[] { dataSource },
                     false,
                     contextLineCount,
                     c_MaxContextLength);
@@ -231,45 +228,25 @@ namespace FunkyGrep.Tests.Engine
                 using var monitor = searcher.Monitor();
                 searcher.Begin();
                 searcher.Wait();
-                monitor.OccurredEvents.Should()
-                    .Contain(x => x.EventName == nameof(searcher.MatchFound))
-                    .Which.Parameters[1].Should().BeOfType<MatchFoundEventArgs>()
-                    .Which.Matches.Should()
-                    .SatisfyRespectively(
-                        expectedResults.Select<SearchMatch, Action<SearchMatch>>(
-                            e => m => m.Should().BeEquivalentTo(e)));
+
+                if (expectedResults.Length > 0)
+                {
+                    monitor.OccurredEvents.Should().Contain(x => x.EventName == nameof(searcher.MatchFound))
+                        .Which.Parameters[1].Should().BeOfType<MatchFoundEventArgs>()
+                        .Which.Matches.Should()
+                        .SatisfyRespectively(
+                            expectedResults.Select<SearchMatch, Action<SearchMatch>>(
+                                e => m => m.Should().BeEquivalentTo(e)));
+                }
+                else
+                {
+                    monitor.OccurredEvents.Should().NotContain(x => x.EventName == nameof(searcher.MatchFound));
+                }
+
+                monitor.OccurredEvents.Should().Contain(x => x.EventName == nameof(searcher.Completed))
+                    .Which.Parameters[1].Should().BeOfType<CompletedEventArgs>()
+                    .Which.Error.Should().BeNull();
             }
-        }
-
-        /// <summary>
-        /// Each element of the passed list represents the fake file contents.
-        /// The file name is a randomly generated GUID.
-        /// </summary>
-        static IEnumerable<IDataSource> MakeDataSourceList(
-            string file1Data,
-            params string[] fileNData)
-        {
-            return
-                MakeDataSourceList(
-                    new[] { file1Data }.Union(fileNData)
-                        .Select(
-                            x =>
-                                new KeyValuePair<string, string>(
-                                    Guid.NewGuid().ToString(),
-                                    x)));
-        }
-
-        /// <summary>
-        /// The dictionary key is the fake file name.
-        /// The dictionary value is the fake file contents.
-        /// </summary>
-        /// <param name="dictionary"></param>
-        /// <returns></returns>
-        static IEnumerable<IDataSource> MakeDataSourceList(
-            IEnumerable<KeyValuePair<string, string>> dictionary)
-        {
-            return dictionary?.Select(
-                x => new TestDataSource(x.Key, x.Value, Encoding.UTF8));
         }
     }
 }
