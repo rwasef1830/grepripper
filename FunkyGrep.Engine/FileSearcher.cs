@@ -47,7 +47,8 @@ namespace FunkyGrep.Engine
         readonly bool _skipBinaryFiles;
         readonly int _contextLineCount;
 
-        readonly object _locker = new object();
+        readonly object _beginCancelLocker = new object();
+        readonly object _magicCreateLocker = new object();
         readonly int _maxContextLength;
         long _doneCount;
         long _failedCount;
@@ -90,7 +91,7 @@ namespace FunkyGrep.Engine
 
         public void Begin()
         {
-            lock (this._locker)
+            lock (this._beginCancelLocker)
             {
                 if (this._searchTask != null && !this._searchTask.IsCompleted)
                 {
@@ -178,7 +179,7 @@ namespace FunkyGrep.Engine
 
         public void Cancel()
         {
-            lock (this._locker)
+            lock (this._beginCancelLocker)
             {
                 if (this._searchTask == null)
                 {
@@ -212,13 +213,13 @@ namespace FunkyGrep.Engine
 
         void DoSearch(CancellationToken token)
         {
-            Parallel.ForEach(
-                this._dataSources,
-                new ParallelOptions { CancellationToken = token },
-                () => new
+            Magic CreateMagic()
+            {
+                // magic_load is not thread safe and alters static state.
+                // Protect from heap corruption.
+                lock (this._magicCreateLocker)
                 {
-                    Regex = new Regex(this._expression.ToString(), this._expression.Options),
-                    Magic = new Magic(
+                    return new Magic(
                         MagicOpenFlags.MAGIC_MIME_TYPE
                         | MagicOpenFlags.MAGIC_ERROR
                         | MagicOpenFlags.MAGIC_NO_CHECK_COMPRESS
@@ -229,7 +230,17 @@ namespace FunkyGrep.Engine
                         | MagicOpenFlags.MAGIC_NO_CHECK_TOKENS
                         | MagicOpenFlags.MAGIC_NO_CHECK_JSON
                         | MagicOpenFlags.MAGIC_NO_CHECK_CDF
-                        | MagicOpenFlags.MAGIC_PRESERVE_ATIME)
+                        | MagicOpenFlags.MAGIC_PRESERVE_ATIME);
+                }
+            }
+
+            Parallel.ForEach(
+                this._dataSources,
+                new ParallelOptions { CancellationToken = token },
+                () => new
+                {
+                    Regex = new Regex(this._expression.ToString(), this._expression.Options),
+                    Magic = CreateMagic()
                 },
                 (dataSource, loopState, _, vars) =>
                 {
