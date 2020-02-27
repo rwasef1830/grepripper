@@ -21,5 +21,5 @@ Features
 --------
 1. Accepts a single command-line parameter to launch the UI with the cursor ready in the "Text" field and search path pre-input, just type to search and press ENTER. This is useful to facilitate setting up FunkyGrep as an external tool in other apps like Visual Studio or WebStorm.
 2. Supports multiple space-separated DOS filename inclusion patterns.
-3. Right-click on found matches and copy useful information such as absolute and relative path as well as "Copy as File" (can be pasted in shell or other programs).
+3. Right-click on found matches and copy useful information such as path as well as "Copy as File" (can be pasted in shell or other programs).
 4. Drag a match and drop it in any external application to instantly open the it in your favorite editor.
