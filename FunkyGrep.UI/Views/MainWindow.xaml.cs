@@ -93,7 +93,7 @@ namespace FunkyGrep.UI.Views
             }
         }
 
-        void HandleDataGridRowPreviewMouseDown(object sender, MouseButtonEventArgs e)
+        void HandleDataGridRowPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             var row = (DataGridRow)sender;
             DragDrop.DoDragDrop(

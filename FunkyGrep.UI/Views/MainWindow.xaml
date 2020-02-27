@@ -244,7 +244,7 @@
                     </Style.Triggers>
                 </Style>
                 <Style TargetType="DataGridRow">
-                    <EventSetter Event="PreviewMouseDown" Handler="HandleDataGridRowPreviewMouseDown" />
+                    <EventSetter Event="PreviewMouseLeftButtonDown" Handler="HandleDataGridRowPreviewMouseLeftButtonDown" />
                 </Style>
             </DataGrid.Resources>
             <DataGrid.Columns>
