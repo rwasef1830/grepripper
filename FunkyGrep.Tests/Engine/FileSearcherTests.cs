@@ -107,7 +107,7 @@ namespace FunkyGrep.Tests.Engine
                     "A",
                     "BBBBBBBBACDEF",
                     0,
-                    new SearchMatch(1, "BBBBBBACDE", 6, 1, null, null));
+                    new SearchMatch(1, "BBBBBACDEF", 5, 1, null, null));
             }
 
             [Fact]
@@ -127,7 +127,7 @@ namespace FunkyGrep.Tests.Engine
                     "A",
                     "\r\nBBBBBBBBACDEF\r\n",
                     0,
-                    new SearchMatch(2, "BBBBBBACDE", 6, 1, null, null));
+                    new SearchMatch(2, "BBBBBACDEF", 5, 1, null, null));
             }
 
             [Fact]
