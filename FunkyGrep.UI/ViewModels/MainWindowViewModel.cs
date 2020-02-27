@@ -60,7 +60,6 @@ namespace FunkyGrep.UI.ViewModels
         bool? _lastSearchCompleted;
         TimeSpan? _lastSearchDuration;
         FileSearcher _searcher;
-        string _lastSearchDirectory;
 
         [Required]
         [DirectoryExists]
@@ -246,7 +245,7 @@ namespace FunkyGrep.UI.ViewModels
                 return;
             }
 
-            var itemFilePath = Path.Combine(this._lastSearchDirectory, item.FilePath);
+            var itemFilePath = item.AbsoluteFilePath;
             this._clipboardService.SetText(itemFilePath);
         }
 
@@ -257,7 +256,7 @@ namespace FunkyGrep.UI.ViewModels
                 return;
             }
 
-            var itemFilePath = Path.Combine(this._lastSearchDirectory, item.FilePath);
+            var itemFilePath = item.AbsoluteFilePath;
             this._clipboardService.SetFileDropList(new[] { itemFilePath });
         }
 
@@ -278,7 +277,7 @@ namespace FunkyGrep.UI.ViewModels
                 return;
             }
 
-            var itemFilePath = Path.Combine(this._lastSearchDirectory, item.FilePath);
+            var itemFilePath = item.AbsoluteFilePath;
             var pi = new ProcessStartInfo(
                 "notepad.exe",
                 $"\"{itemFilePath}\"")
@@ -300,7 +299,6 @@ namespace FunkyGrep.UI.ViewModels
             {
                 this.LastSearchCompleted = null;
                 this.LastSearchDuration = null;
-                this._lastSearchDirectory = this.Directory;
                 this.SearchProgress = new SearchProgressViewModel();
 
                 this.SearchIsRunning = true;
@@ -341,7 +339,7 @@ namespace FunkyGrep.UI.ViewModels
                         string relativePath = args.FilePath.Substring(basenameLength);
                         foreach (var match in args.Matches)
                         {
-                            this.SearchResults.Add(new SearchResultItem(relativePath, match));
+                            this.SearchResults.Add(new SearchResultItem(args.FilePath, relativePath, match));
                         }
                     }
                 };

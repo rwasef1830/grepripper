@@ -212,7 +212,7 @@
                 <DataGridTemplateColumn Header="File" Width="*">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate DataType="viewModels:SearchResultItem">
-                            <Label Content="{Binding FilePath}" Padding="0" Margin="0">
+                            <Label Content="{Binding RelativeFilePath}" Padding="0" Margin="0">
                                 <Label.Resources>
                                     <Style TargetType="Label" BasedOn="{StaticResource LeftEllipsesLabelStyle}">
                                         <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=DataGridRow}}" />
