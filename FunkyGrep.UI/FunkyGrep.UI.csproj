@@ -34,6 +34,7 @@
     <Resource Include="Resources\FunkyGrep.ico" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Ben.Demystifier" Version="0.1.6" />
     <PackageReference Include="Dirkster.NumericUpDownLib" Version="2.4.0" />
     <PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.0.77" />
     <PackageReference Include="Mono.Options" Version="6.6.0.161" />

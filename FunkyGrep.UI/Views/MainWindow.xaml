@@ -194,100 +194,156 @@
             </Button>
         </Grid>
 
-        <DataGrid Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" ItemsSource="{Binding SearchResults}" 
-                  IsReadOnly="True" AutoGenerateColumns="False" VerticalGridLinesBrush="LightGray" 
-                  HorizontalGridLinesBrush="LightGray" AlternatingRowBackground="Gainsboro" AlternationCount="2"
-                  SelectionMode="Single" CanUserSortColumns="False" PreviewMouseRightButtonUp="HandleDataGridPreviewMouseRightButtonUp">
-            <DataGrid.Resources>
-                <converters:SearchResultItemToXamlConverter x:Key="SearchResultItemToXamlConverter">
-                    <converters:SearchResultItemToXamlConverter.MatchRunStyle>
-                        <Style TargetType="Run">
-                            <Setter Property="Foreground" Value="DarkRed" />
-                            <Setter Property="FontWeight" Value="Bold" />
-                        </Style>
-                    </converters:SearchResultItemToXamlConverter.MatchRunStyle>
-                </converters:SearchResultItemToXamlConverter>
-                <Style TargetType="DataGrid">
-                    <Style.Triggers>
-                        <Trigger Property="HasItems" Value="False">
-                            <Trigger.Setters>
-                                <Setter Property="ContextMenu" Value="{x:Null}" />
-                            </Trigger.Setters>
-                        </Trigger>
-                        <Trigger Property="HasItems" Value="True">
-                            <Trigger.Setters>
-                                <Setter Property="ContextMenu">
-                                    <Setter.Value>
-                                        <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
-                                        <ContextMenu IsEnabled="{Binding PlacementTarget.HasItems, RelativeSource={RelativeSource Mode=Self}}">
-                                            <ContextMenu.Resources>
-                                                <Style TargetType="MenuItem">
-                                                    <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
-                                                    <Setter Property="CommandParameter" 
-                                                            Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.SelectedItem}" />
-                                                </Style>
-                                            </ContextMenu.Resources>
-
-                                            <MenuItem Header="_Copy">
-                                                <MenuItem Header="Absolute _Path" Command="{Binding CopyAbsoluteFilePathToClipboardCommand}" />
-                                                <MenuItem Header="_Relative Path" Command="{Binding CopyRelativeFilePathToClipboardCommand}" />
-                                                <MenuItem Header="_File" Command="{Binding CopyFileToClipboardCommand}" />
-                                                <MenuItem Header="_Line Number" Command="{Binding CopyLineNumberToClipboardCommand}" />
-                                            </MenuItem>
-                                            <MenuItem Header="_Open">
-                                                <MenuItem Header="_Notepad" Command="{Binding OpenFileInEditorCommand}" />
-                                            </MenuItem>
-                                        </ContextMenu>
-                                    </Setter.Value>
-                                </Setter>
-                            </Trigger.Setters>
-                        </Trigger>
-                    </Style.Triggers>
+        <TabControl Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3">
+            <TabControl.Resources>
+                <DataTemplate DataType="viewModels:IFileItem">
+                    <Label Content="{Binding RelativeFilePath}" Padding="0" Margin="0">
+                        <Label.Resources>
+                            <Style TargetType="Label" BasedOn="{StaticResource LeftEllipsesLabelStyle}">
+                                <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=DataGridRow}}" />
+                                <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridRow}}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
+                                        <DataTrigger.Setters>
+                                            <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=DataGridCell}}" />
+                                            <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridCell}}" />
+                                        </DataTrigger.Setters>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Label.Resources>
+                    </Label>
+                </DataTemplate>
+                <Style TargetType="TextBlock" x:Key="LineCellTextBlockStyle">
+                    <Setter Property="HorizontalAlignment" Value="Right" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
                 </Style>
                 <Style TargetType="DataGridRow">
                     <EventSetter Event="PreviewMouseLeftButtonDown" Handler="HandleDataGridRowPreviewMouseLeftButtonDown" />
                 </Style>
-            </DataGrid.Resources>
-            <DataGrid.Columns>
-                <DataGridTemplateColumn Header="File" Width="*">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate DataType="viewModels:SearchResultItem">
-                            <Label Content="{Binding RelativeFilePath}" Padding="0" Margin="0">
-                                <Label.Resources>
-                                    <Style TargetType="Label" BasedOn="{StaticResource LeftEllipsesLabelStyle}">
-                                        <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=DataGridRow}}" />
-                                        <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridRow}}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
-                                                <DataTrigger.Setters>
-                                                    <Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=DataGridCell}}" />
-                                                    <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=DataGridCell}}" />
-                                                </DataTrigger.Setters>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Label.Resources>
-                            </Label>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTextColumn Binding="{Binding Match.LineNumber, Mode=OneTime}" Header="Line" Width="50">
-                    <DataGridTextColumn.ElementStyle>
-                        <Style TargetType="TextBlock">
-                            <Setter Property="HorizontalAlignment" Value="Right" />
-                            <Setter Property="VerticalAlignment" Value="Center" />
+            </TabControl.Resources>
+            <TabItem Header="{Binding SearchResults.Count, FallbackValue=0}" HeaderStringFormat="{}Results ({0:n0})" IsSelected="True">
+                <DataGrid ItemsSource="{Binding SearchResults}" IsReadOnly="True" AutoGenerateColumns="False" 
+                          VerticalGridLinesBrush="LightGray" HorizontalGridLinesBrush="LightGray" AlternatingRowBackground="Gainsboro" 
+                          AlternationCount="2" SelectionMode="Single" CanUserSortColumns="False" 
+                          PreviewMouseRightButtonUp="HandleDataGridPreviewMouseRightButtonUp">
+                    <DataGrid.Resources>
+                        <converters:SearchResultItemToXamlConverter x:Key="SearchResultItemToXamlConverter">
+                            <converters:SearchResultItemToXamlConverter.MatchRunStyle>
+                                <Style TargetType="Run">
+                                    <Setter Property="Foreground" Value="DarkRed" />
+                                    <Setter Property="FontWeight" Value="Bold" />
+                                </Style>
+                            </converters:SearchResultItemToXamlConverter.MatchRunStyle>
+                        </converters:SearchResultItemToXamlConverter>
+                        <Style TargetType="DataGrid">
+                            <Style.Triggers>
+                                <Trigger Property="HasItems" Value="False">
+                                    <Trigger.Setters>
+                                        <Setter Property="ContextMenu" Value="{x:Null}" />
+                                    </Trigger.Setters>
+                                </Trigger>
+                                <Trigger Property="HasItems" Value="True">
+                                    <Trigger.Setters>
+                                        <Setter Property="ContextMenu">
+                                            <Setter.Value>
+                                                <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
+                                                <ContextMenu IsEnabled="{Binding PlacementTarget.HasItems, RelativeSource={RelativeSource Mode=Self}}">
+                                                    <ContextMenu.Resources>
+                                                        <Style TargetType="MenuItem">
+                                                            <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
+                                                            <Setter Property="CommandParameter" 
+                                                                    Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.SelectedItem}" />
+                                                        </Style>
+                                                    </ContextMenu.Resources>
+
+                                                    <MenuItem Header="_Copy">
+                                                        <MenuItem Header="Absolute _Path" Command="{Binding CopyAbsoluteFilePathToClipboardCommand}" />
+                                                        <MenuItem Header="_Relative Path" Command="{Binding CopyRelativeFilePathToClipboardCommand}" />
+                                                        <MenuItem Header="_File" Command="{Binding CopyFileToClipboardCommand}" />
+                                                        <MenuItem Header="_Line Number" Command="{Binding CopyLineNumberToClipboardCommand}" />
+                                                    </MenuItem>
+                                                    <MenuItem Header="_Open">
+                                                        <MenuItem Header="_Notepad" Command="{Binding OpenFileInEditorCommand}" />
+                                                    </MenuItem>
+                                                </ContextMenu>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Trigger.Setters>
+                                </Trigger>
+                            </Style.Triggers>
                         </Style>
-                    </DataGridTextColumn.ElementStyle>
-                </DataGridTextColumn>
-                <DataGridTemplateColumn Header="Text" Width="*">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate DataType="viewModels:SearchResultItem">
-                            <ContentControl Content="{Binding Mode=OneTime, Converter={StaticResource SearchResultItemToXamlConverter}}" 
+                    </DataGrid.Resources>
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="File" Width="*" CellTemplate="{StaticResource {DataTemplateKey DataType=viewModels:IFileItem}}" />
+                        <DataGridTextColumn Binding="{Binding Match.LineNumber, Mode=OneTime}" Header="Line" Width="50" 
+                                            ElementStyle="{StaticResource LineCellTextBlockStyle}" />
+                        <DataGridTemplateColumn Header="Text" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="viewModels:SearchResultItem">
+                                    <ContentControl Content="{Binding Mode=OneTime, Converter={StaticResource SearchResultItemToXamlConverter}}" 
                                             FontFamily="Cascadia Code, Fira Code, PragmataPro Mono, Source Code Pro, JetBrains Mono, Consolas, Courier New" />
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-            </DataGrid.Columns>
-        </DataGrid>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+            <TabItem Header="{Binding SearchErrors.Count, FallbackValue=0}" HeaderStringFormat="{}Errors ({0:n0})">
+                <DataGrid ItemsSource="{Binding SearchErrors}" IsReadOnly="True" AutoGenerateColumns="False" 
+                          VerticalGridLinesBrush="LightGray" HorizontalGridLinesBrush="LightGray" AlternatingRowBackground="Gainsboro" 
+                          AlternationCount="2" SelectionMode="Single" CanUserSortColumns="False" 
+                          PreviewMouseRightButtonUp="HandleDataGridPreviewMouseRightButtonUp">
+                    <DataGrid.Resources>
+                        <Style TargetType="DataGrid">
+                            <Style.Triggers>
+                                <Trigger Property="HasItems" Value="False">
+                                    <Trigger.Setters>
+                                        <Setter Property="ContextMenu" Value="{x:Null}" />
+                                    </Trigger.Setters>
+                                </Trigger>
+                                <Trigger Property="HasItems" Value="True">
+                                    <Trigger.Setters>
+                                        <Setter Property="ContextMenu">
+                                            <Setter.Value>
+                                                <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
+                                                <ContextMenu IsEnabled="{Binding PlacementTarget.HasItems, RelativeSource={RelativeSource Mode=Self}}">
+                                                    <ContextMenu.Resources>
+                                                        <Style TargetType="MenuItem">
+                                                            <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
+                                                            <Setter Property="CommandParameter" 
+                                                                    Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.SelectedItem}" />
+                                                        </Style>
+                                                    </ContextMenu.Resources>
+
+                                                    <MenuItem Header="_Copy">
+                                                        <MenuItem Header="Absolute _Path" Command="{Binding CopyAbsoluteFilePathToClipboardCommand}" />
+                                                        <MenuItem Header="_Relative Path" Command="{Binding CopyRelativeFilePathToClipboardCommand}" />
+                                                        <MenuItem Header="_File" Command="{Binding CopyFileToClipboardCommand}" />
+                                                    </MenuItem>
+                                                    <MenuItem Header="_Open">
+                                                        <MenuItem Header="_Notepad" Command="{Binding OpenFileInEditorCommand}" />
+                                                    </MenuItem>
+                                                </ContextMenu>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Trigger.Setters>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.Resources>
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="File" Width="*" CellTemplate="{StaticResource {DataTemplateKey DataType=viewModels:IFileItem}}" />
+                        <DataGridTextColumn Header="Error" Width="*" Binding="{Binding Error}">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="DarkRed" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>

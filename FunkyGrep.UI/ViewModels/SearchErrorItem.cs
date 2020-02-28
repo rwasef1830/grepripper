@@ -23,17 +23,16 @@
 #endregion
 
 using System;
-using FunkyGrep.Engine;
 
 namespace FunkyGrep.UI.ViewModels
 {
-    public class SearchResultItem : IFileItem
+    public class SearchErrorItem : IFileItem
     {
         public string AbsoluteFilePath { get; }
         public string RelativeFilePath { get; }
-        public SearchMatch Match { get; }
+        public string Error { get; }
 
-        public SearchResultItem(string absoluteFilePath, string relativeFilePath, SearchMatch match)
+        public SearchErrorItem(string absoluteFilePath, string relativeFilePath, string error)
         {
             if (string.IsNullOrWhiteSpace(absoluteFilePath))
             {
@@ -45,9 +44,14 @@ namespace FunkyGrep.UI.ViewModels
                 throw new ArgumentException("Value cannot be null or whitespace.", nameof(relativeFilePath));
             }
 
+            if (string.IsNullOrWhiteSpace(error))
+            {
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(error));
+            }
+
             this.AbsoluteFilePath = absoluteFilePath;
             this.RelativeFilePath = relativeFilePath;
-            this.Match = match ?? throw new ArgumentNullException(nameof(match));
+            this.Error = error;
         }
     }
 }

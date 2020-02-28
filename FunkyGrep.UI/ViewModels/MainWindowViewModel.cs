@@ -140,7 +140,11 @@ namespace FunkyGrep.UI.ViewModels
 
         public ObservableCollection<SearchResultItem> SearchResults { get; }
 
+        public ObservableCollection<SearchErrorItem> SearchErrors { get; }
+
         public object SearchResultsLocker { get; }
+
+        public object SearchErrorsLocker { get; }
 
         public bool? LastSearchCompleted
         {
@@ -223,7 +227,9 @@ namespace FunkyGrep.UI.ViewModels
             this.SearchPatternIsRegex = true;
             this.ContextLineCount = 0;
             this.SearchResults = new ObservableCollection<SearchResultItem>();
+            this.SearchErrors = new ObservableCollection<SearchErrorItem>();
             this.SearchResultsLocker = new object();
+            this.SearchErrorsLocker = new object();
         }
 
         void ShowSelectFolderDialog()
@@ -243,7 +249,7 @@ namespace FunkyGrep.UI.ViewModels
             }
         }
 
-        void CopyAbsoluteFilePathToClipboard(SearchResultItem item)
+        void CopyAbsoluteFilePathToClipboard(IFileItem item)
         {
             if (item == null)
             {
@@ -254,7 +260,7 @@ namespace FunkyGrep.UI.ViewModels
             this._clipboardService.SetText(itemFilePath);
         }
 
-        void CopyRelativeFilePathToClipboard(SearchResultItem item)
+        void CopyRelativeFilePathToClipboard(IFileItem item)
         {
             if (item == null)
             {
@@ -265,7 +271,7 @@ namespace FunkyGrep.UI.ViewModels
             this._clipboardService.SetText(itemFilePath);
         }
 
-        void CopyFileToClipboard(SearchResultItem item)
+        void CopyFileToClipboard(IFileItem item)
         {
             if (item == null)
             {
@@ -278,7 +284,7 @@ namespace FunkyGrep.UI.ViewModels
 
         void CopyLineNumberToClipboard(SearchResultItem item)
         {
-            if (item == null)
+            if (item?.Match == null)
             {
                 return;
             }
@@ -286,7 +292,7 @@ namespace FunkyGrep.UI.ViewModels
             this._clipboardService.SetText(item.Match.LineNumber.ToString());
         }
 
-        void OpenFileInEditor(SearchResultItem item)
+        void OpenFileInEditor(IFileItem item)
         {
             if (item == null)
             {
@@ -355,12 +361,35 @@ namespace FunkyGrep.UI.ViewModels
                         string relativePath = args.FilePath.Substring(basenameLength);
                         foreach (var match in args.Matches)
                         {
-                            this.SearchResults.Add(new SearchResultItem(args.FilePath, relativePath, match));
+                            var searchResultItem = new SearchResultItem(args.FilePath, relativePath, match);
+                            this.SearchResults.Add(searchResultItem);
                         }
                     }
                 };
 
                 this._searcher.ProgressChanged += (_, args) => { this.SearchProgress.Update(args); };
+
+                this._searcher.Error += (_, args) =>
+                {
+                    int basenameLength = this.Directory.Length;
+
+                    if (this.Directory[^1] != Path.DirectorySeparatorChar)
+                    {
+                        basenameLength++;
+                    }
+
+                    lock (this.SearchErrorsLocker)
+                    {
+                        string relativePath = args.FilePath.Substring(basenameLength);
+
+                        var errorString = args.Error is IOException || args.Error is UnauthorizedAccessException
+                            ? args.Error.Message
+                            : args.Error.ToStringDemystified();
+
+                        var searchErrorItem = new SearchErrorItem(args.FilePath, relativePath, errorString);
+                        this.SearchErrors.Add(searchErrorItem);
+                    }
+                };
 
                 this._searcher.Completed += (_, args) =>
                 {
@@ -368,9 +397,9 @@ namespace FunkyGrep.UI.ViewModels
                     this.LastSearchCompleted = true;
                     this.SearchIsRunning = false;
 
-                    if (args.Error != null)
+                    if (args.FailureReason != null)
                     {
-                        this.SetGeneralError(args.Error);
+                        this.SetGeneralError(args.FailureReason);
                     }
                 };
 
@@ -427,7 +456,7 @@ namespace FunkyGrep.UI.ViewModels
             this.SetAllErrors(
                 new Dictionary<string, ReadOnlyCollection<string>>
                 {
-                    [string.Empty] = new ReadOnlyCollection<string>(new[] { ex.ToString() })
+                    [string.Empty] = new ReadOnlyCollection<string>(new[] { ex.ToStringDemystified() })
                 });
         }
     }

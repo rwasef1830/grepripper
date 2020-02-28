@@ -1,4 +1,5 @@
 ﻿#region License
+
 // Copyright (c) 2020 Raif Atef Wasef
 // This source file is licensed under the  MIT license.
 // 
@@ -20,34 +21,14 @@
 // OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT
 // OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH
 // THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-#endregion
 
-using System;
-using FunkyGrep.Engine;
+#endregion
 
 namespace FunkyGrep.UI.ViewModels
 {
-    public class SearchResultItem : IFileItem
+    public interface IFileItem
     {
-        public string AbsoluteFilePath { get; }
-        public string RelativeFilePath { get; }
-        public SearchMatch Match { get; }
-
-        public SearchResultItem(string absoluteFilePath, string relativeFilePath, SearchMatch match)
-        {
-            if (string.IsNullOrWhiteSpace(absoluteFilePath))
-            {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(absoluteFilePath));
-            }
-
-            if (string.IsNullOrWhiteSpace(relativeFilePath))
-            {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(relativeFilePath));
-            }
-
-            this.AbsoluteFilePath = absoluteFilePath;
-            this.RelativeFilePath = relativeFilePath;
-            this.Match = match ?? throw new ArgumentNullException(nameof(match));
-        }
+        string AbsoluteFilePath { get; }
+        string RelativeFilePath { get; }
     }
 }

@@ -87,6 +87,7 @@ namespace FunkyGrep.Engine
 
         public event EventHandler<ProgressEventArgs> ProgressChanged;
         public event EventHandler<MatchFoundEventArgs> MatchFound;
+        public event EventHandler<SearchErrorEventArgs> Error;
         public event EventHandler<CompletedEventArgs> Completed;
 
         public void Begin()
@@ -244,6 +245,9 @@ namespace FunkyGrep.Engine
                 },
                 (dataSource, loopState, _, vars) =>
                 {
+                    List<SearchMatch> matches = null;
+                    Exception error = null;
+
                     try
                     {
                         var byteArrayPool = ArrayPool<byte>.Shared;
@@ -255,7 +259,6 @@ namespace FunkyGrep.Engine
                         }
 
                         token.ThrowIfCancellationRequested();
-                        List<SearchMatch> foundMatches = null;
 
                         using (var stream = dataSource.OpenRead())
                         {
@@ -344,38 +347,34 @@ namespace FunkyGrep.Engine
                                         lineBuffer,
                                         readLineCount - postMatchLineCount);
 
-                                    if (foundMatches == null)
+                                    if (matches == null)
                                     {
-                                        foundMatches = new List<SearchMatch>();
+                                        matches = new List<SearchMatch>();
                                     }
 
-                                    foundMatches.Add(match);
+                                    matches.Add(match);
                                 }
                             }
-                        }
-
-                        if (foundMatches != null && foundMatches.Count > 0)
-                        {
-                            this.MatchFound?.Invoke(
-                                this,
-                                new MatchFoundEventArgs(dataSource.Identifier, foundMatches));
                         }
                     }
                     catch (OperationCanceledException) { }
                     catch (Exception ex)
                     {
                         Interlocked.Increment(ref this._failedCount);
-
-                        if (ex is IOException || ex is UnauthorizedAccessException)
-                        {
-                            Debug.WriteLine(ex);
-                            return vars;
-                        }
-
-                        throw;
+                        error = ex;
                     }
                     finally
                     {
+                        if (matches != null)
+                        {
+                            this.MatchFound?.Invoke(this, new MatchFoundEventArgs(dataSource.Identifier, matches));
+                        }
+
+                        if (error != null)
+                        {
+                            this.Error?.Invoke(this, new SearchErrorEventArgs(dataSource.Identifier, error));
+                        }
+
                         Interlocked.Increment(ref this._doneCount);
                     }
 

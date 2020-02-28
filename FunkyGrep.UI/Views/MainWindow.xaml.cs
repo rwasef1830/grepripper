@@ -27,6 +27,7 @@ namespace FunkyGrep.UI.Views
                 if (e.OldValue != null && e.OldValue is MainWindowViewModel oldViewModel)
                 {
                     BindingOperations.DisableCollectionSynchronization(oldViewModel.SearchResults);
+                    BindingOperations.DisableCollectionSynchronization(oldViewModel.SearchErrors);
                     oldViewModel.ErrorsChanged -= HandleModelPropertyChanged;
                 }
 
@@ -35,6 +36,9 @@ namespace FunkyGrep.UI.Views
                     BindingOperations.EnableCollectionSynchronization(
                         newViewModel.SearchResults,
                         newViewModel.SearchResultsLocker);
+                    BindingOperations.EnableCollectionSynchronization(
+                        newViewModel.SearchErrors,
+                        newViewModel.SearchErrorsLocker);
                     newViewModel.ErrorsChanged += HandleModelPropertyChanged;
                 }
             }
@@ -98,7 +102,7 @@ namespace FunkyGrep.UI.Views
             var row = (DataGridRow)sender;
             DragDrop.DoDragDrop(
                 row,
-                new DataObject(DataFormats.FileDrop, new[] { ((SearchResultItem)row.Item).AbsoluteFilePath }),
+                new DataObject(DataFormats.FileDrop, new[] { ((IFileItem)row.Item).AbsoluteFilePath }),
                 DragDropEffects.All);
         }
     }

@@ -23,7 +23,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
@@ -61,7 +60,9 @@ namespace FunkyGrep.Tests.Engine
 
             monitor.OccurredEvents.Should().Contain(x => x.EventName == nameof(fileSearcher.Completed))
                 .Which.Parameters[1].Should().BeOfType<CompletedEventArgs>()
-                .Which.Error.Should().BeNull();
+                .Which.FailureReason.Should().BeNull();
+
+            monitor.OccurredEvents.Should().NotContain(x => x.EventName == nameof(fileSearcher.Error));
         }
 
         [SuppressMessage("ReSharper", "InconsistentNaming")]
@@ -245,7 +246,9 @@ namespace FunkyGrep.Tests.Engine
 
                 monitor.OccurredEvents.Should().Contain(x => x.EventName == nameof(searcher.Completed))
                     .Which.Parameters[1].Should().BeOfType<CompletedEventArgs>()
-                    .Which.Error.Should().BeNull();
+                    .Which.FailureReason.Should().BeNull();
+
+                monitor.OccurredEvents.Should().NotContain(x => x.EventName == nameof(searcher.Error));
             }
         }
     }

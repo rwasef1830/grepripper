@@ -30,12 +30,12 @@ namespace FunkyGrep.Engine
     {
         public TimeSpan Duration { get; }
 
-        public Exception Error { get; }
+        public Exception FailureReason { get; }
 
-        public CompletedEventArgs(TimeSpan duration, Exception error)
+        public CompletedEventArgs(TimeSpan duration, Exception failureReason)
         {
             this.Duration = duration;
-            this.Error = error;
+            this.FailureReason = failureReason;
         }
     }
 }
