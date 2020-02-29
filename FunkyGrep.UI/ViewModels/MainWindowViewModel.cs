@@ -212,13 +212,13 @@ namespace FunkyGrep.UI.ViewModels
             this.RunSearchCommand = new DelegateCommand(this.RunSearch);
             this.AbortSearchCommand = new DelegateCommand(this.AbortSearch);
             this.CopyAbsoluteFilePathToClipboardCommand =
-                new DelegateCommand<SearchResultItem>(this.CopyAbsoluteFilePathToClipboard);
+                new DelegateCommand<IFileItem>(this.CopyAbsoluteFilePathToClipboard);
             this.CopyRelativeFilePathToClipboardCommand =
-                new DelegateCommand<SearchResultItem>(this.CopyRelativeFilePathToClipboard);
-            this.CopyFileToClipboardCommand = new DelegateCommand<SearchResultItem>(this.CopyFileToClipboard);
+                new DelegateCommand<IFileItem>(this.CopyRelativeFilePathToClipboard);
+            this.CopyFileToClipboardCommand = new DelegateCommand<IFileItem>(this.CopyFileToClipboard);
             this.CopyLineNumberToClipboardCommand =
                 new DelegateCommand<SearchResultItem>(this.CopyLineNumberToClipboard);
-            this.OpenFileInEditorCommand = new DelegateCommand<SearchResultItem>(this.OpenFileInEditor);
+            this.OpenFileInEditorCommand = new DelegateCommand<IFileItem>(this.OpenFileInEditor);
 
             this.Directory = Environment.CurrentDirectory;
             this.IncludeSubDirectories = true;
