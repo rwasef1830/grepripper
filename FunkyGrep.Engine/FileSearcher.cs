@@ -320,7 +320,7 @@ namespace FunkyGrep.Engine
 
                             Debug.Assert(lastReadLine == null != lineBuffer.IsFull);
 
-                            if (!readFirstLine)
+                            while (!lineBuffer.IsFull)
                             {
                                 lineBuffer.PushBack(null);
                             }

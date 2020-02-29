@@ -160,6 +160,16 @@ namespace FunkyGrep.Tests.Engine
             }
 
             [Fact]
+            public void Post_match_context_lines_more_than_file_lines()
+            {
+                DoTest(
+                    "A",
+                    "A\r\nB",
+                    3,
+                    new SearchMatch(1, "A", 0, 1, null, new[] { "B" }));
+            }
+
+            [Fact]
             public void Context_lines_should_be_clamped()
             {
                 DoTest(
