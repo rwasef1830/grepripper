@@ -221,11 +221,27 @@
                 <Style TargetType="DataGridRow">
                     <EventSetter Event="PreviewMouseLeftButtonDown" Handler="HandleDataGridRowPreviewMouseLeftButtonDown" />
                 </Style>
+                <Style TargetType="DataGridCell">
+                    <Setter Property="Padding" Value="3" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type DataGridCell}">
+                                <Border Padding="{TemplateBinding Padding}" 
+                                        BorderBrush="{TemplateBinding BorderBrush}" 
+                                        BorderThickness="{TemplateBinding BorderThickness}" 
+                                        Background="{TemplateBinding Background}" 
+                                        SnapsToDevicePixels="True">
+                                    <ContentPresenter SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
             </TabControl.Resources>
             <TabItem Header="{Binding SearchResults.Count, FallbackValue=0}" HeaderStringFormat="{}Results ({0:n0})" IsSelected="True">
                 <DataGrid ItemsSource="{Binding SearchResults}" IsReadOnly="True" AutoGenerateColumns="False" 
                           VerticalGridLinesBrush="LightGray" HorizontalGridLinesBrush="LightGray" AlternatingRowBackground="Gainsboro" 
-                          AlternationCount="2" SelectionMode="Single" CanUserSortColumns="False" 
+                          AlternationCount="2" SelectionMode="Single" CanUserSortColumns="False"
                           PreviewMouseRightButtonUp="HandleDataGridPreviewMouseRightButtonUp">
                     <DataGrid.Resources>
                         <converters:SearchResultItemToXamlConverter x:Key="SearchResultItemToXamlConverter">
@@ -278,7 +294,7 @@
                         <DataGridTemplateColumn Header="File" Width="*" CellTemplate="{StaticResource {DataTemplateKey DataType=viewModels:IFileItem}}" />
                         <DataGridTextColumn Binding="{Binding Match.LineNumber, Mode=OneTime}" Header="Line" Width="50" 
                                             ElementStyle="{StaticResource LineCellTextBlockStyle}" />
-                        <DataGridTemplateColumn Header="Text" Width="*">
+                        <DataGridTemplateColumn Header="Text" Width="2*">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate DataType="viewModels:SearchResultItem">
                                     <ContentControl Content="{Binding Mode=OneTime, Converter={StaticResource SearchResultItemToXamlConverter}}" 
@@ -334,7 +350,7 @@
                     </DataGrid.Resources>
                     <DataGrid.Columns>
                         <DataGridTemplateColumn Header="File" Width="*" CellTemplate="{StaticResource {DataTemplateKey DataType=viewModels:IFileItem}}" />
-                        <DataGridTextColumn Header="Error" Width="*" Binding="{Binding Error}">
+                        <DataGridTextColumn Header="Error" Width="2*" Binding="{Binding Error}">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="DarkRed" />
