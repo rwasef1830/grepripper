@@ -263,13 +263,11 @@
                                     <Trigger.Setters>
                                         <Setter Property="ContextMenu">
                                             <Setter.Value>
-                                                <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
-                                                <ContextMenu IsEnabled="{Binding PlacementTarget.HasItems, RelativeSource={RelativeSource Mode=Self}}">
+                                                <ContextMenu>
                                                     <ContextMenu.Resources>
                                                         <Style TargetType="MenuItem">
-                                                            <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
                                                             <Setter Property="CommandParameter" 
-                                                                    Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.SelectedItem}" />
+                                                                    Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.(DataGrid.SelectedItem)}" />
                                                         </Style>
                                                     </ContextMenu.Resources>
 
@@ -322,13 +320,11 @@
                                     <Trigger.Setters>
                                         <Setter Property="ContextMenu">
                                             <Setter.Value>
-                                                <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
-                                                <ContextMenu IsEnabled="{Binding PlacementTarget.HasItems, RelativeSource={RelativeSource Mode=Self}}">
+                                                <ContextMenu>
                                                     <ContextMenu.Resources>
                                                         <Style TargetType="MenuItem">
-                                                            <!-- ReSharper disable once Xaml.BindingWithContextNotResolved -->
                                                             <Setter Property="CommandParameter" 
-                                                                    Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.SelectedItem}" />
+                                                                    Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.(DataGrid.SelectedItem)}" />
                                                         </Style>
                                                     </ContextMenu.Resources>
 
