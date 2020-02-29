@@ -341,6 +341,11 @@ namespace FunkyGrep.UI.ViewModels
                     this.SearchResults.Clear();
                 }
 
+                lock (this.SearchErrorsLocker)
+                {
+                    this.SearchErrors.Clear();
+                }
+
                 this._searcher = new FileSearcher(
                     patternSpec.Expression,
                     fileSpec.EnumerateFiles(),
