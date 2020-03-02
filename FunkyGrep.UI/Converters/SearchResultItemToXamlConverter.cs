@@ -105,8 +105,7 @@ namespace FunkyGrep.UI.Converters
             if (contextAfterLength > 0)
             {
                 var contextAfterText = match.Line.Substring(match.MatchIndex + match.MatchLength, contextAfterLength);
-                var contextAfterRun = new Run(
-                    contextAfterText)
+                var contextAfterRun = new Run(contextAfterText)
                 {
                     Style = this.ContextRunStyle
                 };
