@@ -23,6 +23,20 @@
                                     <GradientStop Color="Black" Offset="0.5" />
                                     <GradientStop Color="Transparent" Offset="1" />
                                 </LinearGradientBrush>
+                                <Style TargetType="Grid">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Visibility, Source={x:Reference Ellipses}}" Value="Visible">
+                                            <DataTrigger.Setters>
+                                                <Setter Property="ToolTip" Value="{Binding RelativeSource={RelativeSource AncestorType=Label}, Path=Content}" />
+                                            </DataTrigger.Setters>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding Visibility, Source={x:Reference Ellipses}}" Value="Hidden">
+                                            <DataTrigger.Setters>
+                                                <Setter Property="ToolTip" Value="{x:Null}" />
+                                            </DataTrigger.Setters>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
                             </Grid.Resources>
                             <Canvas x:Name="Canvas" ClipToBounds="True" Height="{Binding ElementName=Content, Path=ActualHeight}">
                                 <Border
@@ -37,23 +51,9 @@
                                         x:Name="Content">
                                     <ContentPresenter
                                             HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                            Content="{Binding RelativeSource={RelativeSource AncestorType=Label}, Path=Content}"
                                             RecognizesAccessKey="True"
                                             SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
-                                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
-                                        <ContentPresenter.Resources>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="FontSize"
-                                                            Value="{Binding FontSize, RelativeSource={RelativeSource AncestorType=Label}}" />
-                                                <Setter Property="FontWeight"
-                                                            Value="{Binding FontWeight, RelativeSource={RelativeSource AncestorType=Label}}" />
-                                                <Setter Property="FontStyle"
-                                                            Value="{Binding FontStyle, RelativeSource={RelativeSource AncestorType=Label}}" />
-                                                <Setter Property="FontFamily"
-                                                            Value="{Binding FontFamily, RelativeSource={RelativeSource AncestorType=Label}}" />
-                                            </Style>
-                                        </ContentPresenter.Resources>
-                                    </ContentPresenter>
+                                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                                 </Border>
                                 <Label 
                                         x:Name="Ellipses" 
