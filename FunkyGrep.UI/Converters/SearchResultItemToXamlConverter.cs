@@ -68,7 +68,7 @@ namespace FunkyGrep.UI.Converters
                 return null;
             }
 
-            var textBlock = new TextBlock { IsHitTestVisible = false };
+            var textBlock = new TextBlock();
             var match = item.Match;
 
             if (match.PreMatchLines != null && match.PreMatchLines.Count > 0)

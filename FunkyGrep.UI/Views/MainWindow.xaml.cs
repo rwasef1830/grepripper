@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using FunkyGrep.UI.Util;
@@ -86,14 +87,30 @@ namespace FunkyGrep.UI.Views
         {
             var depObj = (DependencyObject)e.OriginalSource;
 
-            while (depObj != null && !(depObj is DataGridColumnHeader))
+            if (depObj is Inline inline)
             {
-                depObj = VisualTreeHelper.GetParent(depObj);
+                depObj = inline.Parent;
+                if (depObj == null)
+                {
+                    return;
+                }
             }
 
-            if (depObj != null)
+            while (depObj != null)
             {
-                e.Handled = true;
+                depObj = VisualTreeHelper.GetParent(depObj);
+
+                if (depObj is DataGridColumnHeader)
+                {
+                    e.Handled = true;
+                    return;
+                }
+
+                if (depObj is DataGridRow dataGridRow)
+                {
+                    dataGridRow.IsSelected = true;
+                    return;
+                }
             }
         }
 
