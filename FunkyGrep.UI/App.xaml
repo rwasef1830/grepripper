@@ -51,7 +51,7 @@
                                         x:Name="Content">
                                     <ContentPresenter
                                             HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                            RecognizesAccessKey="True"
+                                            RecognizesAccessKey="False"
                                             SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
                                             VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                                 </Border>
