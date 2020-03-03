@@ -222,6 +222,7 @@
                 </Style>
                 <Style TargetType="DataGridRow">
                     <EventSetter Event="PreviewMouseLeftButtonDown" Handler="HandleDataGridRowPreviewMouseLeftButtonDown" />
+                    <EventSetter Event="PreviewMouseDoubleClick" Handler="HandleDataGridRowPreviewMouseDoubleClick" />
                 </Style>
                 <Style TargetType="DataGridCell">
                     <Setter Property="Padding" Value="3" />

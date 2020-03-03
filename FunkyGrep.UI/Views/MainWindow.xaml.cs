@@ -122,5 +122,17 @@ namespace FunkyGrep.UI.Views
                 new DataObject(DataFormats.FileDrop, new[] { ((IFileItem)row.Item).AbsoluteFilePath }),
                 DragDropEffects.All);
         }
+
+        void HandleDataGridRowPreviewMouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            var row = (DataGridRow)sender;
+            var fileItem = (IFileItem)row.Item;
+            var viewModel = (MainWindowViewModel)this.DataContext;
+            
+            if (viewModel.OpenFileInEditorCommand.CanExecute(fileItem))
+            {
+                viewModel.OpenFileInEditorCommand.Execute(fileItem);
+            }
+        }
     }
 }
