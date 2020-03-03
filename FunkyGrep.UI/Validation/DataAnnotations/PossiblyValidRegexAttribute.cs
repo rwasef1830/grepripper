@@ -1,26 +1,47 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
-using FunkyGrep.UI.ViewModels;
 
 namespace FunkyGrep.UI.Validation.DataAnnotations
 {
     public class PossiblyValidRegexAttribute : ValidationAttribute
     {
+        public string ValueIsRegexMemberName { get; }
+
         public override bool RequiresValidationContext => true;
+
+        public PossiblyValidRegexAttribute(string valueIsRegexMemberName)
+        {
+            this.ValueIsRegexMemberName = valueIsRegexMemberName;
+        }
 
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
-            if (!(validationContext.ObjectInstance is MainWindowViewModel viewModel))
+            if (!(value is string expression))
             {
-                return ValidationResult.Success;
+                return new ValidationResult("Incorrect value type. Expecting String.");
             }
 
-            if (!viewModel.SearchPatternIsRegex)
+            var instance = validationContext.ObjectInstance;
+            if (instance == null)
             {
-                return ValidationResult.Success;
+                throw new InvalidOperationException("Validation context object instance is required.");
             }
 
-            if (value == null)
+            var valueIsRegexProperty = instance.GetType().GetProperty(this.ValueIsRegexMemberName);
+            if (valueIsRegexProperty == null)
+            {
+                return new ValidationResult(
+                    $"Could not find member '{this.ValueIsRegexMemberName}' in object being validated.");
+            }
+
+            var valueIsRegexObj = valueIsRegexProperty.GetValue(instance);
+            if (!(valueIsRegexObj is bool valueIsRegex))
+            {
+                return new ValidationResult($"Member '{this.ValueIsRegexMemberName}' must be Boolean.");
+            }
+
+            if (!valueIsRegex)
             {
                 return ValidationResult.Success;
             }

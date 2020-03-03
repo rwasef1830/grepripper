@@ -22,7 +22,6 @@
 // THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endregion
 
-using System.Reflection;
 using System.Runtime.InteropServices;
 
 // Setting ComVisible to false makes the types in this assembly not visible 

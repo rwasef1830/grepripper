@@ -16,6 +16,8 @@ namespace FunkyGrep.UI.Views
 {
     public partial class MainWindow
     {
+        SearchOperationViewModel _lastSearchOperation;
+
         public MainWindow()
         {
             this.InitializeComponent();
@@ -27,24 +29,46 @@ namespace FunkyGrep.UI.Views
             {
                 if (e.OldValue != null && e.OldValue is MainWindowViewModel oldViewModel)
                 {
-                    BindingOperations.DisableCollectionSynchronization(oldViewModel.SearchResults);
-                    BindingOperations.DisableCollectionSynchronization(oldViewModel.SearchErrors);
+                    oldViewModel.Search.PropertyChanged -= this.HandleSearchPropertyChanged;
                     oldViewModel.ErrorsChanged -= HandleModelPropertyChanged;
                 }
 
                 if (e.NewValue != null && e.NewValue is MainWindowViewModel newViewModel)
                 {
-                    BindingOperations.EnableCollectionSynchronization(
-                        newViewModel.SearchResults,
-                        newViewModel.SearchResultsLocker);
-                    BindingOperations.EnableCollectionSynchronization(
-                        newViewModel.SearchErrors,
-                        newViewModel.SearchErrorsLocker);
+                    this.HandleSearchPropertyChanged(
+                        newViewModel.Search,
+                        new PropertyChangedEventArgs(nameof(newViewModel.Search.Operation)));
+                    newViewModel.Search.PropertyChanged += this.HandleSearchPropertyChanged;
                     newViewModel.ErrorsChanged += HandleModelPropertyChanged;
                 }
             }
 
             base.OnPropertyChanged(e);
+        }
+
+        void HandleSearchPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            var searchViewModel = (SearchViewModel)sender;
+
+            if (e.PropertyName != nameof(searchViewModel.Operation))
+            {
+                return;
+            }
+
+            if (this._lastSearchOperation != null)
+            {
+                BindingOperations.DisableCollectionSynchronization(this._lastSearchOperation.Results);
+                BindingOperations.DisableCollectionSynchronization(this._lastSearchOperation.SearchErrors);
+            }
+
+            BindingOperations.EnableCollectionSynchronization(
+                searchViewModel.Operation.Results,
+                searchViewModel.Operation.ResultsLocker);
+            BindingOperations.EnableCollectionSynchronization(
+                searchViewModel.Operation.SearchErrors,
+                searchViewModel.Operation.SearchErrorsLocker);
+
+            this._lastSearchOperation = searchViewModel.Operation;
         }
 
         static void HandleModelPropertyChanged(object sender, DataErrorsChangedEventArgs e)

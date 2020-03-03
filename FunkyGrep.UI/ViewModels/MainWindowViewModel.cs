@@ -23,16 +23,10 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
-using System.IO;
 using System.Windows.Input;
-using FunkyGrep.Engine;
-using FunkyGrep.Engine.Specifications;
 using FunkyGrep.UI.Services;
-using FunkyGrep.UI.Validation.DataAnnotations;
+using FunkyGrep.UI.Validation;
 using MvvmDialogs;
 using MvvmDialogs.FrameworkDialogs.FolderBrowser;
 using Prism.Commands;
@@ -46,145 +40,7 @@ namespace FunkyGrep.UI.ViewModels
         readonly IClipboardService _clipboardService;
         readonly IProcessService _processService;
 
-        string _directory;
-        bool _includeSubDirectories;
-        string _filePatternsSpaceSeparated;
-        IReadOnlyList<string> _filePatterns;
-        bool _skipBinaryFiles;
-        string _searchPattern;
-        bool _searchPatternIsRegex;
-        bool _ignoreCase;
-        byte _contextLineCount;
-        bool _searchIsRunning;
-        SearchProgressViewModel _searchProgress;
-        bool? _lastSearchCompleted;
-        TimeSpan? _lastSearchDuration;
-        FileSearcher _searcher;
-
-        [Required]
-        [DirectoryExists]
-        public string Directory
-        {
-            get => this._directory;
-            set => this.SetProperty(ref this._directory, value);
-        }
-
-        public bool IncludeSubDirectories
-        {
-            get => this._includeSubDirectories;
-            set => this.SetProperty(ref this._includeSubDirectories, value);
-        }
-
-        [Required]
-        [ValidSpaceSeparatedGlobExpressions]
-        public string FilePatternsSpaceSeparated
-        {
-            get => this._filePatternsSpaceSeparated;
-            set
-            {
-                if (this.SetProperty(ref this._filePatternsSpaceSeparated, value))
-                {
-                    this.SetProperty(
-                        ref this._filePatterns,
-                        string.IsNullOrWhiteSpace(value)
-                            ? new string[0]
-                            : value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
-                }
-            }
-        }
-
-        public IReadOnlyList<string> FilePatterns => this._filePatterns;
-
-        public bool SkipBinaryFiles
-        {
-            get => this._skipBinaryFiles;
-            set => this.SetProperty(ref this._skipBinaryFiles, value);
-        }
-
-        [RequiredAllowWhiteSpace]
-        [PossiblyValidRegex]
-        public string SearchPattern
-        {
-            get => this._searchPattern;
-            set => this.SetProperty(ref this._searchPattern, value);
-        }
-
-        public bool SearchPatternIsRegex
-        {
-            get => this._searchPatternIsRegex;
-            set
-            {
-                this.SetProperty(ref this._searchPatternIsRegex, value);
-                this.RaisePropertyChanged(nameof(this.SearchPattern));
-            }
-        }
-
-        public bool IgnoreCase
-        {
-            get => this._ignoreCase;
-            set => this.SetProperty(ref this._ignoreCase, value);
-        }
-
-        [Range(0, 255)]
-        public byte ContextLineCount
-        {
-            get => this._contextLineCount;
-            set => this.SetProperty(ref this._contextLineCount, value);
-        }
-
-        public SearchProgressViewModel SearchProgress
-        {
-            get => this._searchProgress;
-            set => this.SetProperty(ref this._searchProgress, value);
-        }
-
-        public ObservableCollection<SearchResultItem> SearchResults { get; }
-
-        public ObservableCollection<SearchErrorItem> SearchErrors { get; }
-
-        public object SearchResultsLocker { get; }
-
-        public object SearchErrorsLocker { get; }
-
-        public bool? LastSearchCompleted
-        {
-            get => this._lastSearchCompleted;
-            set => this.SetProperty(ref this._lastSearchCompleted, value);
-        }
-
-        public TimeSpan? LastSearchDuration
-        {
-            get => this._lastSearchDuration;
-            set
-            {
-                if (this.SetProperty(ref this._lastSearchDuration, value))
-                {
-                    this.RaisePropertyChanged(nameof(this.LastSearchDurationIsSet));
-                }
-            }
-        }
-
-        public bool LastSearchDurationIsSet => this.LastSearchDuration.HasValue;
-
-        public bool SearchIsRunning
-        {
-            get => this._searchIsRunning;
-            set
-            {
-                if (this.SetProperty(ref this._searchIsRunning, value))
-                {
-                    this.RaisePropertyChanged(nameof(this.SearchIsNotRunning));
-                }
-            }
-        }
-
-        public bool SearchIsNotRunning => !this.SearchIsRunning;
-
         public ICommand ShowSelectFolderDialogCommand { get; }
-
-        public ICommand RunSearchCommand { get; }
-
-        public ICommand AbortSearchCommand { get; }
 
         public ICommand CopyAbsoluteFilePathToClipboardCommand { get; }
 
@@ -195,6 +51,8 @@ namespace FunkyGrep.UI.ViewModels
         public ICommand CopyLineNumberToClipboardCommand { get; }
 
         public ICommand OpenFileInEditorCommand { get; }
+
+        public SearchViewModel Search { get; }
 
         public MainWindowViewModel(
             IDialogService dialogService,
@@ -207,10 +65,9 @@ namespace FunkyGrep.UI.ViewModels
 
             this.ShowSelectFolderDialogCommand = new DelegateCommand(
                 this.ShowSelectFolderDialog,
-                () => !this.SearchIsRunning);
+                () => !(this.Search.Operation?.IsRunning ?? false));
 
-            this.RunSearchCommand = new DelegateCommand(this.RunSearch);
-            this.AbortSearchCommand = new DelegateCommand(this.AbortSearch);
+
             this.CopyAbsoluteFilePathToClipboardCommand =
                 new DelegateCommand<IFileItem>(this.CopyAbsoluteFilePathToClipboard);
             this.CopyRelativeFilePathToClipboardCommand =
@@ -220,23 +77,15 @@ namespace FunkyGrep.UI.ViewModels
                 new DelegateCommand<SearchResultItem>(this.CopyLineNumberToClipboard);
             this.OpenFileInEditorCommand = new DelegateCommand<IFileItem>(this.OpenFileInEditor);
 
-            this.Directory = Environment.CurrentDirectory;
-            this.IncludeSubDirectories = true;
-            this.FilePatternsSpaceSeparated = "*";
-            this.SkipBinaryFiles = true;
-            this.SearchPatternIsRegex = true;
-            this.ContextLineCount = 0;
-            this.SearchResults = new ObservableCollection<SearchResultItem>();
-            this.SearchErrors = new ObservableCollection<SearchErrorItem>();
-            this.SearchResultsLocker = new object();
-            this.SearchErrorsLocker = new object();
+            this.Search = new SearchViewModel();
+            this.Search.BubbleFutureGeneralError(this);
         }
 
         void ShowSelectFolderDialog()
         {
             var settings = new FolderBrowserDialogSettings
             {
-                SelectedPath = this.Directory,
+                SelectedPath = this.Search.Directory,
                 ShowNewFolderButton = false
             };
 
@@ -245,7 +94,7 @@ namespace FunkyGrep.UI.ViewModels
                 this,
                 settings) ?? false)
             {
-                this.Directory = settings.SelectedPath;
+                this.Search.Directory = settings.SelectedPath;
             }
         }
 
@@ -308,162 +157,6 @@ namespace FunkyGrep.UI.ViewModels
             };
 
             this._processService.Start(pi);
-        }
-
-        void RunSearch()
-        {
-            if (!this.ValidateProperties())
-            {
-                return;
-            }
-
-            try
-            {
-                this.LastSearchCompleted = null;
-                this.LastSearchDuration = null;
-                this.SearchProgress = new SearchProgressViewModel();
-
-                this.SearchIsRunning = true;
-
-                var patternSpec = new PatternSpecification(
-                    this.SearchPattern,
-                    this.SearchPatternIsRegex,
-                    this.IgnoreCase);
-
-                var fileSpec = new FileSpecification(
-                    this.Directory,
-                    this.IncludeSubDirectories,
-                    this.FilePatterns,
-                    new string[0]);
-
-                lock (this.SearchResultsLocker)
-                {
-                    this.SearchResults.Clear();
-                }
-
-                lock (this.SearchErrorsLocker)
-                {
-                    this.SearchErrors.Clear();
-                }
-
-                this._searcher = new FileSearcher(
-                    patternSpec.Expression,
-                    fileSpec.EnumerateFiles(),
-                    this.SkipBinaryFiles,
-                    this.ContextLineCount);
-
-                this._searcher.MatchFound += (_, args) =>
-                {
-                    int basenameLength = this.Directory.Length;
-
-                    if (this.Directory[^1] != Path.DirectorySeparatorChar)
-                    {
-                        basenameLength++;
-                    }
-
-                    lock (this.SearchResultsLocker)
-                    {
-                        string relativePath = args.FilePath.Substring(basenameLength);
-                        foreach (var match in args.Matches)
-                        {
-                            var searchResultItem = new SearchResultItem(args.FilePath, relativePath, match);
-                            this.SearchResults.Add(searchResultItem);
-                        }
-                    }
-                };
-
-                this._searcher.ProgressChanged += (_, args) => { this.SearchProgress.Update(args); };
-
-                this._searcher.Error += (_, args) =>
-                {
-                    int basenameLength = this.Directory.Length;
-
-                    if (this.Directory[^1] != Path.DirectorySeparatorChar)
-                    {
-                        basenameLength++;
-                    }
-
-                    lock (this.SearchErrorsLocker)
-                    {
-                        string relativePath = args.FilePath.Substring(basenameLength);
-
-                        var errorString = args.Error is IOException || args.Error is UnauthorizedAccessException
-                            ? args.Error.Message
-                            : args.Error.ToStringDemystified();
-
-                        var searchErrorItem = new SearchErrorItem(args.FilePath, relativePath, errorString);
-                        this.SearchErrors.Add(searchErrorItem);
-                    }
-                };
-
-                this._searcher.Completed += (_, args) =>
-                {
-                    this.SearchProgress.Update(args.FinalProgressUpdate);
-                    this.LastSearchDuration = args.Duration;
-                    this.LastSearchCompleted = true;
-                    this.SearchIsRunning = false;
-
-                    if (args.FailureReason != null)
-                    {
-                        this.SetGeneralError(args.FailureReason);
-                    }
-                };
-
-                this._searcher.Begin();
-            }
-            catch (Exception ex)
-            {
-                try
-                {
-                    this.CleanUpSearch();
-                    this.SetGeneralError(ex);
-                }
-                catch
-                {
-                    // ignore
-                }
-                finally
-                {
-                    this.SearchIsRunning = false;
-                    this.LastSearchCompleted = false;
-                }
-            }
-        }
-
-        void AbortSearch()
-        {
-            if (!this.SearchIsRunning)
-            {
-                return;
-            }
-
-            try
-            {
-                this.CleanUpSearch();
-            }
-            catch (Exception ex)
-            {
-                this.SetGeneralError(ex);
-            }
-            finally
-            {
-                this.SearchIsRunning = false;
-                this.LastSearchCompleted = false;
-            }
-        }
-
-        void CleanUpSearch()
-        {
-            this._searcher?.Cancel();
-        }
-
-        void SetGeneralError(Exception ex)
-        {
-            this.SetAllErrors(
-                new Dictionary<string, ReadOnlyCollection<string>>
-                {
-                    [string.Empty] = new ReadOnlyCollection<string>(new[] { ex.ToStringDemystified() })
-                });
         }
     }
 }

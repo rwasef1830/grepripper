@@ -38,7 +38,7 @@ namespace FunkyGrep.UI
                     && this.MainWindow.DataContext is MainWindowViewModel viewModel
                     && !string.IsNullOrWhiteSpace(initialDirectory))
                 {
-                    viewModel.Directory = initialDirectory;
+                    viewModel.Search.Directory = initialDirectory;
                 }
             }
             catch (OptionException ex)
