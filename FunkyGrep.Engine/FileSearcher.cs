@@ -116,7 +116,16 @@ namespace FunkyGrep.Engine
                         }
                         finally
                         {
-                            this.Completed?.Invoke(this, new CompletedEventArgs(stopwatch.Elapsed, error));
+                            this.Completed?.Invoke(
+                                this,
+                                new CompletedEventArgs(
+                                    stopwatch.Elapsed,
+                                    new ProgressEventArgs(
+                                        Interlocked.Read(ref this._doneCount),
+                                        Interlocked.Read(ref this._totalCount),
+                                        Interlocked.Read(ref this._failedCount),
+                                        Interlocked.Read(ref this._skippedCount)),
+                                    error));
                         }
                     },
                     this._cancelSrc.Token);

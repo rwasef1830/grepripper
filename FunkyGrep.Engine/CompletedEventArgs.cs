@@ -32,9 +32,13 @@ namespace FunkyGrep.Engine
 
         public Exception FailureReason { get; }
 
-        public CompletedEventArgs(TimeSpan duration, Exception failureReason)
+        public ProgressEventArgs FinalProgressUpdate { get; }
+
+        public CompletedEventArgs(TimeSpan duration, ProgressEventArgs finalProgressUpdate, Exception failureReason)
         {
             this.Duration = duration;
+            this.FinalProgressUpdate = finalProgressUpdate
+                                       ?? throw new ArgumentNullException(nameof(finalProgressUpdate));
             this.FailureReason = failureReason;
         }
     }

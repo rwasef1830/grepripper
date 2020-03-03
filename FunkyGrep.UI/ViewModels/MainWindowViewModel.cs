@@ -398,6 +398,7 @@ namespace FunkyGrep.UI.ViewModels
 
                 this._searcher.Completed += (_, args) =>
                 {
+                    this.SearchProgress.Update(args.FinalProgressUpdate);
                     this.LastSearchDuration = args.Duration;
                     this.LastSearchCompleted = true;
                     this.SearchIsRunning = false;

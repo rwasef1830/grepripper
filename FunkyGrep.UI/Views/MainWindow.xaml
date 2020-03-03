@@ -118,65 +118,94 @@
                         </Style>
                     </ProgressBar.Style>
                 </ProgressBar>
-                <Label HorizontalAlignment="Left" FontSize="12" Padding="0, 0, 0, 0">
-                    <Label.Style>
-                        <Style TargetType="Label">
-                            <Setter Property="Content" Value="Search not running." />
-                            <Style.Triggers>
-                                <MultiDataTrigger>
-                                    <MultiDataTrigger.Conditions>
-                                        <Condition Binding="{Binding SearchIsRunning}" Value="True" />
-                                        <Condition Binding="{Binding SearchProgress.TotalFileCountIsSet}" Value="False" />
-                                    </MultiDataTrigger.Conditions>
-                                    <MultiDataTrigger.Setters>
+                <DockPanel>
+                    <Label DockPanel.Dock="Left" FontSize="12" Padding="0, 0, 0, 0" Margin="0, 0, 5, 0">
+                        <Label.Style>
+                            <Style TargetType="Label">
+                                <Setter Property="Content" Value="Search not running." />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SearchIsRunning}" Value="True">
                                         <Setter Property="Content">
                                             <Setter.Value>
-                                                <TextBlock>
-                                                    <TextBlock.Text>
-                                                        <MultiBinding StringFormat="{}{0:n0} done. {1:n0} skipped. {2:n0} failed.">
-                                                            <Binding Path="SearchProgress.SearchedCount" />
-                                                            <Binding Path="SearchProgress.SkippedCount" />
-                                                            <Binding Path="SearchProgress.FailedCount" />
-                                                        </MultiBinding>
-                                                    </TextBlock.Text>
-                                                </TextBlock>
+                                                <TextBlock Foreground="Green">Search is running...</TextBlock>
                                             </Setter.Value>
                                         </Setter>
-                                    </MultiDataTrigger.Setters>
-                                </MultiDataTrigger>
-                                <MultiDataTrigger>
-                                    <MultiDataTrigger.Conditions>
-                                        <Condition Binding="{Binding SearchIsRunning}" Value="True" />
-                                        <Condition Binding="{Binding SearchProgress.TotalFileCountIsSet}" Value="True" />
-                                    </MultiDataTrigger.Conditions>
-                                    <MultiDataTrigger.Setters>
-                                        <Setter Property="Content">
-                                            <Setter.Value>
-                                                <TextBlock>
-                                                    <TextBlock.Text>
-                                                        <MultiBinding StringFormat="{}{0:n0} of {1:n0} done. {2:n0} skipped. {3:n0} failed.">
-                                                            <Binding Path="SearchProgress.SearchedCount" />
-                                                            <Binding Path="SearchProgress.TotalFileCount" />
-                                                            <Binding Path="SearchProgress.SkippedCount" />
-                                                            <Binding Path="SearchProgress.FailedCount" />
-                                                        </MultiBinding>
-                                                    </TextBlock.Text>
-                                                </TextBlock>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </MultiDataTrigger.Setters>
-                                </MultiDataTrigger>
-                                <DataTrigger Binding="{Binding LastSearchCompleted}" Value="False">
-                                    <Setter Property="Content" Value="Last search was cancelled." />
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding LastSearchDurationIsSet}" Value="True">
-                                    <Setter Property="Content" Value="{Binding LastSearchDuration}" />
-                                    <Setter Property="ContentStringFormat" Value="Last search duration: {0}" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Label.Style>
-                </Label>
+                                    </DataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding LastSearchCompleted}" Value="False" />
+                                            <Condition Binding="{Binding LastSearchDurationIsSet}" Value="True" />
+                                        </MultiDataTrigger.Conditions>
+                                        <MultiDataTrigger.Setters>
+                                            <Setter Property="Content">
+                                                <Setter.Value>
+                                                    <TextBlock Foreground="Red" 
+                                                               Text="{Binding LastSearchDuration, StringFormat={}Search cancelled after: {0}}" />
+                                                </Setter.Value>
+                                            </Setter>
+                                        </MultiDataTrigger.Setters>
+                                    </MultiDataTrigger>
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding LastSearchCompleted}" Value="True" />
+                                            <Condition Binding="{Binding LastSearchDurationIsSet}" Value="True" />
+                                        </MultiDataTrigger.Conditions>
+                                        <MultiDataTrigger.Setters>
+                                            <Setter Property="Content">
+                                                <Setter.Value>
+                                                    <TextBlock Text="{Binding LastSearchDuration, StringFormat={}Search completed in: {0}}" />
+                                                </Setter.Value>
+                                            </Setter>
+                                        </MultiDataTrigger.Setters>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Label.Style>
+                    </Label>
+                    <Label DockPanel.Dock="Right" HorizontalContentAlignment="Right" FontSize="12" Padding="0, 0, 0, 0">
+                        <Label.Style>
+                            <Style TargetType="Label">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SearchProgress.TotalFileCountIsSet, FallbackValue=False}" Value="False">
+                                        <DataTrigger.Setters>
+                                            <Setter Property="Content">
+                                                <Setter.Value>
+                                                    <TextBlock>
+                                                        <TextBlock.Text>
+                                                            <MultiBinding StringFormat="{}{0:n0} done. {1:n0} skipped. {2:n0} failed.">
+                                                                <Binding Path="SearchProgress.SearchedCount" FallbackValue="0" />
+                                                                <Binding Path="SearchProgress.SkippedCount" FallbackValue="0" />
+                                                                <Binding Path="SearchProgress.FailedCount" FallbackValue="0" />
+                                                            </MultiBinding>
+                                                        </TextBlock.Text>
+                                                    </TextBlock>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </DataTrigger.Setters>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding SearchProgress.TotalFileCountIsSet, FallbackValue=False}" Value="True">
+                                        <DataTrigger.Setters>
+                                            <Setter Property="Content">
+                                                <Setter.Value>
+                                                    <TextBlock>
+                                                        <TextBlock.Text>
+                                                            <MultiBinding StringFormat="{}{0:n0} of {1:n0} done. {2:n0} skipped. {3:n0} failed.">
+                                                                <Binding Path="SearchProgress.SearchedCount" FallbackValue="0" />
+                                                                <Binding Path="SearchProgress.TotalFileCount" FallbackValue="0" />
+                                                                <Binding Path="SearchProgress.SkippedCount" FallbackValue="0" />
+                                                                <Binding Path="SearchProgress.FailedCount" FallbackValue="0" />
+                                                            </MultiBinding>
+                                                        </TextBlock.Text>
+                                                    </TextBlock>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </DataTrigger.Setters>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Label.Style>
+                    </Label>
+                </DockPanel>
             </StackPanel>
 
             <Button Grid.Row="0" Grid.Column="1" Margin="5, 0, 0, 0" IsDefault="True">
