@@ -69,6 +69,10 @@ namespace FunkyGrep.UI.Converters
             }
 
             var textBlock = new TextBlock();
+
+            // Workaround https://github.com/dotnet/wpf/issues/2681
+            textBlock.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+
             var match = item.Match;
 
             if (match.PreMatchLines != null && match.PreMatchLines.Count > 0)

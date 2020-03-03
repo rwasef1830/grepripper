@@ -298,7 +298,13 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate DataType="viewModels:SearchResultItem">
                                     <ContentControl Content="{Binding Mode=OneTime, Converter={StaticResource SearchResultItemToXamlConverter}}" 
-                                                    FontFamily="Cascadia Code, Fira Code, PragmataPro Mono, Source Code Pro, JetBrains Mono, Consolas, Courier New" />
+                                                    FontFamily="Cascadia Code, Fira Code, PragmataPro Mono, Source Code Pro, JetBrains Mono, Consolas, Courier New">
+                                        <ContentControl.Resources>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="util:TextBlockUtil.HasAutoTooltip" Value="True" />
+                                            </Style>
+                                        </ContentControl.Resources>
+                                    </ContentControl>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
