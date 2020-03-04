@@ -23,7 +23,10 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows.Input;
 using FunkyGrep.UI.Services;
 using FunkyGrep.UI.Validation;
@@ -39,6 +42,11 @@ namespace FunkyGrep.UI.ViewModels
         readonly IDialogService _dialogService;
         readonly IClipboardService _clipboardService;
         readonly IProcessService _processService;
+        readonly IAppSettingsService _appSettingsService;
+        readonly IEditorFinderService _editorFinderService;
+
+        SettingsViewModel _settings;
+        bool _scanForEditorsCanExecute;
 
         public ICommand ShowSelectFolderDialogCommand { get; }
 
@@ -54,14 +62,33 @@ namespace FunkyGrep.UI.ViewModels
 
         public SearchViewModel Search { get; }
 
+        public SettingsViewModel Settings
+        {
+            get => this._settings;
+            set => this.SetProperty(ref this._settings, value);
+        }
+
+        public ICommand ScanForEditorsCommand { get; }
+
+        public bool ScanForEditorsCanExecute
+        {
+            get => this._scanForEditorsCanExecute;
+            set => this.SetProperty(ref this._scanForEditorsCanExecute, value);
+        }
+
         public MainWindowViewModel(
             IDialogService dialogService,
             IClipboardService clipboardService,
-            IProcessService processService)
+            IProcessService processService,
+            IAppSettingsService appSettingsService,
+            IEditorFinderService editorFinderService)
         {
             this._dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
             this._clipboardService = clipboardService ?? throw new ArgumentNullException(nameof(clipboardService));
             this._processService = processService ?? throw new ArgumentNullException(nameof(processService));
+            this._appSettingsService = appSettingsService
+                                       ?? throw new ArgumentNullException(nameof(appSettingsService));
+            this._editorFinderService = editorFinderService ?? throw new ArgumentNullException(nameof(editorFinderService));
 
             this.ShowSelectFolderDialogCommand = new DelegateCommand(
                 this.ShowSelectFolderDialog,
@@ -75,10 +102,20 @@ namespace FunkyGrep.UI.ViewModels
             this.CopyFileToClipboardCommand = new DelegateCommand<IFileItem>(this.CopyFileToClipboard);
             this.CopyLineNumberToClipboardCommand =
                 new DelegateCommand<SearchResultItem>(this.CopyLineNumberToClipboard);
-            this.OpenFileInEditorCommand = new DelegateCommand<IFileItem>(this.OpenFileInEditor);
+            this.OpenFileInEditorCommand = new DelegateCommand<OpenFileInEditorParameters>(this.OpenFileInEditor);
 
             this.Search = new SearchViewModel();
             this.Search.BubbleFutureGeneralError(this);
+            this._settings = this._appSettingsService.LoadOrCreate<SettingsViewModel>();
+
+            if (this._settings.Editors.Count <= 1)
+            {
+                this.ScanForEditors();
+            }
+
+            this._scanForEditorsCanExecute = true;
+            this.ScanForEditorsCommand = new DelegateCommand(this.ScanForEditors)
+                .ObservesCanExecute(() => this.ScanForEditorsCanExecute);
         }
 
         void ShowSelectFolderDialog()
@@ -141,22 +178,101 @@ namespace FunkyGrep.UI.ViewModels
             this._clipboardService.SetText(item.Match.LineNumber.ToString());
         }
 
-        void OpenFileInEditor(IFileItem item)
+        void OpenFileInEditor(OpenFileInEditorParameters parameters)
         {
-            if (item == null)
+            if (parameters == null)
             {
                 return;
             }
 
-            var itemFilePath = item.AbsoluteFilePath;
-            var pi = new ProcessStartInfo(
-                "notepad.exe",
-                $"\"{itemFilePath}\"")
+            try
             {
-                UseShellExecute = true
-            };
+                var item = parameters.FileItem;
+                var editor = parameters.Editor;
 
-            this._processService.Start(pi);
+                var itemFilePath = item.AbsoluteFilePath;
+                var lineNumber = 0;
+
+                if (item is SearchResultItem resultItem)
+                {
+                    lineNumber = resultItem.Match.LineNumber;
+                }
+
+                var executablePath = editor.ExecutablePath;
+                var arguments = string.Format(editor.ArgumentsTemplate, itemFilePath, lineNumber);
+
+                var pi = new ProcessStartInfo(executablePath, arguments)
+                {
+                    UseShellExecute = true
+                };
+
+                this._processService.Start(pi);
+            }
+            catch (Exception ex)
+            {
+                this.SetGeneralError(ex);
+            }
+        }
+
+        void ScanForEditors()
+        {
+            this.ScanForEditorsCanExecute = false;
+
+            try
+            {
+                var newEditors = this._editorFinderService.FindInstalledSupportedEditors();
+                var mergedEditorList = new List<EditorInfo>();
+
+                foreach (var existingEditor in this.Settings.Editors)
+                {
+                    var matchingNewEditor = newEditors.FirstOrDefault(x => x.DisplayName == existingEditor.DisplayName);
+                    if (matchingNewEditor != null)
+                    {
+                        mergedEditorList.Add(matchingNewEditor);
+                        continue;
+                    }
+
+                    mergedEditorList.Add(existingEditor);
+                }
+
+                foreach (var newEditor in newEditors)
+                {
+                    if (mergedEditorList.All(x => x.DisplayName != newEditor.DisplayName))
+                    {
+                        mergedEditorList.Add(newEditor);
+                    }
+                }
+
+                var mergedEditors = new ObservableCollection<EditorInfo>(mergedEditorList.OrderBy(x => x.DisplayName));
+                this.Settings.Editors = mergedEditors;
+                this.Settings.DefaultEditorIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                this.SetGeneralError(ex);
+            }
+            finally
+            {
+                this.ScanForEditorsCanExecute = true;
+            }
+        }
+
+        public void SaveSettings()
+        {
+            try
+            {
+                if (this._settings.HasErrors)
+                {
+                    this._settings = new SettingsViewModel();
+                }
+
+                this._appSettingsService.Save(this._settings);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+                this.SetGeneralError(ex);
+            }
         }
     }
 }

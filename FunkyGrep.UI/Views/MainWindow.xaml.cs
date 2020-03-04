@@ -152,11 +152,23 @@ namespace FunkyGrep.UI.Views
             var row = (DataGridRow)sender;
             var fileItem = (IFileItem)row.Item;
             var viewModel = (MainWindowViewModel)this.DataContext;
-            
-            if (viewModel.OpenFileInEditorCommand.CanExecute(fileItem))
+
+            var parameters = new OpenFileInEditorParameters
             {
-                viewModel.OpenFileInEditorCommand.Execute(fileItem);
+                FileItem = fileItem,
+                Editor = viewModel.Settings.Editors[viewModel.Settings.DefaultEditorIndex]
+            };
+            
+            if (viewModel.OpenFileInEditorCommand.CanExecute(parameters))
+            {
+                viewModel.OpenFileInEditorCommand.Execute(parameters);
             }
+        }
+
+        void HandleMainWindowClosing(object sender, CancelEventArgs e)
+        {
+            var viewModel = (MainWindowViewModel)this.DataContext;
+            viewModel.SaveSettings();
         }
     }
 }

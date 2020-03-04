@@ -70,6 +70,8 @@ namespace FunkyGrep.UI
             containerRegistry.RegisterInstance<IDialogService>(new DialogService());
             containerRegistry.RegisterInstance<IClipboardService>(new ClipboardService());
             containerRegistry.RegisterInstance<IProcessService>(new ProcessService());
+            containerRegistry.RegisterInstance<IAppSettingsService>(new AppSettingsService());
+            containerRegistry.RegisterInstance<IEditorFinderService>(new EditorFinderService());
         }
 
         protected override Window CreateShell()

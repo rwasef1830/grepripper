@@ -11,7 +11,6 @@
         xmlns:converters="clr-namespace:FunkyGrep.UI.Converters"
         xmlns:numericUpDownLib="clr-namespace:NumericUpDownLib;assembly=NumericUpDownLib"
         xmlns:util="clr-namespace:FunkyGrep.UI.Util"
-        xmlns:system="clr-namespace:System;assembly=System.Runtime"
         mvvm:ViewModelLocator.AutoWireViewModel="True"
         mc:Ignorable="d"
         Title="{Binding Source={x:Static ui:App.Version}, StringFormat=FunkyGrep {0}}"
@@ -21,7 +20,8 @@
         WindowStyle="SingleBorderWindow"
         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
         md:DialogServiceViews.IsRegistered="True"
-        d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel}">
+        d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel}"
+        Closing="HandleMainWindowClosing">
     <Grid Margin="5, 5, 5, 5" FocusManager.FocusedElement="{Binding ElementName=TextBoxSearchPattern}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="70" />
@@ -64,12 +64,41 @@
                   IsChecked="{Binding Search.IncludeSubDirectories}" IsEnabled="{Binding Search.Operation.IsNotRunning}" />
 
         <Label Grid.Row="1" Grid.Column="0" Content="_Files" Target="{Binding ElementName=TextBoxFiles}" />
-        <TextBox Grid.Row="1" Grid.Column="1" Width="Auto" Text="{Binding Search.FilePatternsSpaceSeparated, UpdateSourceTrigger=PropertyChanged}"
-                 IsEnabled="{Binding Search.Operation.IsNotRunning}" x:Name="TextBoxFiles" />
-        <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal">
-            <CheckBox Content="Skip _Binaries" VerticalAlignment="Center" Margin="5, 0, 5, 0" IsChecked="{Binding Search.SkipBinaryFiles}" 
-                      IsEnabled="{Binding Search.Operation.IsNotRunning}" />
-        </StackPanel>
+        <Grid Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Row="0" Grid.Column="0" Width="Auto" Text="{Binding Search.FilePatternsSpaceSeparated, UpdateSourceTrigger=PropertyChanged}"
+                     IsEnabled="{Binding Search.Operation.IsNotRunning}" x:Name="TextBoxFiles" />
+            <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="5, 0, 0, 0">
+                <CheckBox Content="Skip _Binaries" VerticalAlignment="Center" Margin="0, 0, 5, 0" IsChecked="{Binding Search.SkipBinaryFiles}" 
+                          IsEnabled="{Binding Search.Operation.IsNotRunning}" />
+                <Label Content="_Editor:" Target="{Binding ElementName=ComboBoxEditor}" VerticalAlignment="Center" Margin="5, 0, 2, 0" Padding="0" />
+                <ComboBox x:Name="ComboBoxEditor" Width="150" ItemsSource="{Binding Settings.Editors}" 
+                          SelectedIndex="{Binding Settings.DefaultEditorIndex, FallbackValue=0}">
+                    <ComboBox.IsEnabled>
+                        <MultiBinding Converter="{StaticResource BooleanAndValueConverter}">
+                            <Binding Path="ScanForEditorsCanExecute" />
+                            <Binding Path="Search.Operation.IsNotRunning" />
+                        </MultiBinding>
+                    </ComboBox.IsEnabled>
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate DataType="viewModels:EditorInfo">
+                            <TextBlock Text="{Binding DisplayName}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Content="_Detect" Padding="5, 0, 5, 0" Command="{Binding ScanForEditorsCommand}">
+                    <Button.IsEnabled>
+                        <MultiBinding Converter="{StaticResource BooleanAndValueConverter}">
+                            <Binding Path="ScanForEditorsCanExecute" />
+                            <Binding Path="Search.Operation.IsNotRunning" />
+                        </MultiBinding>
+                    </Button.IsEnabled>
+                </Button>
+            </StackPanel>
+        </Grid>
 
         <Label Grid.Row="2" Grid.Column="0" Content="_Pattern" Target="{Binding ElementName=TextBoxSearchPattern}" />
         <Grid Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2">
@@ -83,9 +112,9 @@
                 <CheckBox Content="_Regex"  Margin="0, 0, 5, 0" IsChecked="{Binding Search.SearchPatternIsRegex}" VerticalAlignment="Center"
                           IsEnabled="{Binding Search.Operation.IsNotRunning}" />
                 <CheckBox Content="Ignore _Case" IsChecked="{Binding Search.IgnoreCase}" VerticalAlignment="Center"
-                          IsEnabled="{Binding Search.Operation.IsNotRunning}" />
-                <Label Content="Context _Lines" Target="{Binding ElementName=ByteUpDownContextLineCount}" VerticalAlignment="Center"
-                       Padding="5, 0, 5, 0" />
+                          IsEnabled="{Binding Search.Operation.IsNotRunning}" Margin="0, 0, 5, 0" />
+                <Label Content="Context _Lines:" Target="{Binding ElementName=ByteUpDownContextLineCount}" VerticalAlignment="Center"
+                       Margin="5, 0, 2, 0" Padding="0" />
                 <numericUpDownLib:ByteUpDown MaxValue="255" MinValue="0"
                                              Value="{Binding Search.ContextLineCount, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                                              IsEnabled="{Binding Search.Operation.IsNotRunning}"
@@ -247,6 +276,25 @@
                         </Label.Resources>
                     </Label>
                 </DataTemplate>
+                <converters:OpenFileInEditorParametersValueConverter x:Key="OpenFileInEditorParametersValueConverter" />
+                <Style TargetType="MenuItem" x:Key="OpenFileInEditorSubMenuItemContainerStyle">
+                    <d:Style.DataContext>
+                        <x:Type Type="viewModels:EditorInfo" />
+                    </d:Style.DataContext>
+                    <Setter Property="Header" Value="{Binding DisplayName}" />
+                    <Setter Property="Command" 
+                            Value="{Binding RelativeSource={RelativeSource AncestorType=MenuItem}, Path=DataContext.(viewModels:MainWindowViewModel.OpenFileInEditorCommand)}" />
+                    <Setter Property="CommandParameter">
+                        <Setter.Value>
+                            <MultiBinding Converter="{StaticResource OpenFileInEditorParametersValueConverter}">
+                                <MultiBinding.Bindings>
+                                    <Binding Path="." />
+                                    <Binding Path="PlacementTarget.(DataGrid.SelectedItem)" RelativeSource="{RelativeSource AncestorType=ContextMenu}" />
+                                </MultiBinding.Bindings>
+                            </MultiBinding>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
                 <Style TargetType="TextBlock" x:Key="LineCellTextBlockStyle">
                     <Setter Property="HorizontalAlignment" Value="Right" />
                     <Setter Property="VerticalAlignment" Value="Center" />
@@ -260,7 +308,7 @@
                     <Setter Property="Padding" Value="3" />
                     <Setter Property="Template">
                         <Setter.Value>
-                            <ControlTemplate TargetType="{x:Type DataGridCell}">
+                            <ControlTemplate TargetType="DataGridCell">
                                 <Border Padding="{TemplateBinding Padding}" 
                                         BorderBrush="{TemplateBinding BorderBrush}" 
                                         BorderThickness="{TemplateBinding BorderThickness}" 
@@ -302,7 +350,7 @@
                                                     <ContextMenu.Resources>
                                                         <Style TargetType="MenuItem">
                                                             <Setter Property="CommandParameter" 
-                                                                    Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.(DataGrid.SelectedItem)}" />
+                                                                    Value="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.(DataGrid.SelectedItem)}" />
                                                         </Style>
                                                     </ContextMenu.Resources>
 
@@ -312,9 +360,9 @@
                                                         <MenuItem Header="_File" Command="{Binding CopyFileToClipboardCommand}" />
                                                         <MenuItem Header="_Line Number" Command="{Binding CopyLineNumberToClipboardCommand}" />
                                                     </MenuItem>
-                                                    <MenuItem Header="_Open">
-                                                        <MenuItem Header="_Notepad" Command="{Binding OpenFileInEditorCommand}" />
-                                                    </MenuItem>
+                                                    <MenuItem Header="_Open" 
+                                                              ItemsSource="{Binding Settings.Editors}"
+                                                              ItemContainerStyle="{StaticResource OpenFileInEditorSubMenuItemContainerStyle}" />
                                                 </ContextMenu>
                                             </Setter.Value>
                                         </Setter>
@@ -365,7 +413,7 @@
                                                     <ContextMenu.Resources>
                                                         <Style TargetType="MenuItem">
                                                             <Setter Property="CommandParameter" 
-                                                                    Value="{Binding RelativeSource={RelativeSource AncestorType={x:Type ContextMenu}}, Path=PlacementTarget.(DataGrid.SelectedItem)}" />
+                                                                    Value="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.(DataGrid.SelectedItem)}" />
                                                         </Style>
                                                     </ContextMenu.Resources>
 
@@ -374,9 +422,9 @@
                                                         <MenuItem Header="_Relative Path" Command="{Binding CopyRelativeFilePathToClipboardCommand}" />
                                                         <MenuItem Header="_File" Command="{Binding CopyFileToClipboardCommand}" />
                                                     </MenuItem>
-                                                    <MenuItem Header="_Open">
-                                                        <MenuItem Header="_Notepad" Command="{Binding OpenFileInEditorCommand}" />
-                                                    </MenuItem>
+                                                    <MenuItem Header="_Open" 
+                                                              ItemsSource="{Binding Settings.Editors}" 
+                                                              ItemContainerStyle="{StaticResource OpenFileInEditorSubMenuItemContainerStyle}" />
                                                 </ContextMenu>
                                             </Setter.Value>
                                         </Setter>
