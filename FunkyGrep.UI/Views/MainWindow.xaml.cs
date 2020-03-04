@@ -98,7 +98,7 @@ namespace FunkyGrep.UI.Views
                 {
                     subDirectories = Directory.GetDirectories(
                         directoryName ?? text,
-                        "*.*",
+                        "*",
                         SearchOption.TopDirectoryOnly);
                 }
             }
