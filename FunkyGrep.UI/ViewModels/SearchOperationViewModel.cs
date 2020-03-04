@@ -35,10 +35,8 @@ namespace FunkyGrep.UI.ViewModels
     public class SearchOperationViewModel : ValidatableBindableBase
     {
         FileSearcher _searcher;
-        bool _hasRunOnce;
-        bool _lastSearchCompleted;
         TimeSpan _lastSearchDuration;
-        bool _isRunning;
+        SearchOperationStatus _status;
         long _searchedCount;
         long _failedCount;
         long _skippedCount;
@@ -52,42 +50,25 @@ namespace FunkyGrep.UI.ViewModels
 
         public object SearchErrorsLocker { get; }
 
-        public bool HasRunOnce
+        public SearchOperationStatus Status
         {
-            get => this._hasRunOnce;
-            private set => this.SetProperty(ref this._hasRunOnce, value);
+            get => this._status;
+            private set
+            {
+                if (this.SetProperty(ref this._status, value))
+                {
+                    this.RaisePropertyChanged(nameof(this.IsNotRunning));
+                }
+            }
         }
 
-        public bool LastSearchCompleted
-        {
-            get => this._lastSearchCompleted;
-            set => this.SetProperty(ref this._lastSearchCompleted, value);
-        }
+        public bool IsNotRunning => this.Status != SearchOperationStatus.Running;
 
         public TimeSpan LastSearchDuration
         {
             get => this._lastSearchDuration;
             set => this.SetProperty(ref this._lastSearchDuration, value);
         }
-
-        public bool IsRunning
-        {
-            get => this._isRunning;
-            set
-            {
-                if (this.SetProperty(ref this._isRunning, value))
-                {
-                    this.RaisePropertyChanged(nameof(this.IsNotRunning));
-
-                    if (value)
-                    {
-                        this.HasRunOnce = true;
-                    }
-                }
-            }
-        }
-
-        public bool IsNotRunning => !this.IsRunning;
 
         public long SearchedCount
         {
@@ -135,7 +116,7 @@ namespace FunkyGrep.UI.ViewModels
             {
                 throw new ArgumentNullException(nameof(progressEventArgs));
             }
-        
+
             this.SearchedCount = progressEventArgs.SearchedCount;
             this.SkippedCount = progressEventArgs.SkippedCount;
             this.FailedCount = progressEventArgs.FailedCount;
@@ -148,9 +129,9 @@ namespace FunkyGrep.UI.ViewModels
 
         public void Start(string directory, FileSearcher fileSearcher)
         {
-            if (this.IsRunning)
+            if (this.Status != SearchOperationStatus.NeverRun)
             {
-                throw new InvalidOperationException("Search already running.");
+                throw new InvalidOperationException("Search already started.");
             }
 
             if (this._searcher != null)
@@ -160,7 +141,7 @@ namespace FunkyGrep.UI.ViewModels
 
             try
             {
-                this.IsRunning = true;
+                this.Status = SearchOperationStatus.Running;
 
                 if (string.IsNullOrWhiteSpace(directory))
                 {
@@ -216,12 +197,15 @@ namespace FunkyGrep.UI.ViewModels
                 {
                     this.Update(args.FinalProgressUpdate);
                     this.LastSearchDuration = args.Duration;
-                    this.LastSearchCompleted = true;
-                    this.IsRunning = false;
 
                     if (args.FailureReason != null)
                     {
+                        this.Status = SearchOperationStatus.Aborted;
                         this.SetGeneralError(args.FailureReason);
+                    }
+                    else
+                    {
+                        this.Status = SearchOperationStatus.Completed;
                     }
                 };
 
@@ -240,8 +224,7 @@ namespace FunkyGrep.UI.ViewModels
                 }
                 finally
                 {
-                    this.IsRunning = false;
-                    this.LastSearchCompleted = false;
+                    this.Status = SearchOperationStatus.Aborted;
                 }
             }
         }
@@ -258,8 +241,7 @@ namespace FunkyGrep.UI.ViewModels
             }
             finally
             {
-                this.IsRunning = false;
-                this.LastSearchCompleted = false;
+                this.Status = SearchOperationStatus.Aborted;
             }
         }
 

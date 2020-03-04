@@ -137,7 +137,7 @@
                             <Style.Triggers>
                                 <MultiDataTrigger>
                                     <MultiDataTrigger.Conditions>
-                                        <Condition Binding="{Binding Search.Operation.IsRunning}" Value="True" />
+                                        <Condition Binding="{Binding Search.Operation.Status}" Value="{x:Static viewModels:SearchOperationStatus.Running}" />
                                         <Condition Binding="{Binding Search.Operation.TotalFileCountIsSet}" Value="False" />
                                     </MultiDataTrigger.Conditions>
                                     <MultiDataTrigger.Setters>
@@ -154,42 +154,39 @@
                             <Style TargetType="Label">
                                 <Setter Property="Content" Value="Ready" />
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Search.Operation.HasRunOnce}" Value="False">
+                                    <DataTrigger Binding="{Binding Search.Operation.Status}" Value="{x:Static viewModels:SearchOperationStatus.NeverRun}">
                                         <Setter Property="Content">
                                             <Setter.Value>
-                                                <TextBlock Foreground="Green">Ready</TextBlock>
+                                                <TextBlock Foreground="Navy">Ready</TextBlock>
                                             </Setter.Value>
                                         </Setter>
                                     </DataTrigger>
-                                    <MultiDataTrigger>
-                                        <MultiDataTrigger.Conditions>
-                                            <Condition Binding="{Binding Search.Operation.HasRunOnce}" Value="True" />
-                                            <Condition Binding="{Binding Search.Operation.IsRunning}" Value="False" />
-                                            <Condition Binding="{Binding Search.Operation.LastSearchCompleted}" Value="False" />
-                                        </MultiDataTrigger.Conditions>
-                                        <MultiDataTrigger.Setters>
+                                    <DataTrigger Binding="{Binding Search.Operation.Status}" Value="{x:Static viewModels:SearchOperationStatus.Running}">
+                                        <Setter Property="Content">
+                                            <Setter.Value>
+                                                <TextBlock Foreground="Green">Search in progress...</TextBlock>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Search.Operation.Status}" Value="{x:Static viewModels:SearchOperationStatus.Aborted}">
+                                        <DataTrigger.Setters>
                                             <Setter Property="Content">
                                                 <Setter.Value>
                                                     <TextBlock Foreground="Red" 
                                                                Text="{Binding Search.Operation.LastSearchDuration, StringFormat={}Search cancelled after: {0}}" />
                                                 </Setter.Value>
                                             </Setter>
-                                        </MultiDataTrigger.Setters>
-                                    </MultiDataTrigger>
-                                    <MultiDataTrigger>
-                                        <MultiDataTrigger.Conditions>
-                                            <Condition Binding="{Binding Search.Operation.HasRunOnce}" Value="True" />
-                                            <Condition Binding="{Binding Search.Operation.IsRunning}" Value="False" />
-                                            <Condition Binding="{Binding Search.Operation.LastSearchCompleted}" Value="True" />
-                                        </MultiDataTrigger.Conditions>
-                                        <MultiDataTrigger.Setters>
+                                        </DataTrigger.Setters>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Search.Operation.Status}" Value="{x:Static viewModels:SearchOperationStatus.Completed}">
+                                        <DataTrigger.Setters>
                                             <Setter Property="Content">
                                                 <Setter.Value>
                                                     <TextBlock Text="{Binding Search.Operation.LastSearchDuration, StringFormat={}Search completed in: {0}}" />
                                                 </Setter.Value>
                                             </Setter>
-                                        </MultiDataTrigger.Setters>
-                                    </MultiDataTrigger>
+                                        </DataTrigger.Setters>
+                                    </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Label.Style>
@@ -246,7 +243,7 @@
                         <Setter Property="Content" Value="_Go" />
                         <Setter Property="Command" Value="{Binding Search.RunSearchCommand}" />
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding Search.Operation.IsRunning}" Value="True">
+                            <DataTrigger Binding="{Binding Search.Operation.Status}" Value="{x:Static viewModels:SearchOperationStatus.Running}">
                                 <Setter Property="Content" Value="_Stop" />
                                 <Setter Property="Command" Value="{Binding Search.AbortSearchCommand}" />
                             </DataTrigger>

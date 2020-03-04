@@ -92,9 +92,7 @@ namespace FunkyGrep.UI.ViewModels
 
             this.ShowSelectFolderDialogCommand = new DelegateCommand(
                 this.ShowSelectFolderDialog,
-                () => !(this.Search.Operation?.IsRunning ?? false));
-
-
+                () => this.Search.Operation?.Status != SearchOperationStatus.Running);
             this.CopyAbsoluteFilePathToClipboardCommand =
                 new DelegateCommand<IFileItem>(this.CopyAbsoluteFilePathToClipboard);
             this.CopyRelativeFilePathToClipboardCommand =
