@@ -71,17 +71,20 @@ namespace FunkyGrep.UI.Views
             this._lastSearchOperation = searchViewModel.Operation;
         }
 
-        static void HandleModelPropertyChanged(object sender, DataErrorsChangedEventArgs e)
+        void HandleModelPropertyChanged(object sender, DataErrorsChangedEventArgs e)
         {
             var viewModel = (BindableValidator)sender;
 
             if (e.PropertyName.Length == 0 && viewModel.Errors[string.Empty].Count > 0)
             {
-                MessageBox.Show(
-                    viewModel.Errors[string.Empty][0],
-                    "Error during search",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
+                this.Dispatcher?.Invoke(
+                    () =>
+                        MessageBox.Show(
+                            this,
+                            viewModel.Errors[string.Empty][0],
+                            "Error during search",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error));
             }
         }
 
