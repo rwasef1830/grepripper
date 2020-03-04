@@ -32,7 +32,7 @@ using FunkyGrep.UI.ViewModels;
 
 namespace FunkyGrep.UI.Converters
 {
-    [ValueConversion(typeof(SearchResultItem), typeof(object))]
+    [ValueConversion(typeof(SearchResultItem), typeof(TextBlock))]
     public class SearchResultItemToXamlConverter : DependencyObject, IValueConverter
     {
         public static readonly DependencyProperty ContextRunStyleProperty = DependencyProperty.Register(
