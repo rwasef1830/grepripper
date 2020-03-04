@@ -60,8 +60,9 @@ namespace FunkyGrep.UI.Validation
 
             model.ErrorsChanged += (sender, args) =>
             {
-                var errors = ((ValidatableBindableBase)sender).Errors[args.PropertyName];
-                if (args.PropertyName.Length == 0 && errors.Count > 0)
+                if (args.PropertyName.Length == 0
+                    && ((BindableValidator)sender).Errors.TryGetValue(args.PropertyName, out var errors)
+                    && errors.Count > 0)
                 {
                     parent.SetGeneralError(errors[0]);
                 }
