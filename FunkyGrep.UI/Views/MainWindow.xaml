@@ -345,17 +345,20 @@
                                             <Setter.Value>
                                                 <ContextMenu>
                                                     <ContextMenu.Resources>
-                                                        <Style TargetType="MenuItem">
-                                                            <Setter Property="CommandParameter" 
-                                                                    Value="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.(DataGrid.SelectedItem)}" />
-                                                        </Style>
+                                                        <converters:SearchResultItemToTextConverter x:Key="SearchResultItemToTextConverter" />
                                                     </ContextMenu.Resources>
 
                                                     <MenuItem Header="_Copy">
-                                                        <MenuItem Header="Absolute _Path" Command="{Binding CopyAbsoluteFilePathToClipboardCommand}" />
-                                                        <MenuItem Header="_Relative Path" Command="{Binding CopyRelativeFilePathToClipboardCommand}" />
-                                                        <MenuItem Header="_File" Command="{Binding CopyFileToClipboardCommand}" />
-                                                        <MenuItem Header="_Line Number" Command="{Binding CopyLineNumberToClipboardCommand}" />
+                                                        <MenuItem Header="Absolute _Path" Command="{Binding CopyTextToClipboardCommand}"
+                                                                  CommandParameter="{Binding Path=PlacementTarget.(DataGrid.SelectedItem).(viewModels:IFileItem.AbsoluteFilePath), RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                        <MenuItem Header="_Relative Path" Command="{Binding CopyTextToClipboardCommand}"
+                                                                  CommandParameter="{Binding Path=PlacementTarget.(DataGrid.SelectedItem).(viewModels:IFileItem.RelativeFilePath), RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                        <MenuItem Header="_File" Command="{Binding CopyFileToClipboardCommand}"
+                                                                  CommandParameter="{Binding Path=PlacementTarget.(DataGrid.SelectedItem).(viewModels:IFileItem.AbsoluteFilePath), RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                        <MenuItem Header="Line _Number" Command="{Binding CopyTextToClipboardCommand}"
+                                                                  CommandParameter="{Binding Path=PlacementTarget.(DataGrid.SelectedItem).(viewModels:SearchResultItem.Match).LineNumber, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                        <MenuItem Header="_Text" Command="{Binding CopyTextToClipboardCommand}"
+                                                                  CommandParameter="{Binding Path=PlacementTarget.(DataGrid.SelectedItem), RelativeSource={RelativeSource AncestorType=ContextMenu}, Converter={StaticResource SearchResultItemToTextConverter}}" />
                                                     </MenuItem>
                                                     <MenuItem Header="_Open" 
                                                               ItemsSource="{Binding Settings.Editors}"
@@ -415,9 +418,14 @@
                                                     </ContextMenu.Resources>
 
                                                     <MenuItem Header="_Copy">
-                                                        <MenuItem Header="Absolute _Path" Command="{Binding CopyAbsoluteFilePathToClipboardCommand}" />
-                                                        <MenuItem Header="_Relative Path" Command="{Binding CopyRelativeFilePathToClipboardCommand}" />
-                                                        <MenuItem Header="_File" Command="{Binding CopyFileToClipboardCommand}" />
+                                                        <MenuItem Header="Absolute _Path" Command="{Binding CopyTextToClipboardCommand}"
+                                                                  CommandParameter="{Binding Path=PlacementTarget.(DataGrid.SelectedItem).(viewModels:IFileItem.AbsoluteFilePath), RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                        <MenuItem Header="_Relative Path" Command="{Binding CopyTextToClipboardCommand}"
+                                                                  CommandParameter="{Binding Path=PlacementTarget.(DataGrid.SelectedItem).(viewModels:IFileItem.RelativeFilePath), RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                        <MenuItem Header="_File" Command="{Binding CopyFileToClipboardCommand}"
+                                                                  CommandParameter="{Binding Path=PlacementTarget.(DataGrid.SelectedItem).(viewModels:IFileItem.AbsoluteFilePath), RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+                                                        <MenuItem Header="_Error" Command="{Binding CopyTextToClipboardCommand}"
+                                                                  CommandParameter="{Binding Path=PlacementTarget.(DataGrid.SelectedItem).(viewModels:SearchErrorItem.Error), RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
                                                     </MenuItem>
                                                     <MenuItem Header="_Open" 
                                                               ItemsSource="{Binding Settings.Editors}" 

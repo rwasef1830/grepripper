@@ -26,6 +26,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Windows.Input;
 using FunkyGrep.UI.Services;
@@ -50,13 +51,9 @@ namespace FunkyGrep.UI.ViewModels
 
         public ICommand ShowSelectFolderDialogCommand { get; }
 
-        public ICommand CopyAbsoluteFilePathToClipboardCommand { get; }
-
-        public ICommand CopyRelativeFilePathToClipboardCommand { get; }
+        public ICommand CopyTextToClipboardCommand { get; }
 
         public ICommand CopyFileToClipboardCommand { get; }
-
-        public ICommand CopyLineNumberToClipboardCommand { get; }
 
         public ICommand OpenFileInEditorCommand { get; }
 
@@ -93,13 +90,8 @@ namespace FunkyGrep.UI.ViewModels
             this.ShowSelectFolderDialogCommand = new DelegateCommand(
                 this.ShowSelectFolderDialog,
                 () => this.Search.Operation?.Status != SearchOperationStatus.Running);
-            this.CopyAbsoluteFilePathToClipboardCommand =
-                new DelegateCommand<IFileItem>(this.CopyAbsoluteFilePathToClipboard);
-            this.CopyRelativeFilePathToClipboardCommand =
-                new DelegateCommand<IFileItem>(this.CopyRelativeFilePathToClipboard);
-            this.CopyFileToClipboardCommand = new DelegateCommand<IFileItem>(this.CopyFileToClipboard);
-            this.CopyLineNumberToClipboardCommand =
-                new DelegateCommand<SearchResultItem>(this.CopyLineNumberToClipboard);
+            this.CopyTextToClipboardCommand = new DelegateCommand<object>(this.CopyTextToClipboard);
+            this.CopyFileToClipboardCommand = new DelegateCommand<string>(this.CopyFileToClipboard);
             this.OpenFileInEditorCommand = new DelegateCommand<OpenFileInEditorParameters>(this.OpenFileInEditor);
 
             this.Search = new SearchViewModel();
@@ -133,47 +125,26 @@ namespace FunkyGrep.UI.ViewModels
             }
         }
 
-        void CopyAbsoluteFilePathToClipboard(IFileItem item)
+        void CopyTextToClipboard(object obj)
         {
-            if (item == null)
+            var text = obj?.ToString();
+
+            if (text == null)
             {
                 return;
             }
 
-            var itemFilePath = item.AbsoluteFilePath;
-            this._clipboardService.SetText(itemFilePath);
+            this._clipboardService.SetText(text);
         }
 
-        void CopyRelativeFilePathToClipboard(IFileItem item)
+        void CopyFileToClipboard(string absoluteFilePath)
         {
-            if (item == null)
+            if (absoluteFilePath == null || !File.Exists(absoluteFilePath))
             {
                 return;
             }
 
-            var itemFilePath = item.RelativeFilePath;
-            this._clipboardService.SetText(itemFilePath);
-        }
-
-        void CopyFileToClipboard(IFileItem item)
-        {
-            if (item == null)
-            {
-                return;
-            }
-
-            var itemFilePath = item.AbsoluteFilePath;
-            this._clipboardService.SetFileDropList(new[] { itemFilePath });
-        }
-
-        void CopyLineNumberToClipboard(SearchResultItem item)
-        {
-            if (item?.Match == null)
-            {
-                return;
-            }
-
-            this._clipboardService.SetText(item.Match.LineNumber.ToString());
+            this._clipboardService.SetFileDropList(new[] { absoluteFilePath });
         }
 
         void OpenFileInEditor(OpenFileInEditorParameters parameters)
