@@ -30,7 +30,7 @@ namespace FunkyGrep.UI.Views
                 if (e.OldValue != null && e.OldValue is MainWindowViewModel oldViewModel)
                 {
                     oldViewModel.Search.PropertyChanged -= this.HandleSearchPropertyChanged;
-                    oldViewModel.ErrorsChanged -= HandleModelPropertyChanged;
+                    oldViewModel.ErrorsChanged -= this.HandleModelPropertyChanged;
                 }
 
                 if (e.NewValue != null && e.NewValue is MainWindowViewModel newViewModel)
@@ -39,7 +39,7 @@ namespace FunkyGrep.UI.Views
                         newViewModel.Search,
                         new PropertyChangedEventArgs(nameof(newViewModel.Search.Operation)));
                     newViewModel.Search.PropertyChanged += this.HandleSearchPropertyChanged;
-                    newViewModel.ErrorsChanged += HandleModelPropertyChanged;
+                    newViewModel.ErrorsChanged += this.HandleModelPropertyChanged;
                 }
             }
 
