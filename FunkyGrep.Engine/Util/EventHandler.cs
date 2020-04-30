@@ -22,24 +22,8 @@
 // THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endregion
 
-using System;
-
-namespace FunkyGrep.Engine
+namespace FunkyGrep.Engine.Util
 {
-    public readonly struct SearchErrorEventArgs
-    {
-        public string FilePath { get; }
-        public Exception Error { get; }
-
-        public SearchErrorEventArgs(string filePath, Exception error)
-        {
-            if (string.IsNullOrWhiteSpace(filePath))
-            {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(filePath));
-            }
-
-            this.FilePath = filePath;
-            this.Error = error ?? throw new ArgumentNullException(nameof(error));
-        }
-    }
+    public delegate void EventHandlerStructArgs<TEventArgs>(object sender, in TEventArgs args)
+        where TEventArgs : struct;
 }

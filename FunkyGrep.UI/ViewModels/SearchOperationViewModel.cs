@@ -110,13 +110,8 @@ namespace FunkyGrep.UI.ViewModels
             this.SearchErrorsLocker = new object();
         }
 
-        void Update(ProgressEventArgs progressEventArgs)
+        void Update(object _, in ProgressEventArgs progressEventArgs)
         {
-            if (progressEventArgs == null)
-            {
-                throw new ArgumentNullException(nameof(progressEventArgs));
-            }
-
             this.SearchedCount = progressEventArgs.SearchedCount;
             this.SkippedCount = progressEventArgs.SkippedCount;
             this.FailedCount = progressEventArgs.FailedCount;
@@ -149,7 +144,7 @@ namespace FunkyGrep.UI.ViewModels
                 }
 
                 this._searcher = fileSearcher ?? throw new ArgumentNullException(nameof(fileSearcher));
-                this._searcher.MatchFound += (_, args) =>
+                this._searcher.MatchFound += delegate(object _, in MatchFoundEventArgs args)
                 {
                     int basenameLength = directory.Length;
 
@@ -169,9 +164,9 @@ namespace FunkyGrep.UI.ViewModels
                     }
                 };
 
-                this._searcher.ProgressChanged += (_, args) => { this.Update(args); };
+                this._searcher.ProgressChanged += this.Update;
 
-                this._searcher.Error += (_, args) =>
+                this._searcher.Error += delegate(object _, in SearchErrorEventArgs args)
                 {
                     int basenameLength = directory.Length;
 
@@ -193,9 +188,9 @@ namespace FunkyGrep.UI.ViewModels
                     }
                 };
 
-                this._searcher.Completed += (_, args) =>
+                this._searcher.Completed += delegate(object _, in CompletedEventArgs args)
                 {
-                    this.Update(args.FinalProgressUpdate);
+                    this.Update(null, args.FinalProgressUpdate);
                     this.LastSearchDuration = args.Duration;
 
                     if (args.FailureReason != null)

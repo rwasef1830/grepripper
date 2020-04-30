@@ -22,11 +22,9 @@
 // THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #endregion
 
-using System;
-
 namespace FunkyGrep.Engine
 {
-    public class ProgressEventArgs : EventArgs
+    public readonly struct ProgressEventArgs
     {
         public long SearchedCount { get; }
         public long TotalCount { get; }

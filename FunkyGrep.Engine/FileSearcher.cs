@@ -31,6 +31,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using FunkyGrep.Engine.Collections;
+using FunkyGrep.Engine.Util;
 using HeyRed.Mime;
 
 namespace FunkyGrep.Engine
@@ -85,10 +86,10 @@ namespace FunkyGrep.Engine
             this._cancelSrc = new CancellationTokenSource();
         }
 
-        public event EventHandler<ProgressEventArgs> ProgressChanged;
-        public event EventHandler<MatchFoundEventArgs> MatchFound;
-        public event EventHandler<SearchErrorEventArgs> Error;
-        public event EventHandler<CompletedEventArgs> Completed;
+        public event EventHandlerStructArgs<ProgressEventArgs> ProgressChanged;
+        public event EventHandlerStructArgs<MatchFoundEventArgs> MatchFound;
+        public event EventHandlerStructArgs<SearchErrorEventArgs> Error;
+        public event EventHandlerStructArgs<CompletedEventArgs> Completed;
 
         public void Begin()
         {

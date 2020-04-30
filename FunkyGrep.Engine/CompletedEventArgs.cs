@@ -26,7 +26,7 @@ using System;
 
 namespace FunkyGrep.Engine
 {
-    public class CompletedEventArgs : EventArgs
+    public readonly struct CompletedEventArgs
     {
         public TimeSpan Duration { get; }
 
@@ -34,11 +34,10 @@ namespace FunkyGrep.Engine
 
         public ProgressEventArgs FinalProgressUpdate { get; }
 
-        public CompletedEventArgs(TimeSpan duration, ProgressEventArgs finalProgressUpdate, Exception failureReason)
+        public CompletedEventArgs(TimeSpan duration, in ProgressEventArgs finalProgressUpdate, Exception failureReason)
         {
             this.Duration = duration;
-            this.FinalProgressUpdate = finalProgressUpdate
-                                       ?? throw new ArgumentNullException(nameof(finalProgressUpdate));
+            this.FinalProgressUpdate = finalProgressUpdate;
             this.FailureReason = failureReason;
         }
     }
