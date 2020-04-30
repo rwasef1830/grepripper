@@ -107,7 +107,24 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBox Grid.Row="0" Grid.Column="0" Width="Auto" Text="{Binding Search.SearchPattern, UpdateSourceTrigger=PropertyChanged}" 
-                     IsEnabled="{Binding Search.Operation.IsNotRunning}" x:Name="TextBoxSearchPattern" />
+                     IsEnabled="{Binding Search.Operation.IsNotRunning}" x:Name="TextBoxSearchPattern">
+                <TextBox.Resources>
+                    <Style TargetType="TextBox">
+                        <Setter Property="VerticalContentAlignment" Value="Center" />
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsEnabled, ElementName=TextBoxSearchPattern}" Value="True" />
+                                    <Condition Binding="{Binding Search.Operation.Status}" Value="Completed" />
+                                </MultiDataTrigger.Conditions>
+                                <MultiDataTrigger.Setters>
+                                    <Setter Property="util:FocusUtil.IsFocused" Value="True" />
+                                </MultiDataTrigger.Setters>
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBox.Resources>
+            </TextBox>
             <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="5, 0, 0, 0">
                 <CheckBox Content="_Regex"  Margin="0, 0, 5, 0" IsChecked="{Binding Search.SearchPatternIsRegex}" VerticalAlignment="Center"
                           IsEnabled="{Binding Search.Operation.IsNotRunning}" />
