@@ -121,6 +121,15 @@
                                     <Setter Property="util:FocusUtil.IsFocused" Value="True" />
                                 </MultiDataTrigger.Setters>
                             </MultiDataTrigger>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsEnabled, ElementName=TextBoxSearchPattern}" Value="True" />
+                                    <Condition Binding="{Binding Search.Operation.Status}" Value="Aborted" />
+                                </MultiDataTrigger.Conditions>
+                                <MultiDataTrigger.Setters>
+                                    <Setter Property="util:FocusUtil.IsFocused" Value="True" />
+                                </MultiDataTrigger.Setters>
+                            </MultiDataTrigger>
                         </Style.Triggers>
                     </Style>
                 </TextBox.Resources>
