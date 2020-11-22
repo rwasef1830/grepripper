@@ -100,36 +100,7 @@ namespace FunkyGrep.Engine
                     throw new InvalidOperationException("Searcher task is already running.");
                 }
 
-                this._searchTask = Task.Run(
-                    () =>
-                    {
-                        var stopwatch = Stopwatch.StartNew();
-                        Exception error = null;
-
-                        try
-                        {
-                            this.DoSearch(this._cancelSrc.Token);
-                        }
-                        catch (OperationCanceledException) { }
-                        catch (Exception ex)
-                        {
-                            error = ex;
-                        }
-                        finally
-                        {
-                            this.Completed?.Invoke(
-                                this,
-                                new CompletedEventArgs(
-                                    stopwatch.Elapsed,
-                                    new ProgressEventArgs(
-                                        Interlocked.Read(ref this._doneCount),
-                                        Interlocked.Read(ref this._totalCount),
-                                        Interlocked.Read(ref this._failedCount),
-                                        Interlocked.Read(ref this._skippedCount)),
-                                    error));
-                        }
-                    },
-                    this._cancelSrc.Token);
+                this._searchTask = Task.Run(this.DoSearchTask, this._cancelSrc.Token);
 
                 // Find out the total number of files on a separate thread
                 Task.Run(
@@ -188,6 +159,58 @@ namespace FunkyGrep.Engine
             }
         }
 
+        void DoSearchTask() => this.DoSearchTask(false);
+
+        void DoSearchTask(bool disableParallelism)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            Exception error = null;
+            bool suppressFinally = false;
+
+            try
+            {
+                this.RunSearch(disableParallelism, this._cancelSrc.Token);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                if (ex is AggregateException && ex.InnerException is IOException && !disableParallelism)
+                {
+                    Interlocked.Exchange(ref this._doneCount, 0);
+                    Interlocked.Exchange(ref this._failedCount, 0);
+                    Interlocked.Exchange(ref this._skippedCount, 0);
+                    this.Error?.Invoke(
+                        this,
+                        new SearchErrorEventArgs(
+                            "(general error)",
+                            new Exception(
+                                "Parallel search failed. Restarted search in sequential mode.",
+                                ex.InnerException)));
+                    this.DoSearchTask(true);
+                    suppressFinally = true;
+                    return;
+                }
+
+                error = ex;
+            }
+            finally
+            {
+                if (!suppressFinally)
+                {
+                    this.Completed?.Invoke(
+                        this,
+                        new CompletedEventArgs(
+                            stopwatch.Elapsed,
+                            new ProgressEventArgs(
+                                Interlocked.Read(ref this._doneCount),
+                                Interlocked.Read(ref this._totalCount),
+                                Interlocked.Read(ref this._failedCount),
+                                Interlocked.Read(ref this._skippedCount)),
+                            error));
+                }
+            }
+        }
+
         public void Cancel()
         {
             lock (this._beginCancelLocker)
@@ -222,7 +245,7 @@ namespace FunkyGrep.Engine
             }
         }
 
-        void DoSearch(CancellationToken token)
+        void RunSearch(bool disableParallelism, CancellationToken token)
         {
             Magic CreateMagic()
             {
@@ -245,9 +268,15 @@ namespace FunkyGrep.Engine
                 }
             }
 
+            var parallelOptions = new ParallelOptions { CancellationToken = token };
+            if (disableParallelism)
+            {
+                parallelOptions.MaxDegreeOfParallelism = 1;
+            }
+
             Parallel.ForEach(
                 this._dataSources,
-                new ParallelOptions { CancellationToken = token },
+                parallelOptions,
                 () => new
                 {
                     Regex = new Regex(this._expression.ToString(), this._expression.Options),
@@ -270,100 +299,98 @@ namespace FunkyGrep.Engine
 
                         token.ThrowIfCancellationRequested();
 
-                        using (var stream = dataSource.OpenRead())
+                        using var stream = dataSource.OpenRead();
+                        var byteBuffer = byteArrayPool.Rent(4096);
+                        try
                         {
-                            var byteBuffer = byteArrayPool.Rent(4096);
-                            try
+                            var bytesRead = stream.Read(byteBuffer, 0, byteBuffer.Length);
+                            if (this._skipBinaryFiles && IsLikelyToBeBinary(byteBuffer, bytesRead, vars.Magic))
                             {
-                                var bytesRead = stream.Read(byteBuffer, 0, byteBuffer.Length);
-                                if (this._skipBinaryFiles && IsLikelyToBeBinary(byteBuffer, bytesRead, vars.Magic))
-                                {
-                                    Interlocked.Increment(ref this._skippedCount);
-                                    return vars;
-                                }
+                                Interlocked.Increment(ref this._skippedCount);
+                                return vars;
                             }
-                            finally
+                        }
+                        finally
+                        {
+                            byteArrayPool.Return(byteBuffer);
+                        }
+
+                        stream.Seek(0, SeekOrigin.Begin);
+
+                        using var reader = new StreamReader(stream, true);
+
+                        var lineBuffer = new CircularBuffer<string>(this._contextLineCount * 2 + 1);
+                        var postMatchLineCount = 0;
+                        var readLineCount = 0;
+                        string lastReadLine;
+
+                        // At the beginning of the file, there are no pre-match lines
+                        for (int i = 0; i < this._contextLineCount; i++)
+                        {
+                            lineBuffer.PushBack(null);
+                        }
+
+                        // Read first line and post-match lines
+                        var readFirstLine = false;
+                        do
+                        {
+                            lastReadLine = reader.ReadLine();
+                            token.ThrowIfCancellationRequested();
+
+                            if (lastReadLine == null)
                             {
-                                byteArrayPool.Return(byteBuffer);
-                            }
-
-                            stream.Seek(0, SeekOrigin.Begin);
-
-                            using var reader = new StreamReader(stream, true);
-
-                            var lineBuffer = new CircularBuffer<string>(this._contextLineCount * 2 + 1);
-                            var postMatchLineCount = 0;
-                            var readLineCount = 0;
-                            string lastReadLine;
-
-                            // At the beginning of the file, there are no pre-match lines
-                            for (int i = 0; i < this._contextLineCount; i++)
-                            {
-                                lineBuffer.PushBack(null);
-                            }
-
-                            // Read first line and post-match lines
-                            var readFirstLine = false;
-                            do
-                            {
-                                lastReadLine = reader.ReadLine();
-                                token.ThrowIfCancellationRequested();
-
-                                if (lastReadLine == null)
-                                {
-                                    break;
-                                }
-
-                                if (!readFirstLine)
-                                {
-                                    readFirstLine = true;
-                                }
-                                else
-                                {
-                                    postMatchLineCount++;
-                                }
-
-                                readLineCount++;
-                                lineBuffer.PushBack(lastReadLine);
-                            }
-                            while (!lineBuffer.IsFull);
-
-                            Debug.Assert(lastReadLine == null != lineBuffer.IsFull);
-
-                            while (!lineBuffer.IsFull)
-                            {
-                                lineBuffer.PushBack(null);
+                                break;
                             }
 
-                            for (string currentLine = lineBuffer[this._contextLineCount];
-                                currentLine != null;
-                                lastReadLine = reader.ReadLine(),
-                                readLineCount += lastReadLine == null ? 0 : 1,
-                                postMatchLineCount -= postMatchLineCount > 0 && lastReadLine == null ? 1 : 0,
-                                lineBuffer.PushBack(lastReadLine),
-                                currentLine = lineBuffer[this._contextLineCount])
+                            if (!readFirstLine)
                             {
-                                // ReSharper disable once AccessToDisposedClosure - Dispose happens after all parallel iteration callbacks are done.
-                                var regexMatches = vars.Regex.Matches(currentLine);
-                                foreach (Match regexMatch in regexMatches)
+                                readFirstLine = true;
+                            }
+                            else
+                            {
+                                postMatchLineCount++;
+                            }
+
+                            readLineCount++;
+                            lineBuffer.PushBack(lastReadLine);
+                        }
+                        while (!lineBuffer.IsFull);
+
+                        Debug.Assert(lastReadLine == null != lineBuffer.IsFull);
+
+                        while (!lineBuffer.IsFull)
+                        {
+                            lineBuffer.PushBack(null);
+                        }
+
+                        for (string currentLine = lineBuffer[this._contextLineCount];
+                            currentLine != null;
+                            lastReadLine = reader.ReadLine(),
+                            readLineCount += lastReadLine == null ? 0 : 1,
+                            postMatchLineCount -= postMatchLineCount > 0 && lastReadLine == null ? 1 : 0,
+                            lineBuffer.PushBack(lastReadLine),
+                            currentLine = lineBuffer[this._contextLineCount])
+                        {
+                            // ReSharper disable once AccessToDisposedClosure - Dispose happens after all parallel iteration callbacks are done.
+                            var regexMatches = vars.Regex.Matches(currentLine);
+                            foreach (Match regexMatch in regexMatches)
+                            {
+                                if (!regexMatch.Success)
                                 {
-                                    if (!regexMatch.Success)
-                                    {
-                                        continue;
-                                    }
-
-                                    var match = this.GetMatch(
-                                        regexMatch,
-                                        lineBuffer,
-                                        readLineCount - postMatchLineCount);
-
-                                    if (matches == null)
-                                    {
-                                        matches = new List<SearchMatch>();
-                                    }
-
-                                    matches.Add(match);
+                                    continue;
                                 }
+
+                                var match = this.GetMatch(
+                                    regexMatch,
+                                    lineBuffer,
+                                    readLineCount - postMatchLineCount);
+
+                                if (matches == null)
+                                {
+                                    matches = new List<SearchMatch>();
+                                }
+
+                                matches.Add(match);
                             }
                         }
                     }

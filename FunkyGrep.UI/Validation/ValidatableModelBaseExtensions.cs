@@ -36,7 +36,7 @@ namespace FunkyGrep.UI.Validation
         {
             if (model == null)
             {
-                throw new ArgumentNullException(nameof(model));
+                throw new ArgumentNullException(nameof(model)); 
             }
 
             model.SetGeneralError(ex.ToStringDemystified());

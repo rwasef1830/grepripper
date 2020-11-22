@@ -177,7 +177,11 @@ namespace FunkyGrep.UI.ViewModels
 
                     lock (this.SearchErrorsLocker)
                     {
-                        string relativePath = args.FilePath.Substring(basenameLength);
+                        string relativePath = args.FilePath;
+                        if (args.FilePath.Length > basenameLength)
+                        {
+                            relativePath = args.FilePath.Substring(basenameLength);
+                        }
 
                         var errorString = args.Error is IOException || args.Error is UnauthorizedAccessException
                             ? args.Error.Message
