@@ -99,10 +99,17 @@ namespace FunkyGrep.UI.Views
                 string directoryName = Path.GetDirectoryName(text);
                 if (DirectoryUtil.ExistsOrNullIfTimeout(directoryName ?? text, TimeSpan.FromSeconds(2)) ?? false)
                 {
-                    subDirectories = Directory.GetDirectories(
-                        directoryName ?? text,
-                        "*",
-                        SearchOption.TopDirectoryOnly);
+                    try
+                    {
+                        subDirectories = Directory.GetDirectories(
+                            directoryName ?? text,
+                            "*",
+                            SearchOption.TopDirectoryOnly);
+                    }
+                    catch
+                    {
+                        // ignore
+                    }
                 }
             }
 
