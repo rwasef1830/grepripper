@@ -29,7 +29,7 @@ namespace FunkyGrep.Engine
 {
     public class FileDataSource : IDataSource
     {
-        readonly FileInfo _fileInfo;
+        public string Identifier { get; }
 
         public FileDataSource(string filePath)
         {
@@ -38,21 +38,12 @@ namespace FunkyGrep.Engine
                 throw new ArgumentException("Value cannot be null or whitespace.", nameof(filePath));
             }
 
-            this._fileInfo = new FileInfo(filePath);
-        }
-
-        #region IDataSource Members
-        public string Identifier => this._fileInfo.FullName;
-
-        public long GetLength()
-        {
-            return this._fileInfo.Length;
+            this.Identifier = filePath;
         }
 
         public Stream OpenRead()
         {
-            return this._fileInfo.OpenRead();
+            return File.Open(this.Identifier, FileMode.Open, FileAccess.Read, FileShare.Read);
         }
-        #endregion
     }
 }

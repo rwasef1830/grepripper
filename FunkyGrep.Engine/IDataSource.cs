@@ -29,7 +29,6 @@ namespace FunkyGrep.Engine
     public interface IDataSource
     {
         string Identifier { get; }
-        long GetLength();
         Stream OpenRead();
     }
 }

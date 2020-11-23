@@ -293,7 +293,9 @@ namespace FunkyGrep.Engine
                     {
                         var byteArrayPool = ArrayPool<byte>.Shared;
 
-                        var length = dataSource.GetLength();
+                        using var stream = dataSource.OpenRead();
+                        var length = stream.Length;
+
                         if (length > MaxFileSize || length == 0)
                         {
                             return vars;
@@ -301,7 +303,6 @@ namespace FunkyGrep.Engine
 
                         token.ThrowIfCancellationRequested();
 
-                        using var stream = dataSource.OpenRead();
                         var byteBuffer = byteArrayPool.Rent(4096);
                         try
                         {
