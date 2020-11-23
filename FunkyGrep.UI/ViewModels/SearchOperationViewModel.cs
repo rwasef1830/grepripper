@@ -192,6 +192,19 @@ namespace FunkyGrep.UI.ViewModels
                     }
                 };
 
+                this._searcher.Reset += delegate
+                {
+                    lock (this.SearchErrorsLocker)
+                    {
+                        this.SearchErrors.Clear();
+                    }
+
+                    lock (this.ResultsLocker)
+                    {
+                        this.Results.Clear();
+                    }
+                };
+
                 this._searcher.Completed += delegate(object _, in CompletedEventArgs args)
                 {
                     this.Update(null, args.FinalProgressUpdate);

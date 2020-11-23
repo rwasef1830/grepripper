@@ -89,6 +89,7 @@ namespace FunkyGrep.Engine
         public event EventHandlerStructArgs<ProgressEventArgs> ProgressChanged;
         public event EventHandlerStructArgs<MatchFoundEventArgs> MatchFound;
         public event EventHandlerStructArgs<SearchErrorEventArgs> Error;
+        public event EventHandler Reset;
         public event EventHandlerStructArgs<CompletedEventArgs> Completed;
 
         public void Begin()
@@ -179,6 +180,7 @@ namespace FunkyGrep.Engine
                     Interlocked.Exchange(ref this._doneCount, 0);
                     Interlocked.Exchange(ref this._failedCount, 0);
                     Interlocked.Exchange(ref this._skippedCount, 0);
+                    this.Reset?.Invoke(this, EventArgs.Empty);
                     this.Error?.Invoke(
                         this,
                         new SearchErrorEventArgs(
