@@ -86,11 +86,11 @@ namespace FunkyGrep.Engine
             this._cancelSrc = new CancellationTokenSource();
         }
 
-        public event EventHandlerStructArgs<ProgressEventArgs> ProgressChanged;
-        public event EventHandlerStructArgs<MatchFoundEventArgs> MatchFound;
-        public event EventHandlerStructArgs<SearchErrorEventArgs> Error;
+        public event EventHandler<ProgressEventArgs> ProgressChanged;
+        public event EventHandler<MatchFoundEventArgs> MatchFound;
+        public event EventHandler<SearchErrorEventArgs> Error;
         public event EventHandler Reset;
-        public event EventHandlerStructArgs<CompletedEventArgs> Completed;
+        public event EventHandler<CompletedEventArgs> Completed;
 
         public void Begin()
         {

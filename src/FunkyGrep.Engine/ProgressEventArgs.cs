@@ -24,7 +24,7 @@
 
 namespace FunkyGrep.Engine
 {
-    public readonly struct ProgressEventArgs
+    public class ProgressEventArgs
     {
         public long SearchedCount { get; }
         public long TotalCount { get; }

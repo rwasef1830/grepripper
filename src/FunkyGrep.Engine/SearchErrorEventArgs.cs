@@ -26,7 +26,7 @@ using System;
 
 namespace FunkyGrep.Engine
 {
-    public readonly struct SearchErrorEventArgs
+    public class SearchErrorEventArgs
     {
         public string FilePath { get; }
         public Exception Error { get; }

@@ -27,7 +27,7 @@ using System.Collections.Generic;
 
 namespace FunkyGrep.Engine
 {
-    public readonly struct MatchFoundEventArgs
+    public class MatchFoundEventArgs
     {
         public string FilePath { get; }
         public IReadOnlyList<SearchMatch> Matches { get; }

@@ -26,7 +26,7 @@ using System;
 
 namespace FunkyGrep.Engine
 {
-    public readonly struct CompletedEventArgs
+    public class CompletedEventArgs
     {
         public TimeSpan Duration { get; }
 

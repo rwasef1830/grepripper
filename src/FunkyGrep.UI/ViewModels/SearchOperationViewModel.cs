@@ -110,7 +110,7 @@ namespace FunkyGrep.UI.ViewModels
             this.SearchErrorsLocker = new object();
         }
 
-        void Update(object _, in ProgressEventArgs progressEventArgs)
+        void Update(object _, ProgressEventArgs progressEventArgs)
         {
             this.SearchedCount = progressEventArgs.SearchedCount;
             this.SkippedCount = progressEventArgs.SkippedCount;
@@ -144,7 +144,7 @@ namespace FunkyGrep.UI.ViewModels
                 }
 
                 this._searcher = fileSearcher ?? throw new ArgumentNullException(nameof(fileSearcher));
-                this._searcher.MatchFound += delegate(object _, in MatchFoundEventArgs args)
+                this._searcher.MatchFound += delegate(object _, MatchFoundEventArgs args)
                 {
                     int basenameLength = directory.Length;
 
@@ -166,7 +166,7 @@ namespace FunkyGrep.UI.ViewModels
 
                 this._searcher.ProgressChanged += this.Update;
 
-                this._searcher.Error += delegate(object _, in SearchErrorEventArgs args)
+                this._searcher.Error += delegate(object _, SearchErrorEventArgs args)
                 {
                     int basenameLength = directory.Length;
 
@@ -205,7 +205,7 @@ namespace FunkyGrep.UI.ViewModels
                     }
                 };
 
-                this._searcher.Completed += delegate(object _, in CompletedEventArgs args)
+                this._searcher.Completed += delegate(object _, CompletedEventArgs args)
                 {
                     this.Update(null, args.FinalProgressUpdate);
                     this.LastSearchDuration = args.Duration;
