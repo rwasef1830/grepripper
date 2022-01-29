@@ -5,5 +5,5 @@ obj
 *.suo
 VersionInfo.cs
 .vs
-/FunkyGrep.UI/Properties/launchSettings.json
-/FunkyGrep.UI/Properties/PublishProfiles
+src/FunkyGrep.UI/Properties/launchSettings.json
+src/FunkyGrep.UI/Properties/PublishProfiles

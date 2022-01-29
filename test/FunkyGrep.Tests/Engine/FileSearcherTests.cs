@@ -56,7 +56,7 @@ namespace FunkyGrep.Tests.Engine
 
             monitor.OccurredEvents.Should().Contain(x => x.EventName == nameof(fileSearcher.MatchFound))
                 .Which.Parameters[1].Should().BeOfType<MatchFoundEventArgs>()
-                .Which.Matches.Should().BeEquivalentTo(new SearchMatch(1, fileContent, 22, 6, null, null));
+                .Which.Matches.Should().BeEquivalentTo(new[] { new SearchMatch(1, fileContent, 22, 6, null, null) });
 
             monitor.OccurredEvents.Should().Contain(x => x.EventName == nameof(fileSearcher.Completed))
                 .Which.Parameters[1].Should().BeOfType<CompletedEventArgs>()
