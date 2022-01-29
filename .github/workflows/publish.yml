@@ -1,0 +1,34 @@
+name: publish
+on:
+  push:
+    tags:
+      - '*'
+
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: publish project
+        run: |
+          dotnet publish -c Release -o build/release ./FunkyGrep.UI
+
+      - name: build release archive
+        run: |
+          $Dll = Get-Item("./build/release/FunkyGrep.UI.exe")
+          $VERSION = $Dll.VersionInfo.ProductVersion
+          7z a -t7z -mx=9 FunkyGrep-$VERSION.7z ./build/release/*
+          
+      - uses: ncipollo/release-action@v1
+        with:
+            artifacts: "FunkyGrep-*.7z"
+            generateReleaseNotes: true
+            allowUpdates: true
+            token: ${{ secrets.GITHUB_TOKEN }}
