@@ -18,7 +18,7 @@ jobs:
 
       - name: publish project
         run: |
-          dotnet publish -c Release -o build/release ./FunkyGrep.UI
+          dotnet publish --no-self-contained -c Release -o build/release src/FunkyGrep.UI
 
       - name: build release archive
         run: |
