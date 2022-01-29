@@ -5,6 +5,9 @@
     <ApplicationIcon>Resources\FunkyGrep.ico</ApplicationIcon>
     <UseWPF>True</UseWPF>
     <Platforms>x64</Platforms>
+    <PublishSingleFile>true</PublishSingleFile>
+    <DebugType>embedded</DebugType>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Update="Properties\Resources.resx">
