@@ -2,75 +2,76 @@
 using System.Windows.Controls;
 using System.Windows.Data;
 
-namespace FunkyGrep.UI.Util
+namespace FunkyGrep.UI.Util;
+
+// Based on: https://blog.scottlogic.com/2011/01/31/automatically-showing-tooltips-on-a-trimmed-textblock-silverlight-wpf.html
+public class TextBlockUtil
 {
-    // Based on: https://blog.scottlogic.com/2011/01/31/automatically-showing-tooltips-on-a-trimmed-textblock-silverlight-wpf.html
-    public class TextBlockUtil
+    public static readonly DependencyProperty HasAutoTooltipProperty = DependencyProperty.RegisterAttached(
+        "HasAutoTooltip",
+        typeof(bool),
+        typeof(TextBlockUtil),
+        new PropertyMetadata(false, OnAutoTooltipPropertyChanged));
+
+    public static bool GetHasAutoTooltip(DependencyObject obj)
     {
-        public static readonly DependencyProperty HasAutoTooltipProperty = DependencyProperty.RegisterAttached(
-            "HasAutoTooltip",
-            typeof(bool),
-            typeof(TextBlockUtil),
-            new PropertyMetadata(false, OnAutoTooltipPropertyChanged));
+        return (bool)obj.GetValue(HasAutoTooltipProperty);
+    }
 
-        public static bool GetHasAutoTooltip(DependencyObject obj)
+    public static void SetHasAutoTooltip(DependencyObject obj, bool value)
+    {
+        obj.SetValue(HasAutoTooltipProperty, value);
+    }
+
+    static void OnAutoTooltipPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not TextBlock textBlock)
         {
-            return (bool)obj.GetValue(HasAutoTooltipProperty);
+            return;
         }
 
-        public static void SetHasAutoTooltip(DependencyObject obj, bool value)
+        if (e.NewValue.Equals(true))
         {
-            obj.SetValue(HasAutoTooltipProperty, value);
+            textBlock.TextTrimming = TextTrimming.WordEllipsis;
+            ComputeAutoTooltip(textBlock);
+            textBlock.SizeChanged += HandleTextBlockSizeChanged;
         }
-
-        static void OnAutoTooltipPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        else
         {
-            if (!(d is TextBlock textBlock))
-            {
-                return;
-            }
-
-            if (e.NewValue.Equals(true))
-            {
-                textBlock.TextTrimming = TextTrimming.WordEllipsis;
-                ComputeAutoTooltip(textBlock);
-                textBlock.SizeChanged += HandleTextBlockSizeChanged;
-            }
-            else
-            {
-                textBlock.SizeChanged -= HandleTextBlockSizeChanged;
-                ClearToolTip(textBlock);
-            }
+            textBlock.SizeChanged -= HandleTextBlockSizeChanged;
+            ClearToolTip(textBlock);
         }
+    }
 
-        static void HandleTextBlockSizeChanged(object sender, SizeChangedEventArgs e)
+    static void HandleTextBlockSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (sender is TextBlock textBlock)
         {
-            var textBlock = sender as TextBlock;
             ComputeAutoTooltip(textBlock);
         }
+    }
 
-        static void ComputeAutoTooltip(TextBlock textBlock)
+    static void ComputeAutoTooltip(TextBlock textBlock)
+    {
+        textBlock.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var width = textBlock.DesiredSize.Width;
+
+        if (textBlock.ActualWidth < width)
         {
-            textBlock.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            var width = textBlock.DesiredSize.Width;
-
-            if (textBlock.ActualWidth < width)
-            {
-                BindingOperations.SetBinding(
-                    textBlock,
-                    FrameworkElement.ToolTipProperty,
-                    new Binding(nameof(textBlock.Text)) { Source = textBlock, Mode = BindingMode.OneWay });
-            }
-            else
-            {
-                ClearToolTip(textBlock);
-            }
+            BindingOperations.SetBinding(
+                textBlock,
+                FrameworkElement.ToolTipProperty,
+                new Binding(nameof(textBlock.Text)) { Source = textBlock, Mode = BindingMode.OneWay });
         }
-
-        static void ClearToolTip(FrameworkElement textBlock)
+        else
         {
-            BindingOperations.ClearBinding(textBlock, FrameworkElement.ToolTipProperty);
-            textBlock.ToolTip = null;
+            ClearToolTip(textBlock);
         }
+    }
+
+    static void ClearToolTip(FrameworkElement textBlock)
+    {
+        BindingOperations.ClearBinding(textBlock, FrameworkElement.ToolTipProperty);
+        textBlock.ToolTip = null;
     }
 }

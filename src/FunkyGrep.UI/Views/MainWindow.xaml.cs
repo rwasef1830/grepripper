@@ -12,173 +12,181 @@ using FunkyGrep.UI.Util;
 using FunkyGrep.UI.ViewModels;
 using Prism.Validation;
 
-namespace FunkyGrep.UI.Views
+namespace FunkyGrep.UI.Views;
+
+public partial class MainWindow
 {
-    public partial class MainWindow
+    SearchOperationViewModel? _lastSearchOperation;
+
+    public MainWindow()
     {
-        SearchOperationViewModel _lastSearchOperation;
+        this.InitializeComponent();
+    }
 
-        public MainWindow()
+    protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
+    {
+        if (e.Property == DataContextProperty)
         {
-            this.InitializeComponent();
-        }
-
-        protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
-        {
-            if (e.Property == DataContextProperty)
+            if (e.OldValue is MainWindowViewModel oldViewModel)
             {
-                if (e.OldValue != null && e.OldValue is MainWindowViewModel oldViewModel)
-                {
-                    oldViewModel.Search.PropertyChanged -= this.HandleSearchPropertyChanged;
-                    oldViewModel.ErrorsChanged -= this.HandleModelPropertyChanged;
-                }
-
-                if (e.NewValue != null && e.NewValue is MainWindowViewModel newViewModel)
-                {
-                    this.HandleSearchPropertyChanged(
-                        newViewModel.Search,
-                        new PropertyChangedEventArgs(nameof(newViewModel.Search.Operation)));
-                    newViewModel.Search.PropertyChanged += this.HandleSearchPropertyChanged;
-                    newViewModel.ErrorsChanged += this.HandleModelPropertyChanged;
-                }
+                oldViewModel.Search.PropertyChanged -= this.HandleSearchPropertyChanged;
+                oldViewModel.ErrorsChanged -= this.HandleModelPropertyChanged;
             }
 
-            base.OnPropertyChanged(e);
+            if (e.NewValue is MainWindowViewModel newViewModel)
+            {
+                this.HandleSearchPropertyChanged(
+                    newViewModel.Search,
+                    new PropertyChangedEventArgs(nameof(newViewModel.Search.Operation)));
+                newViewModel.Search.PropertyChanged += this.HandleSearchPropertyChanged;
+                newViewModel.ErrorsChanged += this.HandleModelPropertyChanged;
+            }
         }
 
-        void HandleSearchPropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            var searchViewModel = (SearchViewModel)sender;
+        base.OnPropertyChanged(e);
+    }
 
-            if (e.PropertyName != nameof(searchViewModel.Operation))
+    void HandleSearchPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (sender is not SearchViewModel searchViewModel)
+        {
+            return;
+        }
+
+        if (e.PropertyName != nameof(searchViewModel.Operation))
+        {
+            return;
+        }
+
+        if (this._lastSearchOperation != null)
+        {
+            BindingOperations.DisableCollectionSynchronization(this._lastSearchOperation.Results);
+            BindingOperations.DisableCollectionSynchronization(this._lastSearchOperation.SearchErrors);
+        }
+
+        BindingOperations.EnableCollectionSynchronization(
+            searchViewModel.Operation.Results,
+            searchViewModel.Operation.ResultsLocker);
+        BindingOperations.EnableCollectionSynchronization(
+            searchViewModel.Operation.SearchErrors,
+            searchViewModel.Operation.SearchErrorsLocker);
+
+        this._lastSearchOperation = searchViewModel.Operation;
+    }
+
+    void HandleModelPropertyChanged(object? sender, DataErrorsChangedEventArgs e)
+    {
+        if (sender is not BindableValidator viewModel)
+        {
+            return;
+        }
+
+        if (e.PropertyName?.Length == 0 && viewModel.Errors[string.Empty].Count > 0)
+        {
+            this.Dispatcher.Invoke(
+                (Window self, BindableValidator bindableValidator) =>
+                    MessageBox.Show(
+                        self,
+                        bindableValidator.Errors[string.Empty][0],
+                        "Error during search",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error),
+                this,
+                viewModel);
+        }
+    }
+
+    void HandleDirectoryAutoCompleteBoxPopulating(object sender, PopulatingEventArgs e)
+    {
+        var autoCompleteBox = (AutoCompleteBox)sender;
+        string text = autoCompleteBox.Text;
+        string[] subDirectories = Array.Empty<string>();
+
+        if (!string.IsNullOrWhiteSpace(text))
+        {
+            string? directoryName = Path.GetDirectoryName(text);
+            if (DirectoryUtil.ExistsOrNullIfTimeout(directoryName ?? text, TimeSpan.FromSeconds(2)) ?? false)
+            {
+                try
+                {
+                    subDirectories = Directory.GetDirectories(
+                        directoryName ?? text,
+                        "*",
+                        SearchOption.TopDirectoryOnly);
+                }
+                catch
+                {
+                    // ignore
+                }
+            }
+        }
+
+        autoCompleteBox.ItemsSource = subDirectories;
+        autoCompleteBox.PopulateComplete();
+    }
+
+    void HandleDataGridPreviewMouseRightButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        var depObj = (DependencyObject?)e.OriginalSource;
+
+        if (depObj is Inline inline)
+        {
+            depObj = inline.Parent;
+            if (depObj == null)
             {
                 return;
             }
-
-            if (this._lastSearchOperation != null)
-            {
-                BindingOperations.DisableCollectionSynchronization(this._lastSearchOperation.Results);
-                BindingOperations.DisableCollectionSynchronization(this._lastSearchOperation.SearchErrors);
-            }
-
-            BindingOperations.EnableCollectionSynchronization(
-                searchViewModel.Operation.Results,
-                searchViewModel.Operation.ResultsLocker);
-            BindingOperations.EnableCollectionSynchronization(
-                searchViewModel.Operation.SearchErrors,
-                searchViewModel.Operation.SearchErrorsLocker);
-
-            this._lastSearchOperation = searchViewModel.Operation;
         }
 
-        void HandleModelPropertyChanged(object sender, DataErrorsChangedEventArgs e)
+        while (depObj != null)
         {
-            var viewModel = (BindableValidator)sender;
+            depObj = VisualTreeHelper.GetParent(depObj);
 
-            if (e.PropertyName.Length == 0 && viewModel.Errors[string.Empty].Count > 0)
+            switch (depObj)
             {
-                this.Dispatcher?.Invoke(
-                    () =>
-                        MessageBox.Show(
-                            this,
-                            viewModel.Errors[string.Empty][0],
-                            "Error during search",
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Error));
-            }
-        }
-
-        void HandleDirectoryAutoCompleteBoxPopulating(object sender, PopulatingEventArgs e)
-        {
-            var autoCompleteBox = (AutoCompleteBox)sender;
-            string text = autoCompleteBox.Text;
-            string[] subDirectories = null;
-
-            if (!string.IsNullOrWhiteSpace(text))
-            {
-                string directoryName = Path.GetDirectoryName(text);
-                if (DirectoryUtil.ExistsOrNullIfTimeout(directoryName ?? text, TimeSpan.FromSeconds(2)) ?? false)
-                {
-                    try
-                    {
-                        subDirectories = Directory.GetDirectories(
-                            directoryName ?? text,
-                            "*",
-                            SearchOption.TopDirectoryOnly);
-                    }
-                    catch
-                    {
-                        // ignore
-                    }
-                }
-            }
-
-            autoCompleteBox.ItemsSource = subDirectories;
-            autoCompleteBox.PopulateComplete();
-        }
-
-        void HandleDataGridPreviewMouseRightButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            var depObj = (DependencyObject)e.OriginalSource;
-
-            if (depObj is Inline inline)
-            {
-                depObj = inline.Parent;
-                if (depObj == null)
-                {
-                    return;
-                }
-            }
-
-            while (depObj != null)
-            {
-                depObj = VisualTreeHelper.GetParent(depObj);
-
-                if (depObj is DataGridColumnHeader)
-                {
+                case DataGridColumnHeader:
                     e.Handled = true;
                     return;
-                }
-
-                if (depObj is DataGridRow dataGridRow)
-                {
+                
+                case DataGridRow dataGridRow:
                     dataGridRow.IsSelected = true;
                     return;
-                }
             }
         }
+    }
 
-        void HandleDataGridRowPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    void HandleDataGridRowPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        var row = (DataGridRow)sender;
+        DragDrop.DoDragDrop(
+            row,
+            new DataObject(DataFormats.FileDrop, new[] { ((IFileItem)row.Item).AbsoluteFilePath }),
+            DragDropEffects.All);
+    }
+
+    void HandleDataGridRowPreviewMouseDoubleClick(object? sender, MouseButtonEventArgs e)
+    {
+        if (sender is not DataGridRow row)
         {
-            var row = (DataGridRow)sender;
-            DragDrop.DoDragDrop(
-                row,
-                new DataObject(DataFormats.FileDrop, new[] { ((IFileItem)row.Item).AbsoluteFilePath }),
-                DragDropEffects.All);
+            return;
         }
+        
+        var fileItem = (IFileItem)row.Item;
+        var viewModel = (MainWindowViewModel)this.DataContext;
 
-        void HandleDataGridRowPreviewMouseDoubleClick(object sender, MouseButtonEventArgs e)
+        var parameters = new OpenFileInEditorParameters(
+            viewModel.Settings.Editors[viewModel.Settings.DefaultEditorIndex],
+            fileItem);
+
+        if (viewModel.OpenFileInEditorCommand.CanExecute(parameters))
         {
-            var row = (DataGridRow)sender;
-            var fileItem = (IFileItem)row.Item;
-            var viewModel = (MainWindowViewModel)this.DataContext;
-
-            var parameters = new OpenFileInEditorParameters
-            {
-                FileItem = fileItem,
-                Editor = viewModel.Settings.Editors[viewModel.Settings.DefaultEditorIndex]
-            };
-            
-            if (viewModel.OpenFileInEditorCommand.CanExecute(parameters))
-            {
-                viewModel.OpenFileInEditorCommand.Execute(parameters);
-            }
+            viewModel.OpenFileInEditorCommand.Execute(parameters);
         }
+    }
 
-        void HandleMainWindowClosing(object sender, CancelEventArgs e)
-        {
-            var viewModel = (MainWindowViewModel)this.DataContext;
-            viewModel.SaveSettings();
-        }
+    void HandleMainWindowClosing(object sender, CancelEventArgs e)
+    {
+        var viewModel = (MainWindowViewModel)this.DataContext;
+        viewModel.SaveSettings();
     }
 }

@@ -37,6 +37,7 @@
     <PackageReference Include="Ben.Demystifier" Version="0.4.1" />
     <PackageReference Include="Dirkster.NumericUpDownLib" Version="3.0.0" />
     <PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.1.94" />
+    <PackageReference Include="JetBrains.Annotations" Version="2021.3.0" />
     <PackageReference Include="Mono.Options" Version="6.12.0.148" />
     <PackageReference Include="MvvmDialogs" Version="8.0.0" />
     <PackageReference Include="Ninject" Version="3.3.4" />

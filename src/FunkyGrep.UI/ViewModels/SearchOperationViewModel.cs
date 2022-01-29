@@ -1,28 +1,4 @@
-﻿#region License
-// Copyright (c) 2020 Raif Atef Wasef
-// This source file is licensed under the  MIT license.
-// 
-// Permission is hereby granted, free of charge, to any person
-// obtaining a copy of this software and associated documentation
-// files (the "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish, distribute,
-// sublicense, and/or sell copies of the Software, and to permit persons to whom
-// the Software is furnished to do so, subject to the following conditions:
-// 
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
-// KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
-// WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
-// OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT
-// OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH
-// THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-#endregion
-
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -30,236 +6,251 @@ using FunkyGrep.Engine;
 using FunkyGrep.UI.Validation;
 using Prism.Validation;
 
-namespace FunkyGrep.UI.ViewModels
+namespace FunkyGrep.UI.ViewModels;
+
+public class SearchOperationViewModel : ValidatableBindableBase
 {
-    public class SearchOperationViewModel : ValidatableBindableBase
+    FileSearcher? _searcher;
+    string? _directory;
+    TimeSpan _lastSearchDuration;
+    SearchOperationStatus _status;
+    long _searchedCount;
+    long _failedCount;
+    long _skippedCount;
+    long? _totalFileCount;
+
+    public ObservableCollection<SearchResultItem> Results { get; }
+
+    public ObservableCollection<SearchErrorItem> SearchErrors { get; }
+
+    public object ResultsLocker { get; }
+
+    public object SearchErrorsLocker { get; }
+
+    public SearchOperationStatus Status
     {
-        FileSearcher _searcher;
-        TimeSpan _lastSearchDuration;
-        SearchOperationStatus _status;
-        long _searchedCount;
-        long _failedCount;
-        long _skippedCount;
-        long? _totalFileCount;
-
-        public ObservableCollection<SearchResultItem> Results { get; }
-
-        public ObservableCollection<SearchErrorItem> SearchErrors { get; }
-
-        public object ResultsLocker { get; }
-
-        public object SearchErrorsLocker { get; }
-
-        public SearchOperationStatus Status
+        get => this._status;
+        private set
         {
-            get => this._status;
-            private set
+            if (this.SetProperty(ref this._status, value))
             {
-                if (this.SetProperty(ref this._status, value))
-                {
-                    this.RaisePropertyChanged(nameof(this.IsNotRunning));
-                }
+                this.RaisePropertyChanged(nameof(this.IsNotRunning));
             }
         }
+    }
 
-        public bool IsNotRunning => this.Status != SearchOperationStatus.Running;
+    public bool IsNotRunning => this.Status != SearchOperationStatus.Running;
 
-        public TimeSpan LastSearchDuration
+    public TimeSpan LastSearchDuration
+    {
+        get => this._lastSearchDuration;
+        set => this.SetProperty(ref this._lastSearchDuration, value);
+    }
+
+    public long SearchedCount
+    {
+        get => this._searchedCount;
+        set => this.SetProperty(ref this._searchedCount, value);
+    }
+
+    public long FailedCount
+    {
+        get => this._failedCount;
+        set => this.SetProperty(ref this._failedCount, value);
+    }
+
+    public long SkippedCount
+    {
+        get => this._skippedCount;
+        set => this.SetProperty(ref this._skippedCount, value);
+    }
+
+    public long? TotalFileCount
+    {
+        get => this._totalFileCount;
+        set
         {
-            get => this._lastSearchDuration;
-            set => this.SetProperty(ref this._lastSearchDuration, value);
-        }
-
-        public long SearchedCount
-        {
-            get => this._searchedCount;
-            set => this.SetProperty(ref this._searchedCount, value);
-        }
-
-        public long FailedCount
-        {
-            get => this._failedCount;
-            set => this.SetProperty(ref this._failedCount, value);
-        }
-
-        public long SkippedCount
-        {
-            get => this._skippedCount;
-            set => this.SetProperty(ref this._skippedCount, value);
-        }
-
-        public long? TotalFileCount
-        {
-            get => this._totalFileCount;
-            set
+            if (this.SetProperty(ref this._totalFileCount, value))
             {
-                if (this.SetProperty(ref this._totalFileCount, value))
-                {
-                    this.RaisePropertyChanged(nameof(this.TotalFileCountIsSet));
-                }
+                this.RaisePropertyChanged(nameof(this.TotalFileCountIsSet));
             }
         }
+    }
 
-        public bool TotalFileCountIsSet => this.TotalFileCount.HasValue;
+    public bool TotalFileCountIsSet => this.TotalFileCount.HasValue;
 
-        public SearchOperationViewModel()
+    public SearchOperationViewModel()
+    {
+        this.Results = new ObservableCollection<SearchResultItem>();
+        this.SearchErrors = new ObservableCollection<SearchErrorItem>();
+        this.ResultsLocker = new object();
+        this.SearchErrorsLocker = new object();
+    }
+
+    void Update(object? _, ProgressEventArgs progressEventArgs)
+    {
+        this.SearchedCount = progressEventArgs.SearchedCount;
+        this.SkippedCount = progressEventArgs.SkippedCount;
+        this.FailedCount = progressEventArgs.FailedCount;
+
+        if (progressEventArgs.TotalCount > 0)
         {
-            this.Results = new ObservableCollection<SearchResultItem>();
-            this.SearchErrors = new ObservableCollection<SearchErrorItem>();
-            this.ResultsLocker = new object();
-            this.SearchErrorsLocker = new object();
+            this.TotalFileCount = progressEventArgs.TotalCount;
+        }
+    }
+
+    public void Start(string directory, FileSearcher fileSearcher)
+    {
+        if (this.Status != SearchOperationStatus.NeverRun)
+        {
+            throw new InvalidOperationException("Search already started.");
         }
 
-        void Update(object _, ProgressEventArgs progressEventArgs)
+        if (this._searcher != null)
         {
-            this.SearchedCount = progressEventArgs.SearchedCount;
-            this.SkippedCount = progressEventArgs.SkippedCount;
-            this.FailedCount = progressEventArgs.FailedCount;
-
-            if (progressEventArgs.TotalCount > 0)
-            {
-                this.TotalFileCount = progressEventArgs.TotalCount;
-            }
+            throw new InvalidOperationException("Instances are not reusable. Please create a new instance.");
         }
 
-        public void Start(string directory, FileSearcher fileSearcher)
+        try
         {
-            if (this.Status != SearchOperationStatus.NeverRun)
+            this.Status = SearchOperationStatus.Running;
+            this._directory = directory;
+
+            if (string.IsNullOrWhiteSpace(directory))
             {
-                throw new InvalidOperationException("Search already started.");
+                throw new ArgumentException("Value cannot be null or whitespace.", nameof(directory));
             }
 
-            if (this._searcher != null)
-            {
-                throw new InvalidOperationException("Instances are not reusable. Please create a new instance.");
-            }
+            this._searcher = fileSearcher ?? throw new ArgumentNullException(nameof(fileSearcher));
+            this._searcher.MatchFound += this.HandleMatchFound;
+            this._searcher.ProgressChanged += this.Update;
+            this._searcher.Error += this.HandleError;
+            this._searcher.Reset += this.HandleReset;
+            this._searcher.Completed += this.HandleCompleted;
 
-            try
-            {
-                this.Status = SearchOperationStatus.Running;
-
-                if (string.IsNullOrWhiteSpace(directory))
-                {
-                    throw new ArgumentException("Value cannot be null or whitespace.", nameof(directory));
-                }
-
-                this._searcher = fileSearcher ?? throw new ArgumentNullException(nameof(fileSearcher));
-                this._searcher.MatchFound += delegate(object _, MatchFoundEventArgs args)
-                {
-                    int basenameLength = directory.Length;
-
-                    if (directory[^1] != Path.DirectorySeparatorChar)
-                    {
-                        basenameLength++;
-                    }
-
-                    lock (this.ResultsLocker)
-                    {
-                        string relativePath = args.FilePath.Substring(basenameLength);
-                        foreach (var match in args.Matches)
-                        {
-                            var searchResultItem = new SearchResultItem(args.FilePath, relativePath, match);
-                            this.Results.Add(searchResultItem);
-                        }
-                    }
-                };
-
-                this._searcher.ProgressChanged += this.Update;
-
-                this._searcher.Error += delegate(object _, SearchErrorEventArgs args)
-                {
-                    int basenameLength = directory.Length;
-
-                    if (directory[^1] != Path.DirectorySeparatorChar)
-                    {
-                        basenameLength++;
-                    }
-
-                    lock (this.SearchErrorsLocker)
-                    {
-                        string relativePath = args.FilePath;
-                        if (args.FilePath.Length > basenameLength)
-                        {
-                            relativePath = args.FilePath.Substring(basenameLength);
-                        }
-
-                        var errorString = args.Error is IOException || args.Error is UnauthorizedAccessException
-                            ? args.Error.Message
-                            : args.Error.ToStringDemystified();
-
-                        var searchErrorItem = new SearchErrorItem(args.FilePath, relativePath, errorString);
-                        this.SearchErrors.Add(searchErrorItem);
-                    }
-                };
-
-                this._searcher.Reset += delegate
-                {
-                    lock (this.SearchErrorsLocker)
-                    {
-                        this.SearchErrors.Clear();
-                    }
-
-                    lock (this.ResultsLocker)
-                    {
-                        this.Results.Clear();
-                    }
-                };
-
-                this._searcher.Completed += delegate(object _, CompletedEventArgs args)
-                {
-                    this.Update(null, args.FinalProgressUpdate);
-                    this.LastSearchDuration = args.Duration;
-
-                    if (args.FailureReason != null)
-                    {
-                        this.Status = SearchOperationStatus.Aborted;
-                        this.SetGeneralError(args.FailureReason);
-                    }
-                    else
-                    {
-                        this.Status = SearchOperationStatus.Completed;
-                    }
-                };
-
-                this._searcher.Begin();
-            }
-            catch (Exception ex)
-            {
-                try
-                {
-                    this.CleanUpSearch();
-                    this.SetGeneralError(ex);
-                }
-                catch
-                {
-                    // ignore
-                }
-                finally
-                {
-                    this.Status = SearchOperationStatus.Aborted;
-                }
-            }
+            this._searcher.Begin();
         }
-
-        public void Cancel()
+        catch (Exception ex)
         {
             try
             {
                 this.CleanUpSearch();
-            }
-            catch (Exception ex)
-            {
                 this.SetGeneralError(ex);
+            }
+            catch
+            {
+                // ignore
             }
             finally
             {
                 this.Status = SearchOperationStatus.Aborted;
             }
         }
+    }
 
-        void CleanUpSearch()
+    void HandleMatchFound(object? _, MatchFoundEventArgs args)
+    {
+        if (this._directory == null)
         {
-            this._searcher?.Cancel();
+            throw new InvalidOperationException();
         }
+        
+        int basenameLength = this._directory.Length;
+
+        if (this._directory[^1] != Path.DirectorySeparatorChar)
+        {
+            basenameLength++;
+        }
+
+        lock (this.ResultsLocker)
+        {
+            string relativePath = args.FilePath[basenameLength..];
+            foreach (var match in args.Matches)
+            {
+                var searchResultItem = new SearchResultItem(args.FilePath, relativePath, match);
+                this.Results.Add(searchResultItem);
+            }
+        }
+    }
+    
+    void HandleError(object? _, SearchErrorEventArgs args)
+    {
+        if (this._directory == null)
+        {
+            throw new InvalidOperationException();
+        }
+        
+        int basenameLength = this._directory.Length;
+
+        if (this._directory[^1] != Path.DirectorySeparatorChar)
+        {
+            basenameLength++;
+        }
+
+        lock (this.SearchErrorsLocker)
+        {
+            string relativePath = args.FilePath;
+            if (args.FilePath.Length > basenameLength)
+            {
+                relativePath = args.FilePath[basenameLength..];
+            }
+
+            var errorString = args.Error is IOException or UnauthorizedAccessException
+                ? args.Error.Message
+                : args.Error.ToStringDemystified();
+
+            var searchErrorItem = new SearchErrorItem(args.FilePath, relativePath, errorString);
+            this.SearchErrors.Add(searchErrorItem);
+        }
+    }
+    
+    void HandleReset(object? _, EventArgs e)
+    {
+        lock (this.SearchErrorsLocker)
+        {
+            this.SearchErrors.Clear();
+        }
+
+        lock (this.ResultsLocker)
+        {
+            this.Results.Clear();
+        }
+    }
+    
+    void HandleCompleted(object? _, CompletedEventArgs args)
+    {
+        this.Update(null, args.FinalProgressUpdate);
+        this.LastSearchDuration = args.Duration;
+
+        if (args.FailureReason != null)
+        {
+            this.Status = SearchOperationStatus.Aborted;
+            this.SetGeneralError(args.FailureReason);
+        }
+        else
+        {
+            this.Status = SearchOperationStatus.Completed;
+        }
+    }
+
+    public void Cancel()
+    {
+        try
+        {
+            this.CleanUpSearch();
+        }
+        catch (Exception ex)
+        {
+            this.SetGeneralError(ex);
+        }
+        finally
+        {
+            this.Status = SearchOperationStatus.Aborted;
+        }
+    }
+
+    void CleanUpSearch()
+    {
+        this._searcher?.Cancel();
     }
 }

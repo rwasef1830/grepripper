@@ -10,73 +10,71 @@ using Mono.Options;
 using MvvmDialogs;
 using Prism.Ioc;
 
-namespace FunkyGrep.UI
+namespace FunkyGrep.UI;
+
+public partial class App
 {
-    public partial class App
+    public static readonly string Version = Assembly.GetExecutingAssembly()
+        .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+        ?.InformationalVersion ?? "<unknown version>";
+
+    StartupEventArgs _startupArgs = null!;
+
+    void HandleStartup(object sender, StartupEventArgs e)
     {
-        public static readonly string Version = Assembly.GetExecutingAssembly()
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-            ?.InformationalVersion ?? "<unknown version>";
+        this._startupArgs = e;
+    }
 
-        StartupEventArgs _startupArgs;
-
-        void HandleStartup(object sender, StartupEventArgs e)
+    protected override void OnInitialized()
+    {
+        try
         {
-            this._startupArgs = e;
-        }
+            var optionSet = new OptionSet();
+            List<string> unprocessed = optionSet.Parse(this._startupArgs.Args);
 
-        protected override void OnInitialized()
-        {
-            try
+            string? initialDirectory = unprocessed.FirstOrDefault();
+
+            if (this.MainWindow is { DataContext: MainWindowViewModel viewModel } &&
+                !string.IsNullOrWhiteSpace(initialDirectory))
             {
-                var optionSet = new OptionSet();
-                List<string> unprocessed = optionSet.Parse(this._startupArgs.Args);
-
-                string initialDirectory = unprocessed.FirstOrDefault();
-
-                if (this.MainWindow != null
-                    && this.MainWindow.DataContext is MainWindowViewModel viewModel
-                    && !string.IsNullOrWhiteSpace(initialDirectory))
-                {
-                    viewModel.Search.Directory = initialDirectory;
-                }
+                viewModel.Search.Directory = initialDirectory;
             }
-            catch (OptionException ex)
-            {
-                // ReSharper disable LocalizableElement
-                MessageBox.Show(
-                    "Invalid arguments passed via command line. Details: " + ex,
-                    "Fatal error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Exclamation);
-                // ReSharper restore LocalizableElement
-            }
-            catch (Exception ex)
-            {
-                // ReSharper disable LocalizableElement
-                MessageBox.Show(
-                    "An unhandled error occurred. Details: " + ex,
-                    "Fatal error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Exclamation);
-                // ReSharper restore LocalizableElement
-            }
-
-            base.OnInitialized();
         }
-
-        protected override void RegisterTypes(IContainerRegistry containerRegistry)
+        catch (OptionException ex)
         {
-            containerRegistry.RegisterInstance<IDialogService>(new DialogService());
-            containerRegistry.RegisterInstance<IClipboardService>(new ClipboardService());
-            containerRegistry.RegisterInstance<IProcessService>(new ProcessService());
-            containerRegistry.RegisterInstance<IAppSettingsService>(new AppSettingsService());
-            containerRegistry.RegisterInstance<IEditorFinderService>(new EditorFinderService());
+            // ReSharper disable LocalizableElement
+            MessageBox.Show(
+                "Invalid arguments passed via command line. Details: " + ex,
+                "Fatal error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Exclamation);
+            // ReSharper restore LocalizableElement
+        }
+        catch (Exception ex)
+        {
+            // ReSharper disable LocalizableElement
+            MessageBox.Show(
+                "An unhandled error occurred. Details: " + ex,
+                "Fatal error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Exclamation);
+            // ReSharper restore LocalizableElement
         }
 
-        protected override Window CreateShell()
-        {
-            return this.Container.Resolve<MainWindow>();
-        }
+        base.OnInitialized();
+    }
+
+    protected override void RegisterTypes(IContainerRegistry containerRegistry)
+    {
+        containerRegistry.RegisterInstance<IDialogService>(new DialogService());
+        containerRegistry.RegisterInstance<IClipboardService>(new ClipboardService());
+        containerRegistry.RegisterInstance<IProcessService>(new ProcessService());
+        containerRegistry.RegisterInstance<IAppSettingsService>(new AppSettingsService());
+        containerRegistry.RegisterInstance<IEditorFinderService>(new EditorFinderService());
+    }
+
+    protected override Window CreateShell()
+    {
+        return this.Container.Resolve<MainWindow>();
     }
 }

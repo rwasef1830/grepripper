@@ -1,247 +1,220 @@
-﻿#region License
-// Copyright (c) 2020 Raif Atef Wasef
-// This source file is licensed under the  MIT license.
-// 
-// Permission is hereby granted, free of charge, to any person
-// obtaining a copy of this software and associated documentation
-// files (the "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish, distribute,
-// sublicense, and/or sell copies of the Software, and to permit persons to whom
-// the Software is furnished to do so, subject to the following conditions:
-// 
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
-// KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
-// WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
-// OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-// OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT
-// OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH
-// THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-#endregion
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Windows.Input;
 using FunkyGrep.UI.Services;
 using FunkyGrep.UI.Validation;
+using JetBrains.Annotations;
 using MvvmDialogs;
 using MvvmDialogs.FrameworkDialogs.FolderBrowser;
 using Prism.Commands;
 using Prism.Validation;
 
-namespace FunkyGrep.UI.ViewModels
+namespace FunkyGrep.UI.ViewModels;
+
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
+public class MainWindowViewModel : ValidatableBindableBase
 {
-    public class MainWindowViewModel : ValidatableBindableBase
+    readonly IDialogService _dialogService;
+    readonly IClipboardService _clipboardService;
+    readonly IProcessService _processService;
+    readonly IAppSettingsService _appSettingsService;
+    readonly IEditorFinderService _editorFinderService;
+
+    SettingsViewModel _settings;
+    bool _scanForEditorsCanExecute;
+
+    public ICommand ShowSelectFolderDialogCommand { get; }
+
+    public ICommand CopyTextToClipboardCommand { get; }
+
+    public ICommand CopyFileToClipboardCommand { get; }
+
+    public ICommand OpenFileInEditorCommand { get; }
+
+    public SearchViewModel Search { get; }
+
+    public SettingsViewModel Settings
     {
-        readonly IDialogService _dialogService;
-        readonly IClipboardService _clipboardService;
-        readonly IProcessService _processService;
-        readonly IAppSettingsService _appSettingsService;
-        readonly IEditorFinderService _editorFinderService;
+        get => this._settings;
+        set => this.SetProperty(ref this._settings, value);
+    }
 
-        SettingsViewModel _settings;
-        bool _scanForEditorsCanExecute;
+    public ICommand ScanForEditorsCommand { get; }
 
-        public ICommand ShowSelectFolderDialogCommand { get; }
+    public bool ScanForEditorsCanExecute
+    {
+        get => this._scanForEditorsCanExecute;
+        set => this.SetProperty(ref this._scanForEditorsCanExecute, value);
+    }
 
-        public ICommand CopyTextToClipboardCommand { get; }
+    public MainWindowViewModel(
+        IDialogService dialogService,
+        IClipboardService clipboardService,
+        IProcessService processService,
+        IAppSettingsService appSettingsService,
+        IEditorFinderService editorFinderService)
+    {
+        this._dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
+        this._clipboardService = clipboardService ?? throw new ArgumentNullException(nameof(clipboardService));
+        this._processService = processService ?? throw new ArgumentNullException(nameof(processService));
+        this._appSettingsService = appSettingsService
+                                   ?? throw new ArgumentNullException(nameof(appSettingsService));
+        this._editorFinderService = editorFinderService ?? throw new ArgumentNullException(nameof(editorFinderService));
 
-        public ICommand CopyFileToClipboardCommand { get; }
+        this.Search = new SearchViewModel();
+        this.ShowSelectFolderDialogCommand = new DelegateCommand(
+            this.ShowSelectFolderDialog,
+            () => this.Search.Operation.Status != SearchOperationStatus.Running);
+        this.CopyTextToClipboardCommand = new DelegateCommand<object>(this.CopyTextToClipboard);
+        this.CopyFileToClipboardCommand = new DelegateCommand<string>(this.CopyFileToClipboard);
+        this.OpenFileInEditorCommand = new DelegateCommand<OpenFileInEditorParameters>(this.OpenFileInEditor);
+        
+        this.Search.BubbleFutureGeneralError(this);
+        this._settings = this._appSettingsService.LoadOrCreate<SettingsViewModel>();
 
-        public ICommand OpenFileInEditorCommand { get; }
-
-        public SearchViewModel Search { get; }
-
-        public SettingsViewModel Settings
+        if (this._settings.Editors.Count <= 1)
         {
-            get => this._settings;
-            set => this.SetProperty(ref this._settings, value);
+            this.ScanForEditors();
         }
 
-        public ICommand ScanForEditorsCommand { get; }
+        this._scanForEditorsCanExecute = true;
+        this.ScanForEditorsCommand = new DelegateCommand(this.ScanForEditors)
+            .ObservesCanExecute(() => this.ScanForEditorsCanExecute);
+    }
 
-        public bool ScanForEditorsCanExecute
+    void ShowSelectFolderDialog()
+    {
+        var settings = new FolderBrowserDialogSettings
         {
-            get => this._scanForEditorsCanExecute;
-            set => this.SetProperty(ref this._scanForEditorsCanExecute, value);
-        }
+            SelectedPath = this.Search.Directory,
+            ShowNewFolderButton = false
+        };
 
-        public MainWindowViewModel(
-            IDialogService dialogService,
-            IClipboardService clipboardService,
-            IProcessService processService,
-            IAppSettingsService appSettingsService,
-            IEditorFinderService editorFinderService)
-        {
-            this._dialogService = dialogService ?? throw new ArgumentNullException(nameof(dialogService));
-            this._clipboardService = clipboardService ?? throw new ArgumentNullException(nameof(clipboardService));
-            this._processService = processService ?? throw new ArgumentNullException(nameof(processService));
-            this._appSettingsService = appSettingsService
-                                       ?? throw new ArgumentNullException(nameof(appSettingsService));
-            this._editorFinderService = editorFinderService ?? throw new ArgumentNullException(nameof(editorFinderService));
-
-            this.ShowSelectFolderDialogCommand = new DelegateCommand(
-                this.ShowSelectFolderDialog,
-                () => this.Search.Operation?.Status != SearchOperationStatus.Running);
-            this.CopyTextToClipboardCommand = new DelegateCommand<object>(this.CopyTextToClipboard);
-            this.CopyFileToClipboardCommand = new DelegateCommand<string>(this.CopyFileToClipboard);
-            this.OpenFileInEditorCommand = new DelegateCommand<OpenFileInEditorParameters>(this.OpenFileInEditor);
-
-            this.Search = new SearchViewModel();
-            this.Search.BubbleFutureGeneralError(this);
-            this._settings = this._appSettingsService.LoadOrCreate<SettingsViewModel>();
-
-            if (this._settings.Editors.Count <= 1)
-            {
-                this.ScanForEditors();
-            }
-
-            this._scanForEditorsCanExecute = true;
-            this.ScanForEditorsCommand = new DelegateCommand(this.ScanForEditors)
-                .ObservesCanExecute(() => this.ScanForEditorsCanExecute);
-        }
-
-        void ShowSelectFolderDialog()
-        {
-            var settings = new FolderBrowserDialogSettings
-            {
-                SelectedPath = this.Search.Directory,
-                ShowNewFolderButton = false
-            };
-
-            // ReSharper disable once ConstantNullCoalescingCondition
-            if (this._dialogService.ShowFolderBrowserDialog(
+        // ReSharper disable once ConstantNullCoalescingCondition
+        if (this._dialogService.ShowFolderBrowserDialog(
                 this,
                 settings) ?? false)
-            {
-                this.Search.Directory = settings.SelectedPath;
-            }
+        {
+            this.Search.Directory = settings.SelectedPath;
+        }
+    }
+
+    void CopyTextToClipboard(object? obj)
+    {
+        var text = obj?.ToString();
+
+        if (text == null)
+        {
+            return;
         }
 
-        void CopyTextToClipboard(object obj)
+        this._clipboardService.SetText(text);
+    }
+
+    void CopyFileToClipboard(string absoluteFilePath)
+    {
+        if (!File.Exists(absoluteFilePath))
         {
-            var text = obj?.ToString();
-
-            if (text == null)
-            {
-                return;
-            }
-
-            this._clipboardService.SetText(text);
+            return;
         }
 
-        void CopyFileToClipboard(string absoluteFilePath)
+        this._clipboardService.SetFileDropList(new[] { absoluteFilePath });
+    }
+
+    void OpenFileInEditor(OpenFileInEditorParameters parameters)
+    {
+        try
         {
-            if (absoluteFilePath == null || !File.Exists(absoluteFilePath))
+            var (editorInfo, item) = parameters;
+            var (_, executablePath, argumentsTemplate) = editorInfo;
+
+            var itemFilePath = item.AbsoluteFilePath;
+            var lineNumber = 0;
+
+            if (item is SearchResultItem resultItem)
             {
-                return;
+                lineNumber = resultItem.Match.LineNumber;
             }
 
-            this._clipboardService.SetFileDropList(new[] { absoluteFilePath });
+            var arguments = string.Format(argumentsTemplate, itemFilePath, lineNumber);
+
+            var pi = new ProcessStartInfo(executablePath, arguments)
+            {
+                UseShellExecute = true
+            };
+
+            this._processService.Start(pi);
         }
-
-        void OpenFileInEditor(OpenFileInEditorParameters parameters)
+        catch (Exception ex)
         {
-            if (parameters == null)
+            this.SetGeneralError(ex);
+        }
+    }
+
+    [SuppressMessage("ReSharper", "HeapView.ClosureAllocation")]
+    void ScanForEditors()
+    {
+        this.ScanForEditorsCanExecute = false;
+
+        try
+        {
+            var newEditors = this._editorFinderService.FindInstalledSupportedEditors();
+            var mergedEditorList = new List<EditorInfo>();
+
+            foreach (var existingEditor in this.Settings.Editors)
             {
-                return;
-            }
-
-            try
-            {
-                var item = parameters.FileItem;
-                var editor = parameters.Editor;
-
-                var itemFilePath = item.AbsoluteFilePath;
-                var lineNumber = 0;
-
-                if (item is SearchResultItem resultItem)
+                var matchingNewEditor = newEditors.FirstOrDefault(x => x.DisplayName == existingEditor.DisplayName);
+                if (matchingNewEditor != null)
                 {
-                    lineNumber = resultItem.Match.LineNumber;
+                    mergedEditorList.Add(matchingNewEditor);
+                    continue;
                 }
 
-                var executablePath = editor.ExecutablePath;
-                var arguments = string.Format(editor.ArgumentsTemplate, itemFilePath, lineNumber);
-
-                var pi = new ProcessStartInfo(executablePath, arguments)
-                {
-                    UseShellExecute = true
-                };
-
-                this._processService.Start(pi);
+                mergedEditorList.Add(existingEditor);
             }
-            catch (Exception ex)
+
+            foreach (var newEditor in newEditors)
             {
-                this.SetGeneralError(ex);
+                if (mergedEditorList.All(x => x.DisplayName != newEditor.DisplayName))
+                {
+                    mergedEditorList.Add(newEditor);
+                }
             }
+
+            var mergedEditors = new ObservableCollection<EditorInfo>(mergedEditorList.OrderBy(x => x.DisplayName));
+            this.Settings.Editors = mergedEditors;
+            this.Settings.DefaultEditorIndex = 0;
         }
-
-        void ScanForEditors()
+        catch (Exception ex)
         {
-            this.ScanForEditorsCanExecute = false;
-
-            try
-            {
-                var newEditors = this._editorFinderService.FindInstalledSupportedEditors();
-                var mergedEditorList = new List<EditorInfo>();
-
-                foreach (var existingEditor in this.Settings.Editors)
-                {
-                    var matchingNewEditor = newEditors.FirstOrDefault(x => x.DisplayName == existingEditor.DisplayName);
-                    if (matchingNewEditor != null)
-                    {
-                        mergedEditorList.Add(matchingNewEditor);
-                        continue;
-                    }
-
-                    mergedEditorList.Add(existingEditor);
-                }
-
-                foreach (var newEditor in newEditors)
-                {
-                    if (mergedEditorList.All(x => x.DisplayName != newEditor.DisplayName))
-                    {
-                        mergedEditorList.Add(newEditor);
-                    }
-                }
-
-                var mergedEditors = new ObservableCollection<EditorInfo>(mergedEditorList.OrderBy(x => x.DisplayName));
-                this.Settings.Editors = mergedEditors;
-                this.Settings.DefaultEditorIndex = 0;
-            }
-            catch (Exception ex)
-            {
-                this.SetGeneralError(ex);
-            }
-            finally
-            {
-                this.ScanForEditorsCanExecute = true;
-            }
+            this.SetGeneralError(ex);
         }
-
-        public void SaveSettings()
+        finally
         {
-            try
-            {
-                if (this._settings.HasErrors)
-                {
-                    this._settings = new SettingsViewModel();
-                }
+            this.ScanForEditorsCanExecute = true;
+        }
+    }
 
-                this._appSettingsService.Save(this._settings);
-            }
-            catch (Exception ex)
+    public void SaveSettings()
+    {
+        try
+        {
+            if (this._settings.HasErrors)
             {
-                Debug.WriteLine(ex);
-                this.SetGeneralError(ex);
+                this._settings = new SettingsViewModel();
             }
+
+            this._appSettingsService.Save(this._settings);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex);
+            this.SetGeneralError(ex);
         }
     }
 }

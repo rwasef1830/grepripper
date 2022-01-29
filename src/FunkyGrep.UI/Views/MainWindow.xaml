@@ -399,7 +399,8 @@
                     </DataGrid.Resources>
                     <DataGrid.Columns>
                         <DataGridTemplateColumn Header="File" Width="*" CellTemplate="{StaticResource {DataTemplateKey DataType=viewModels:IFileItem}}" />
-                        <DataGridTextColumn Binding="{Binding Match.LineNumber, Mode=OneTime}" Header="Line" Width="50" 
+                        <DataGridTextColumn Binding="{Binding Match.LineNumber, Mode=OneTime}" Header="Line" Width="50"
+                                            d:DataContext="{d:DesignInstance d:Type=viewModels:SearchResultItem}"
                                             ElementStyle="{StaticResource LineCellTextBlockStyle}" />
                         <DataGridTemplateColumn Header="Text" Width="2*">
                             <DataGridTemplateColumn.CellTemplate>
@@ -466,7 +467,9 @@
                     </DataGrid.Resources>
                     <DataGrid.Columns>
                         <DataGridTemplateColumn Header="File" Width="*" CellTemplate="{StaticResource {DataTemplateKey DataType=viewModels:IFileItem}}" />
-                        <DataGridTextColumn Header="Error" Width="2*" Binding="{Binding Error}">
+                        <DataGridTextColumn Header="Error" Width="2*"
+                                            d:DataContext="{d:DesignInstance d:Type=viewModels:SearchErrorItem}"
+                                            Binding="{Binding Error}">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="DarkRed" />
