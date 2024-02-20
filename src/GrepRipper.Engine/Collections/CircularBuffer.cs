@@ -71,10 +71,7 @@ public class CircularBuffer<T>
                 nameof(capacity));
         }
 
-        if (items == null)
-        {
-            throw new ArgumentNullException(nameof(items));
-        }
+        ArgumentNullException.ThrowIfNull(items);
 
         if (items.Length > capacity)
         {

@@ -20,10 +20,7 @@ public class SearchMatch
         IReadOnlyList<string>? preMatchLines,
         IReadOnlyList<string>? postMatchLines)
     {
-        if (matchedLineNumber <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(matchedLineNumber));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(matchedLineNumber);
 
         this.LineNumber = matchedLineNumber;
         this.Line = matchedLine;

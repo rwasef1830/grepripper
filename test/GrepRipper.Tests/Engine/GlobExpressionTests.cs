@@ -1,51 +1,51 @@
-﻿using System.Collections.Generic;
+﻿using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using GrepRipper.Engine;
 using Xunit;
 
 namespace GrepRipper.Tests.Engine;
 
+[SuppressMessage("ReSharper", "StringLiteralTypo")]
 public class GlobExpressionTests
 {
-    // ReSharper disable UnusedMethodReturnValue.Local
-    public static IEnumerable<object[]> GetPositiveGlobTestCases()
+    public static TheoryData<string, string> GetPositiveGlobTestCases()
     {
-        return new[]
+        return new TheoryData<string, string>
         {
-            new[] { @"test.txt", "*.txt" },
-            new[] { @"test1.txt", "test?.txt" },
-            new[] { @"Xtest.txt", "?test.txt" },
-            new[] { @"test.exe", "test.*" },
-            new[] { @"a", "a" },
-            new[] { @"test1Abc.tot", "test1???.t?t" },
-            new[] { @"dummy\test.txt", "test.*" }
+            { "test.txt", "*.txt" },
+            { "test1.txt", "test?.txt" },
+            { "Xtest.txt", "?test.txt" },
+            { "test.exe", "test.*" },
+            { "a", "a" },
+            { "test1Abc.tot", "test1???.t?t" },
+            { "dummy\\test.txt", "test.*" }
         };
     }
 
-    public static IEnumerable<object[]> GetNegativeGlobTestCases()
+    public static TheoryData<string, string> GetNegativeGlobTestCases()
     {
-        return new[]
+        return new TheoryData<string, string>
         {
-            new[] { @"test.txt", "*.txx" },
-            new[] { @"test1.txt", "test_.txt" },
-            new[] { @"Xtest.txt", "_test.txt" },
-            new[] { @"test.exe", "test.?" },
-            new[] { @"a", "ab" },
-            new[] { @"test1Abc.tot", "test1??X.t?t" },
-            new[] { @"dummy\test.txt", "wrong.*" }
+            { "test.txt", "*.txx" },
+            { "test1.txt", "test_.txt" },
+            { "Xtest.txt", "_test.txt" },
+            { "test.exe", "test.?" },
+            { "a", "ab" },
+            { "test1Abc.tot", "test1??X.t?t" },
+            { "dummy\\test.txt", "wrong.*" }
         };
     }
 
-    public static IEnumerable<object[]> GetGlobTestCases()
+    public static TheoryData<string, bool> GetGlobTestCases()
     {
-        return new[]
+        return new TheoryData<string, bool>
         {
-            new object[] { "*.css", true },
-            new object[] { "*.cs?", true },
-            new object[] { "\\*.css", false },
-            new object[] { "??*.??s", true },
-            new object[] { "test", true },
-            new object[] { "^", true }
+            { "*.css", true },
+            { "*.cs?", true },
+            { "\\*.css", false },
+            { "??*.??s", true },
+            { "test", true },
+            { "^", true }
         };
     }
 

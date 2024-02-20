@@ -9,7 +9,7 @@ public class OpenFileInEditorParametersValueConverter : IMultiValueConverter
 {
     public object? Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
-        if (values.Length != 2 || values[0] is not EditorInfo editor || values[1] is not IFileItem fileItem)
+        if (values is not [EditorInfo editor, IFileItem fileItem])
         {
             return null;
         }

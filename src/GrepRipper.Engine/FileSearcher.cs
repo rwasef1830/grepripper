@@ -43,15 +43,8 @@ public class FileSearcher
         int contextLineCount,
         int maxContextLength = DefaultMaxContextLength)
     {
-        if (contextLineCount < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(contextLineCount));
-        }
-
-        if (maxContextLength <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(maxContextLength));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegative(contextLineCount);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxContextLength);
 
         this._expression = expression ?? throw new ArgumentNullException(nameof(expression));
         this._dataSources = dataSources ?? throw new ArgumentNullException(nameof(dataSources));
@@ -344,7 +337,7 @@ public class FileSearcher
                                 lineBuffer,
                                 readLineCount - postMatchLineCount);
 
-                            matches ??= new List<SearchMatch>();
+                            matches ??= [];
                             matches.Add(match);
                         }
                     }
@@ -398,20 +391,9 @@ public class FileSearcher
 
     static bool IsLikelyToBeBinary(byte[] byteBuffer, int bytesRead, Magic magic)
     {
-        if (byteBuffer == null)
-        {
-            throw new ArgumentNullException(nameof(byteBuffer));
-        }
-
-        if (bytesRead > byteBuffer.Length)
-        {
-            throw new ArgumentOutOfRangeException(nameof(bytesRead));
-        }
-
-        if (magic == null)
-        {
-            throw new ArgumentNullException(nameof(magic));
-        }
+        ArgumentNullException.ThrowIfNull(byteBuffer);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(bytesRead, byteBuffer.Length);
+        ArgumentNullException.ThrowIfNull(magic);
 
         var nullCount = 0;
         var twoConsecutiveNullsFound = false;
@@ -508,6 +490,17 @@ public class FileSearcher
         List<string>? preMatchLines = null;
         List<string>? postMatchLines = null;
 
+        CaptureContextLines(0, ref preMatchLines);
+        CaptureContextLines(this._contextLineCount + 1, ref postMatchLines);
+
+        return new SearchMatch(
+            matchLineNumber,
+            context,
+            adjustedMatchIndex,
+            match.Length,
+            preMatchLines,
+            postMatchLines);
+
         void CaptureContextLines(int startIndex, ref List<string>? targetLines)
         {
             for (int i = startIndex; i < startIndex + this._contextLineCount; i++)
@@ -529,16 +522,5 @@ public class FileSearcher
                 targetLines.Add(contextLine);
             }
         }
-
-        CaptureContextLines(0, ref preMatchLines);
-        CaptureContextLines(this._contextLineCount + 1, ref postMatchLines);
-
-        return new SearchMatch(
-            matchLineNumber,
-            context,
-            adjustedMatchIndex,
-            match.Length,
-            preMatchLines,
-            postMatchLines);
     }
 }

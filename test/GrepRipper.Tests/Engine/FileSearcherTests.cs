@@ -11,7 +11,8 @@ namespace GrepRipper.Tests.Engine;
 
 [SuppressMessage("ReSharper", "StringLiteralTypo")]
 [SuppressMessage("ReSharper", "HeapView.ClosureAllocation")]
-public class FileSearcherTests
+[SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments")]
+public partial class FileSearcherTests
 {
     [Fact]
     public void FileSearcher_FindsAMatch_FiresEvents()
@@ -22,7 +23,7 @@ public class FileSearcherTests
         var dataSource = new TestDataSource(fileName, fileContent, Encoding.UTF8);
 
         var fileSearcher = new FileSearcher(
-            new Regex("speedy", RegexOptions.None),
+            SpeedyRegex(),
             new[] { dataSource },
             false,
             0);
@@ -238,4 +239,7 @@ public class FileSearcherTests
             monitor.OccurredEvents.Should().NotContain(x => x.EventName == nameof(searcher.Error));
         }
     }
+
+    [GeneratedRegex("speedy", RegexOptions.None)]
+    private static partial Regex SpeedyRegex();
 }

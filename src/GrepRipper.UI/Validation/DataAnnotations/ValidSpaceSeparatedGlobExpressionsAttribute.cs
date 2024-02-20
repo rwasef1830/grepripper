@@ -6,6 +6,8 @@ namespace GrepRipper.UI.Validation.DataAnnotations;
 
 public class ValidSpaceSeparatedGlobExpressionsAttribute : ValidationAttribute
 {
+    static readonly char[] s_Separators = [' '];
+
     protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {
         var spaceSeparatedExpressions = value?.ToString();
@@ -15,7 +17,7 @@ public class ValidSpaceSeparatedGlobExpressionsAttribute : ValidationAttribute
             return ValidationResult.Success;
         }
 
-        var expressions = spaceSeparatedExpressions.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        var expressions = spaceSeparatedExpressions.Split(s_Separators, StringSplitOptions.RemoveEmptyEntries);
         foreach (var expression in expressions)
         {
             if (!GlobExpression.IsValid(expression))

@@ -24,10 +24,7 @@ class AppSettingsService : IAppSettingsService
 
     public void Save<TSettings>(TSettings settings) where TSettings : class
     {
-        if (settings == null)
-        {
-            throw new ArgumentNullException(nameof(settings));
-        }
+        ArgumentNullException.ThrowIfNull(settings);
 
         if (!Directory.Exists(SettingsRoot))
         {

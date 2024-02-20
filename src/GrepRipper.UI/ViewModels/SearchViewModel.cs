@@ -26,6 +26,8 @@ public class SearchViewModel : ValidatableBindableBase
     byte _contextLineCount;
     SearchOperationViewModel _operation = null!;
 
+    static readonly char[] s_Separators = [' '];
+
     [Required]
     [DirectoryExists]
     public string Directory
@@ -53,7 +55,7 @@ public class SearchViewModel : ValidatableBindableBase
                     ref this._filePatterns,
                     string.IsNullOrWhiteSpace(value)
                         ? Array.Empty<string>()
-                        : value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+                        : value.Split(s_Separators, StringSplitOptions.RemoveEmptyEntries));
             }
         }
     }
@@ -106,7 +108,7 @@ public class SearchViewModel : ValidatableBindableBase
     public ICommand RunSearchCommand { get; }
 
     public ICommand AbortSearchCommand { get; }
-
+    
     public SearchViewModel()
     {
         this.Directory = Environment.CurrentDirectory;

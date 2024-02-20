@@ -12,6 +12,8 @@ using Xunit;
 namespace GrepRipper.Tests.Engine.Specifications;
 
 [SuppressMessage("ReSharper", "HeapView.ClosureAllocation")]
+[SuppressMessage("Performance", "CA1861:Avoid constant arrays as arguments")]
+[SuppressMessage("ReSharper", "StringLiteralTypo")]
 public sealed class FileSpecificationTests : IDisposable
 {
     readonly string _tempPath;
@@ -21,7 +23,7 @@ public sealed class FileSpecificationTests : IDisposable
     {
         var random = new Random();
 
-        string tempPath = Path.Combine(Path.GetTempPath(), @"FNGREP_" + random.Next());
+        string tempPath = Path.Combine(Path.GetTempPath(), "FNGREP_" + random.Next());
         if (Directory.Exists(tempPath))
         {
             Directory.Delete(tempPath, true);

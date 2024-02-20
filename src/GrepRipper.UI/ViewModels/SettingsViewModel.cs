@@ -24,9 +24,6 @@ public class SettingsViewModel : ValidatableBindableBase
 
     public SettingsViewModel()
     {
-        this.Editors = new ObservableCollection<EditorInfo>
-        {
-            EditorInfo.GetDefaultEditor()
-        };
+        this.Editors = [EditorInfo.GetDefaultEditor()];
     }
 }

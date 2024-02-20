@@ -11,11 +11,7 @@ public static class ValidatableBindableBaseExtensions
 {
     public static void SetGeneralError(this ValidatableBindableBase model, Exception ex)
     {
-        if (model == null)
-        {
-            throw new ArgumentNullException(nameof(model)); 
-        }
-
+        ArgumentNullException.ThrowIfNull(model);
         model.SetGeneralError(ex.ToStringDemystified());
     }
 
@@ -31,10 +27,7 @@ public static class ValidatableBindableBaseExtensions
     [SuppressMessage("ReSharper", "HeapView.ClosureAllocation")]
     public static void BubbleFutureGeneralError(this ValidatableBindableBase model, ValidatableBindableBase parent)
     {
-        if (model == null)
-        {
-            throw new ArgumentNullException(nameof(model));
-        }
+        ArgumentNullException.ThrowIfNull(model);
 
         model.ErrorsChanged += (sender, args) =>
         {

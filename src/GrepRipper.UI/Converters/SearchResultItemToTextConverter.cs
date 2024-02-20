@@ -10,7 +10,7 @@ namespace GrepRipper.UI.Converters;
 [ValueConversion(typeof(SearchResultItem), typeof(string))]
 public class SearchResultItemToTextConverter : IValueConverter
 {
-    public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is not SearchResultItem item)
         {
@@ -49,7 +49,7 @@ public class SearchResultItemToTextConverter : IValueConverter
         return builder.ToString();
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotSupportedException();
     }
