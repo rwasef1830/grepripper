@@ -116,11 +116,8 @@ public class SearchOperationViewModel : ValidatableBindableBase
             this.Status = SearchOperationStatus.Running;
             this._directory = directory;
 
-            if (string.IsNullOrWhiteSpace(directory))
-            {
-                throw new ArgumentException("Value cannot be null or whitespace.", nameof(directory));
-            }
-
+            ArgumentException.ThrowIfNullOrWhiteSpace(directory);
+            
             this._searcher = fileSearcher ?? throw new ArgumentNullException(nameof(fileSearcher));
             this._searcher.MatchFound += this.HandleMatchFound;
             this._searcher.ProgressChanged += this.Update;

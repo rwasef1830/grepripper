@@ -10,20 +10,9 @@ public class SearchErrorItem : IFileItem
 
     public SearchErrorItem(string absoluteFilePath, string relativeFilePath, string error)
     {
-        if (string.IsNullOrWhiteSpace(absoluteFilePath))
-        {
-            throw new ArgumentException("Value cannot be null or whitespace.", nameof(absoluteFilePath));
-        }
-
-        if (string.IsNullOrWhiteSpace(relativeFilePath))
-        {
-            throw new ArgumentException("Value cannot be null or whitespace.", nameof(relativeFilePath));
-        }
-
-        if (string.IsNullOrWhiteSpace(error))
-        {
-            throw new ArgumentException("Value cannot be null or whitespace.", nameof(error));
-        }
+        ArgumentException.ThrowIfNullOrWhiteSpace(absoluteFilePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(relativeFilePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(error);
 
         this.AbsoluteFilePath = absoluteFilePath;
         this.RelativeFilePath = relativeFilePath;

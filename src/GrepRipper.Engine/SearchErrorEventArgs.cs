@@ -9,10 +9,7 @@ public class SearchErrorEventArgs
 
     public SearchErrorEventArgs(string filePath, Exception error)
     {
-        if (string.IsNullOrWhiteSpace(filePath))
-        {
-            throw new ArgumentException("Value cannot be null or whitespace.", nameof(filePath));
-        }
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
         this.FilePath = filePath;
         this.Error = error ?? throw new ArgumentNullException(nameof(error));

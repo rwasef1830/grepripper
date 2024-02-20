@@ -9,11 +9,8 @@ public class FileDataSource : IDataSource
 
     public FileDataSource(string filePath)
     {
-        if (string.IsNullOrWhiteSpace(filePath))
-        {
-            throw new ArgumentException("Value cannot be null or whitespace.", nameof(filePath));
-        }
-
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+        
         this.Identifier = filePath;
     }
 

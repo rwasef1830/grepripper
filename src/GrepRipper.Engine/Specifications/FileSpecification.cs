@@ -19,10 +19,7 @@ public class FileSpecification
         IEnumerable<string> filePatterns,
         IEnumerable<string> fileExcludePatterns)
     {
-        if (string.IsNullOrWhiteSpace(folderPath))
-        {
-            throw new ArgumentException("Value cannot be null or whitespace.", nameof(folderPath));
-        }
+        ArgumentException.ThrowIfNullOrWhiteSpace(folderPath);
 
         this._folderPath = folderPath;
         this._includeSubfolders = includeSubfolders;

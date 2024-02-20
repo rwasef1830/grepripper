@@ -10,10 +10,7 @@ public class MatchFoundEventArgs
 
     public MatchFoundEventArgs(string filePath, IReadOnlyList<SearchMatch> matches)
     {
-        if (string.IsNullOrWhiteSpace(filePath))
-        {
-            throw new ArgumentException("Value cannot be null or whitespace.", nameof(filePath));
-        }
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
         this.FilePath = filePath;
         this.Matches = matches ?? throw new ArgumentNullException(nameof(matches));
