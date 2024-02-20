@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -20,7 +21,7 @@ public partial class FileSearcherTests
         const string fileName = "Test";
         const string fileContent = "Speedy thing goes in, speedy thing comes out!";
 
-        var dataSource = new TestDataSource(fileName, fileContent, Encoding.UTF8);
+        var dataSource = new DataSource(fileName, _ => new MemoryStream(Encoding.UTF8.GetBytes(fileContent)));
 
         var fileSearcher = new FileSearcher(
             SpeedyRegex(),
@@ -53,7 +54,8 @@ public partial class FileSearcherTests
         {
             DoTest(
                 "A",
-                new TestDataSource(string.Empty, new UnicodeEncoding(false, true)),
+                new DataSource(string.Empty,
+                    _ => new MemoryStream(new UnicodeEncoding(false, true).GetBytes(string.Empty))),
                 0);
         }
 
@@ -197,13 +199,13 @@ public partial class FileSearcherTests
             int contextLineCount,
             params SearchMatch[] expectedResults)
         {
-            var dataSource = new TestDataSource(textToSearch, Encoding.UTF8);
+            var dataSource = new DataSource(textToSearch, _ => new MemoryStream(Encoding.UTF8.GetBytes(textToSearch)));
             DoTest(searchPattern, dataSource, contextLineCount, expectedResults);
         }
 
         static void DoTest(
             string searchPattern,
-            IDataSource dataSource,
+            DataSource dataSource,
             int contextLineCount,
             params SearchMatch[] expectedResults)
         {

@@ -20,7 +20,7 @@ public class FileSearcher
     readonly CancellationTokenSource _cancelSrc;
 
     readonly Regex _expression;
-    readonly IEnumerable<IDataSource> _dataSources;
+    readonly IEnumerable<DataSource> _dataSources;
     readonly bool _skipBinaryFiles;
     readonly int _contextLineCount;
 
@@ -38,7 +38,7 @@ public class FileSearcher
 
     public FileSearcher(
         Regex expression,
-        IEnumerable<IDataSource> dataSources,
+        IEnumerable<DataSource> dataSources,
         bool skipBinaryFiles,
         int contextLineCount,
         int maxContextLength = DefaultMaxContextLength)
@@ -80,7 +80,7 @@ public class FileSearcher
                     {
                         int totalCount = 0;
 
-                        using (IEnumerator<IDataSource> enumerator = this._dataSources.GetEnumerator())
+                        using (IEnumerator<DataSource> enumerator = this._dataSources.GetEnumerator())
                         {
                             while (enumerator.MoveNext())
                             {

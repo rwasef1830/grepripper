@@ -40,7 +40,7 @@ public class FileSpecification
 
     [SuppressMessage("ReSharper", "HeapView.ClosureAllocation")]
     [SuppressMessage("ReSharper", "InvertIf")]
-    public IEnumerable<IDataSource> EnumerateFiles()
+    public IEnumerable<DataSource> EnumerateFiles()
     {
         var searchOption = this._includeSubfolders ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
 
@@ -71,6 +71,15 @@ public class FileSpecification
             enumerator = enumerator.Where(x => !fileExcludePatternExpressions.Any(e => e.IsMatch(x)));
         }
 
-        return enumerator.Select(x => new FileDataSource(x));
+        return enumerator.Select(x => new DataSource(
+            x, f => File.Open(
+                f,
+                new FileStreamOptions
+                {
+                    Mode = FileMode.Open,
+                    Access = FileAccess.Read,
+                    Share = FileShare.Read,
+                    Options = FileOptions.SequentialScan | FileOptions.Asynchronous
+                })));
     }
 }

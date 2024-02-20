@@ -66,7 +66,7 @@ public sealed class FileSpecificationTests : IDisposable
             true,
             Enumerable.Empty<string>(),
             Enumerable.Empty<string>());
-        List<IDataSource> files = fileSpec.EnumerateFiles().ToList();
+        List<DataSource> files = fileSpec.EnumerateFiles().ToList();
 
         files.Count.Should().Be(4);
         files.Should().Contain(x => x.Identifier == Path.Combine(this._tempPath, "temp1.css"));
@@ -84,7 +84,7 @@ public sealed class FileSpecificationTests : IDisposable
             Enumerable.Empty<string>(),
             Enumerable.Empty<string>());
 
-        List<IDataSource> files = fileSpec.EnumerateFiles().ToList();
+        List<DataSource> files = fileSpec.EnumerateFiles().ToList();
 
         files.Count.Should().Be(2);
         files.Should().Contain(x => x.Identifier == Path.Combine(this._tempPath, "temp1.css"));
@@ -99,7 +99,7 @@ public sealed class FileSpecificationTests : IDisposable
             true,
             Enumerable.Empty<string>(),
             new[] { "*.asp", "*.bmp", "*.txt" });
-        List<IDataSource> files = fileSpec.EnumerateFiles().ToList();
+        List<DataSource> files = fileSpec.EnumerateFiles().ToList();
 
         files.Count.Should().Be(1);
         files.Should().Contain(x => x.Identifier == Path.Combine(this._tempPath, "temp1.css"));
@@ -113,7 +113,7 @@ public sealed class FileSpecificationTests : IDisposable
             true,
             new[] { "temp1.css", "temp2.txt" },
             Enumerable.Empty<string>());
-        List<IDataSource> files = fileSpec.EnumerateFiles().ToList();
+        List<DataSource> files = fileSpec.EnumerateFiles().ToList();
 
         files.Count.Should().Be(2);
         files.Should().Contain(x => x.Identifier == Path.Combine(this._tempPath, "temp1.css"));
@@ -128,7 +128,7 @@ public sealed class FileSpecificationTests : IDisposable
             true,
             new[] { "*.xyz" },
             Enumerable.Empty<string>());
-        List<IDataSource> files = fileSpec.EnumerateFiles().ToList();
+        List<DataSource> files = fileSpec.EnumerateFiles().ToList();
 
         files.Count.Should().Be(0);
     }
