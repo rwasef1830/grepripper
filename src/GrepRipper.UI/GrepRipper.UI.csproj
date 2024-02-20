@@ -1,54 +1,54 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <ApplicationIcon>Resources\GrepRipper.ico</ApplicationIcon>
-    <UseWPF>True</UseWPF>
-    <Platforms>x64</Platforms>
-    <PublishSingleFile>true</PublishSingleFile>
-    <DebugType>embedded</DebugType>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-  </PropertyGroup>
-  <ItemGroup>
-    <EmbeddedResource Update="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <Compile Update="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-      <DesignTime>True</DesignTime>
-    </Compile>
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-    <Compile Update="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="../GrepRipper.Engine/GrepRipper.Engine.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\GrepRipper.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Ben.Demystifier" Version="0.4.1" />
-    <PackageReference Include="Dirkster.NumericUpDownLib" Version="3.4.0" />
-    <PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.1.94" />
-    <PackageReference Include="JetBrains.Annotations" Version="2023.3.0" />
-    <PackageReference Include="Mono.Options" Version="6.12.0.148" />
-    <PackageReference Include="MvvmDialogs" Version="9.1.2" />
-    <PackageReference Include="Prism.Core" Version="8.1.97" />
-    <PackageReference Include="Prism.DryIoc" Version="8.1.97" />
-    <PackageReference Include="Prism.Validation" Version="1.3.0" />
-    <PackageReference Include="Prism.Wpf" Version="8.1.97" />
-  </ItemGroup>
-  <ItemGroup>
-    <Page Include="App.xaml" />
-  </ItemGroup>
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <ApplicationIcon>Resources\GrepRipper.ico</ApplicationIcon>
+        <UseWPF>True</UseWPF>
+        <Platforms>x64</Platforms>
+        <PublishSingleFile>true</PublishSingleFile>
+        <DebugType>embedded</DebugType>
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    </PropertyGroup>
+    <ItemGroup>
+        <EmbeddedResource Update="Properties\Resources.resx">
+            <Generator>ResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+            <SubType>Designer</SubType>
+        </EmbeddedResource>
+        <Compile Update="Properties\Resources.Designer.cs">
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+            <DesignTime>True</DesignTime>
+        </Compile>
+        <None Include="Properties\Settings.settings">
+            <Generator>SettingsSingleFileGenerator</Generator>
+            <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+        </None>
+        <Compile Update="Properties\Settings.Designer.cs">
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Settings.settings</DependentUpon>
+            <DesignTimeSharedInput>True</DesignTimeSharedInput>
+        </Compile>
+    </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="../GrepRipper.Engine/GrepRipper.Engine.csproj"/>
+    </ItemGroup>
+    <ItemGroup>
+        <Resource Include="Resources\GrepRipper.ico"/>
+    </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Ben.Demystifier" Version="0.4.1"/>
+        <PackageReference Include="Dirkster.NumericUpDownLib" Version="3.4.0"/>
+        <PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.1.94"/>
+        <PackageReference Include="JetBrains.Annotations" Version="2023.3.0"/>
+        <PackageReference Include="Mono.Options" Version="6.12.0.148"/>
+        <PackageReference Include="MvvmDialogs" Version="9.1.2"/>
+        <PackageReference Include="Prism.Core" Version="8.1.97"/>
+        <PackageReference Include="Prism.DryIoc" Version="8.1.97"/>
+        <PackageReference Include="Prism.Validation" Version="1.3.0"/>
+        <PackageReference Include="Prism.Wpf" Version="8.1.97"/>
+    </ItemGroup>
+    <ItemGroup>
+        <Page Include="App.xaml"/>
+    </ItemGroup>
 </Project>
