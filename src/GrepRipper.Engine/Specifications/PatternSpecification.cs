@@ -12,11 +12,8 @@ public class PatternSpecification
         bool isRegex,
         bool ignoreCase)
     {
-        if (string.IsNullOrEmpty(text))
-        {
-            throw new ArgumentException("Value cannot be null or whitespace.", nameof(text));
-        }
-
+        ArgumentException.ThrowIfNullOrWhiteSpace(text);
+        
         var options = RegexOptions.None;
         if (ignoreCase) options |= RegexOptions.IgnoreCase;
 
