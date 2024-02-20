@@ -2,18 +2,11 @@
 
 namespace GrepRipper.Engine;
 
-public class CompletedEventArgs
+public class CompletedEventArgs(TimeSpan duration, ProgressEventArgs finalProgressUpdate, Exception? failureReason)
 {
-    public TimeSpan Duration { get; }
+    public TimeSpan Duration { get; } = duration;
 
-    public Exception? FailureReason { get; }
+    public Exception? FailureReason { get; } = failureReason;
 
-    public ProgressEventArgs FinalProgressUpdate { get; }
-
-    public CompletedEventArgs(TimeSpan duration, ProgressEventArgs finalProgressUpdate, Exception? failureReason)
-    {
-        this.Duration = duration;
-        this.FinalProgressUpdate = finalProgressUpdate;
-        this.FailureReason = failureReason;
-    }
+    public ProgressEventArgs FinalProgressUpdate { get; } = finalProgressUpdate;
 }

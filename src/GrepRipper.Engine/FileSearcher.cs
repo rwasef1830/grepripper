@@ -17,15 +17,15 @@ public class FileSearcher
     public const long MaxFileSize = 256 * 1024 * 1024;
     public const int DefaultMaxContextLength = 512;
 
-    readonly CancellationTokenSource _cancelSrc;
+    static readonly ThreadLocal<Magic> s_Magic = new(CreateMagic);
+    static readonly object s_MagicCreateLocker = new();
 
+    readonly CancellationTokenSource _cancelSrc;
     readonly Regex _expression;
     readonly IEnumerable<DataSource> _dataSources;
     readonly bool _skipBinaryFiles;
     readonly int _contextLineCount;
-
     readonly object _beginCancelLocker = new();
-    readonly object _magicCreateLocker = new();
     readonly int _maxContextLength;
     long _doneCount;
     long _failedCount;
@@ -79,18 +79,16 @@ public class FileSearcher
                     try
                     {
                         int totalCount = 0;
-
-                        using (IEnumerator<DataSource> enumerator = this._dataSources.GetEnumerator())
+                        using IEnumerator<DataSource> enumerator = this._dataSources.GetEnumerator();
+                        
+                        while (enumerator.MoveNext())
                         {
-                            while (enumerator.MoveNext())
+                            if (totalCount % 100 != 0 && this._cancelSrc.IsCancellationRequested)
                             {
-                                if (this._cancelSrc.IsCancellationRequested)
-                                {
-                                    return;
-                                }
-
-                                totalCount++;
+                                return;
                             }
+
+                            totalCount++;
                         }
 
                         Interlocked.Exchange(ref this._totalCount, totalCount);
@@ -129,9 +127,9 @@ public class FileSearcher
         }
     }
 
-    void DoSearchTask() => this.DoSearchTask(false);
+    Task DoSearchTask() => this.DoSearchTask(false);
 
-    void DoSearchTask(bool disableParallelism)
+    async Task DoSearchTask(bool disableParallelism)
     {
         var stopwatch = Stopwatch.StartNew();
         Exception? error = null;
@@ -139,7 +137,7 @@ public class FileSearcher
 
         try
         {
-            this.RunSearch(disableParallelism, this._cancelSrc.Token);
+            await this.RunSearchAsync(disableParallelism, this._cancelSrc.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException) { }
         catch (Exception ex)
@@ -157,7 +155,7 @@ public class FileSearcher
                         new Exception(
                             "Parallel search failed. Restarted search in sequential mode.",
                             ex.InnerException)));
-                this.DoSearchTask(true);
+                await this.DoSearchTask(true).ConfigureAwait(false);
                 suppressFinally = true;
                 return;
             }
@@ -217,23 +215,23 @@ public class FileSearcher
     }
 
     [SuppressMessage("ReSharper", "HeapView.ClosureAllocation")]
-    void RunSearch(bool disableParallelism, CancellationToken token)
+    async Task RunSearchAsync(bool disableParallelism, CancellationToken token)
     {
-        var parallelOptions = new ParallelOptions { CancellationToken = token };
+        var parallelOptions = new ParallelOptions
+        {
+            CancellationToken = token, 
+            MaxDegreeOfParallelism = Environment.ProcessorCount * 2
+        };
+        
         if (disableParallelism)
         {
             parallelOptions.MaxDegreeOfParallelism = 1;
         }
 
-        Parallel.ForEach(
+        await Parallel.ForEachAsync(
             this._dataSources,
             parallelOptions,
-            () => new
-            {
-                Regex = new Regex(this._expression.ToString(), this._expression.Options),
-                Magic = this.CreateMagic()
-            },
-            (dataSource, _, _, vars) =>
+            async (dataSource, cancellationToken) =>
             {
                 List<SearchMatch>? matches = null;
                 Exception? error = null;
@@ -242,107 +240,116 @@ public class FileSearcher
                 {
                     var byteArrayPool = ArrayPool<byte>.Shared;
 
-                    using var stream = dataSource.OpenRead();
-                    var length = stream.Length;
-
-                    if (length is > MaxFileSize or 0)
+                    var stream = dataSource.OpenRead();
+                    await using (stream.ConfigureAwait(false))
                     {
-                        return vars;
-                    }
+                        var length = stream.Length;
 
-                    token.ThrowIfCancellationRequested();
-
-                    var byteBuffer = byteArrayPool.Rent(4096);
-                    try
-                    {
-                        var bytesRead = stream.Read(byteBuffer, 0, byteBuffer.Length);
-                        if (this._skipBinaryFiles && IsLikelyToBeBinary(byteBuffer, bytesRead, vars.Magic))
+                        if (length is > MaxFileSize or 0)
                         {
-                            Interlocked.Increment(ref this._skippedCount);
-                            return vars;
+                            return;
                         }
-                    }
-                    finally
-                    {
-                        byteArrayPool.Return(byteBuffer);
-                    }
 
-                    stream.Seek(0, SeekOrigin.Begin);
-
-                    using var reader = new StreamReader(stream, true);
-
-                    var lineBuffer = new CircularBuffer<string?>(this._contextLineCount * 2 + 1);
-                    var postMatchLineCount = 0;
-                    var readLineCount = 0;
-                    string? lastReadLine;
-
-                    // At the beginning of the file, there are no pre-match lines
-                    for (int i = 0; i < this._contextLineCount; i++)
-                    {
-                        lineBuffer.PushBack(null);
-                    }
-
-                    // Read first line and post-match lines
-                    var readFirstLine = false;
-                    do
-                    {
-                        lastReadLine = reader.ReadLine();
                         token.ThrowIfCancellationRequested();
 
-                        if (lastReadLine == null)
+                        var byteBuffer = byteArrayPool.Rent(4096);
+                        try
                         {
-                            break;
-                        }
+                            var bytesRead = await stream.ReadAsync(byteBuffer, cancellationToken)
+                                .ConfigureAwait(false);
 
-                        if (!readFirstLine)
-                        {
-                            readFirstLine = true;
-                        }
-                        else
-                        {
-                            postMatchLineCount++;
-                        }
-
-                        readLineCount++;
-                        lineBuffer.PushBack(lastReadLine);
-                    }
-                    while (!lineBuffer.IsFull);
-
-                    Debug.Assert(lastReadLine == null != lineBuffer.IsFull);
-
-                    while (!lineBuffer.IsFull)
-                    {
-                        lineBuffer.PushBack(null);
-                    }
-
-                    for (string? currentLine = lineBuffer[this._contextLineCount];
-                         currentLine != null;
-                         lastReadLine = reader.ReadLine(),
-                         readLineCount += lastReadLine == null ? 0 : 1,
-                         postMatchLineCount -= postMatchLineCount > 0 && lastReadLine == null ? 1 : 0,
-                         lineBuffer.PushBack(lastReadLine),
-                         currentLine = lineBuffer[this._contextLineCount])
-                    {
-                        // ReSharper disable once AccessToDisposedClosure - Dispose happens after all parallel iteration callbacks are done.
-                        var regexMatches = vars.Regex.Matches(currentLine);
-                        foreach (Match regexMatch in regexMatches)
-                        {
-                            if (!regexMatch.Success)
+                            var magic = s_Magic.Value ?? throw new InvalidOperationException("Failed to init libmagic");
+                            
+                            if (this._skipBinaryFiles && IsLikelyToBeBinary(byteBuffer, bytesRead, magic))
                             {
-                                continue;
+                                Interlocked.Increment(ref this._skippedCount);
+                                return;
+                            }
+                        }
+                        finally
+                        {
+                            byteArrayPool.Return(byteBuffer);
+                        }
+
+                        stream.Seek(0, SeekOrigin.Begin);
+
+                        using var reader = new StreamReader(stream, true);
+
+                        var lineBuffer = new CircularBuffer<string?>(this._contextLineCount * 2 + 1);
+                        var postMatchLineCount = 0;
+                        var readLineCount = 0;
+                        string? lastReadLine;
+
+                        // At the beginning of the file, there are no pre-match lines
+                        for (int i = 0; i < this._contextLineCount; i++)
+                        {
+                            lineBuffer.PushBack(null);
+                        }
+
+                        // Read first line and post-match lines
+                        var readFirstLine = false;
+                        do
+                        {
+                            lastReadLine = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
+                            token.ThrowIfCancellationRequested();
+
+                            if (lastReadLine == null)
+                            {
+                                break;
                             }
 
-                            var match = this.GetMatch(
-                                regexMatch,
-                                lineBuffer,
-                                readLineCount - postMatchLineCount);
+                            if (!readFirstLine)
+                            {
+                                readFirstLine = true;
+                            }
+                            else
+                            {
+                                postMatchLineCount++;
+                            }
 
-                            matches ??= [];
-                            matches.Add(match);
+                            readLineCount++;
+                            lineBuffer.PushBack(lastReadLine);
+                        }
+                        while (!lineBuffer.IsFull);
+
+                        Debug.Assert(lastReadLine == null != lineBuffer.IsFull);
+
+                        while (!lineBuffer.IsFull)
+                        {
+                            lineBuffer.PushBack(null);
+                        }
+
+                        for (string? currentLine = lineBuffer[this._contextLineCount];
+                             currentLine != null;
+                             lastReadLine = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false),
+                             readLineCount += lastReadLine == null ? 0 : 1,
+                             postMatchLineCount -= postMatchLineCount > 0 && lastReadLine == null ? 1 : 0,
+                             lineBuffer.PushBack(lastReadLine),
+                             currentLine = lineBuffer[this._contextLineCount])
+                        {
+                            // ReSharper disable once AccessToDisposedClosure - Dispose happens after all parallel iteration callbacks are done.
+                            var regexMatches = this._expression.Matches(currentLine);
+                            foreach (Match regexMatch in regexMatches)
+                            {
+                                if (!regexMatch.Success)
+                                {
+                                    continue;
+                                }
+
+                                var match = this.GetMatch(
+                                    regexMatch,
+                                    lineBuffer,
+                                    readLineCount - postMatchLineCount);
+
+                                matches ??= [];
+                                matches.Add(match);
+                            }
                         }
                     }
                 }
-                catch (OperationCanceledException) { }
+                catch (OperationCanceledException)
+                {
+                }
                 catch (Exception ex)
                 {
                     Interlocked.Increment(ref this._failedCount);
@@ -362,17 +369,14 @@ public class FileSearcher
 
                     Interlocked.Increment(ref this._doneCount);
                 }
-
-                return vars;
-            },
-            vars => vars.Magic.Dispose());
+            });
     }
 
-    Magic CreateMagic()
+    static Magic CreateMagic()
     {
         // magic_load is not thread safe and alters static state.
         // Protect from heap corruption.
-        lock (this._magicCreateLocker)
+        lock (s_MagicCreateLocker)
         {
             return new Magic(
                 MagicOpenFlags.MAGIC_MIME_TYPE
