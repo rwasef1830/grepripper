@@ -107,7 +107,8 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBox Grid.Row="0" Grid.Column="0" Width="Auto" Text="{Binding Search.SearchPattern, UpdateSourceTrigger=PropertyChanged}" 
-                     IsEnabled="{Binding Search.Operation.IsNotRunning}" x:Name="TextBoxSearchPattern">
+                     IsEnabled="{Binding Search.Operation.IsNotRunning}" x:Name="TextBoxSearchPattern"
+                     PreviewKeyDown="HandleTextBoxSearchPatternPreviewKeyDown">
                 <TextBox.Resources>
                     <Style TargetType="TextBox">
                         <Setter Property="VerticalContentAlignment" Value="Center" />

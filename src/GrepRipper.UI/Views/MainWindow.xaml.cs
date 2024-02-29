@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -188,5 +189,29 @@ public partial class MainWindow
     {
         var viewModel = (MainWindowViewModel)this.DataContext;
         viewModel.SaveSettings();
+    }
+
+    [SuppressMessage("ReSharper", "SwitchStatementHandlesSomeKnownEnumValuesWithDefault")]
+    void HandleTextBoxSearchPatternPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        var viewModel = (MainWindowViewModel)this.DataContext;
+
+        switch (e.Key)
+        {
+            case Key.Down when viewModel.Search.ContextLineCount == 0:
+                return;
+            case Key.Down:
+                viewModel.Search.ContextLineCount--;
+                break;
+            case Key.Up when viewModel.Search.ContextLineCount == SearchViewModel.MaxContextLineCount:
+                return;
+            case Key.Up:
+                viewModel.Search.ContextLineCount++;
+                break;
+            default:
+                return;
+        }
+
+        e.Handled = true;
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 using System.Windows.Input;
 using GrepRipper.Engine;
 using GrepRipper.Engine.Specifications;
@@ -27,6 +28,10 @@ public class SearchViewModel : ValidatableBindableBase
     SearchOperationViewModel _operation = null!;
 
     static readonly char[] s_Separators = [' '];
+
+    public static readonly int MaxContextLineCount = typeof(SearchViewModel)
+        .GetProperty(nameof(ContextLineCount))
+        ?.GetCustomAttribute<RangeAttribute>()?.Maximum as int? ?? 0;
 
     [Required]
     [DirectoryExists]
